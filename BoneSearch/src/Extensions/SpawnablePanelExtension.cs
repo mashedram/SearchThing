@@ -18,6 +18,7 @@ namespace BoneSearch.Extensions;
 public class SpawnablePanelExtension
 {
     public const int SearchTabIndex = 5;
+    public const int ItemsPerPage = 12;
     
     private string _searchQuery = "";
     private readonly SpawnablesPanelView _panelView;
@@ -25,6 +26,9 @@ public class SpawnablePanelExtension
     private const string SourceTabButtonPath = "group_tabs/grid_tabs/button_tab_05";
 
     private static readonly Texture2D IconTexture = ImageHelper.LoadEmbeddedImage("BoneSearch.resources.SearchIcon.png");
+
+    private SearchResults? _results;
+    private int _pageIndex = -1;
     
     private void AddTab()
     {
@@ -91,7 +95,21 @@ public class SpawnablePanelExtension
 
     public void RequestRefresh()
     {
-        SearchManager.SearchAsync(_searchQuery, Refresh);
+        var filter = _panelView._selectedTagIndex switch
+        {
+            1 => CrateType.Avatar,
+            _ => CrateType.Prop
+        };
+        SearchManager.SearchAsync(_searchQuery, filter, OnSearchCompleted);
+    }
+
+    public void EnsureList(string name)
+    {
+        var contents = _panelView.SpawnablesQuickMap;
+        if (!contents.ContainsKey(name))
+        {
+            contents[name] = new Il2CppSystem.Collections.Generic.List<SpawnableCrate>();
+        }
     }
 
     public Il2CppSystem.Collections.Generic.List<SpawnableCrate> GetList(string name)
@@ -111,57 +129,95 @@ public class SpawnablePanelExtension
         list.Clear();
         return list;
     }
+
+    public void UpdateTagVisuals()
+    {
+        var tagePageCount = _panelView._activeTags.Count;
+        _panelView.UpdateTagPageItems(0, tagePageCount);
+        _panelView.UpdateTagPageText(_panelView._selectedTagIndex, tagePageCount);
+    }
     
     public void EnableTags(string defaultTag, params string[] tags)
     {
         var activeTags = _panelView._activeTags;
         activeTags.Clear();
+        EnsureList(defaultTag);
         activeTags.Add(defaultTag);
         foreach (var tag in tags)
         {
+            EnsureList(tag);
             activeTags.Add(tag);
         }
         
-        if (activeTags.Contains(_panelView._selectedTag))
-            return;
-
-        _panelView._selectedTag = defaultTag;
+        if (!activeTags.Contains(_panelView._selectedTag))
+            _panelView._selectedTag = defaultTag;
+        
+        UpdateTagVisuals();
+    }
+    
+    public void OnSearchCompleted(SearchResults results)
+    {
+        _results = results;
+        _pageIndex = 0;
+        Refresh();
     }
 
-    public void Refresh(IEnumerable<SpawnableCrate> search)
+    public void Refresh()
     {
-        var contents = _panelView.SpawnablesQuickMap;
-        var propMap = GetAndClearList("Props");
-        var avatarMap = GetAndClearList("Avatars");
-        EnableTags("Props", "Avatars");
+        if (_results == null)
+            return; 
         
-        foreach (var spawnableCrate in search)
+        var selectedTag = _panelView._selectedTag;
+        var contents = GetAndClearList(selectedTag);
+
+        // TODO : This doesn't filter, currently
+        var entries = _results.GetPage(_pageIndex, ItemsPerPage);
+        foreach (var entry in entries)
         {
-            if (spawnableCrate.TryCast<AvatarCrate>() == null)
-            {
-                propMap.Add(spawnableCrate);
-            }
-            else
-            {
-                avatarMap.Add(spawnableCrate);
-            }
+            if (entry.Crate != null)
+                contents.Add(entry.Crate);
         }
 
-        var selectedMap = contents[_panelView._selectedTag];
-        var pageCount = selectedMap._size / 12;
+        var pageCount = _results.GetPageCount(ItemsPerPage);
         _panelView._numberOfPages = pageCount;
         
         _panelView.labelText.text = _searchQuery;
         _panelView.UpdatePageItems(0, 12);
-        _panelView.UpdatePageText(0, pageCount);
+        _panelView.UpdatePageText(_pageIndex, pageCount);
+    }
 
-        var tagePageCount = _panelView.SpawnablesQuickMap._count;
-        _panelView.UpdateTagPageItems(0, tagePageCount);
-        _panelView.UpdateTagPageText(0, tagePageCount);
+    public void ChangePage(int offset)
+    {
+        var newPage = _pageIndex + offset;
+        if (newPage < 0 || newPage >= _panelView._numberOfPages)
+            return;
+        
+        _pageIndex = newPage;
+        
+        Refresh();
+    }
+    
+    public void NextPage()
+    {
+        ChangePage(1);
+    }
+    
+    public void PrevPage()
+    {
+        ChangePage(-1);
+    }
+    
+    public void SelectCategory(int idx)
+    {
+        if (_results == null)
+            return;
+        
+        RequestRefresh();
     }
 
     public void Show()
     {
+        EnableTags("Props", "Avatars");
         ShowKeyboard();
         RequestRefresh();
     }
@@ -179,6 +235,11 @@ public class SpawnablePanelExtension
     public void CloseKeyboard()
     {
         _keyboard.Hide();
+    }
+
+    public bool IsSearchActive()
+    {
+        return _panelView._selectedTabIndex == SearchTabIndex;
     }
     
     public bool Is(SpawnablesPanelView panelView)

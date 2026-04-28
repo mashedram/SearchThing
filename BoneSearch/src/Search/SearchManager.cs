@@ -12,15 +12,17 @@ using Type = Il2CppSystem.Type;
 
 namespace BoneSearch.Search;
 
-public class SearchableCrate
+public enum CrateType
 {
-    public SpawnableCrate SpawnableCrate;
-    public string Name { get; }
-    public string PalletName { get; }
-    public string Author { get; }
-    public string[] Tags { get; }
-    
-    public string SearchableString { get; }
+    Prop,
+    Avatar
+}
+
+public struct SearchableCrate
+{
+    public readonly string SearchableString;
+    public readonly CrateType Type;
+    public readonly Barcode Barcode;
 
     private static string StripDecoration(string value)
     {
@@ -30,13 +32,15 @@ public class SearchableCrate
     
     public SearchableCrate(SpawnableCrate spawnableCrate)
     {
-        Name = StripDecoration(spawnableCrate.name);
-        PalletName = StripDecoration(spawnableCrate._pallet.name);
-        Author = spawnableCrate._pallet._author;
-        Tags = spawnableCrate._tags.ToArray();
-        SearchableString =  $"{Name} {PalletName} {Author} {string.Join(" ", Tags)}".ToLowerInvariant();
-         
-        SpawnableCrate = spawnableCrate;
+        var name = StripDecoration(spawnableCrate.name);
+        var palletName = StripDecoration(spawnableCrate._pallet.name);
+        var author = spawnableCrate._pallet._author;
+        var tags = spawnableCrate._tags.ToArray();
+        SearchableString =  $"{name} {palletName} {author} {string.Join(" ", tags)}".ToLowerInvariant();
+        
+        Type = spawnableCrate.TryCast<AvatarCrate>() != null ? CrateType.Avatar : CrateType.Prop;
+        
+        Barcode = spawnableCrate.Barcode;
     }
 }
 
@@ -45,53 +49,68 @@ public record struct ScoredCrate(SearchableCrate Crate, int Score);
 public static class SearchManager
 {
     private const int RequiredMatchRate = 82;
+    private static readonly ReaderWriterLockSlim CrateLock = new();
     private static readonly List<SearchableCrate> SearchableCrates = new();
-#if DEBUG
-    private static readonly Stopwatch Stopwatch = new Stopwatch();
-#endif
     
     public static void AddPallet(Pallet pallet)
     {
-        foreach (var palletCrate in pallet._crates)
+        CrateLock.EnterWriteLock();
+        try
         {
-            var spawnableCrate = palletCrate.TryCast<SpawnableCrate>();
-            if (spawnableCrate == null)
-                continue;
-            
-            if (spawnableCrate._redacted)
-                continue;
-            
-            SearchableCrates.Add(new SearchableCrate(spawnableCrate));
+            foreach (var palletCrate in pallet._crates)
+            {
+                var spawnableCrate = palletCrate.TryCast<SpawnableCrate>();
+                if (spawnableCrate == null)
+                    continue;
+
+                if (spawnableCrate._redacted)
+                    continue;
+
+                SearchableCrates.Add(new SearchableCrate(spawnableCrate));
+            }
+        }
+        finally
+        {
+            CrateLock.ExitWriteLock();
         }
     }
     
-    public static void SearchAsync(string query, Action<IEnumerable<SpawnableCrate>> onComplete)
+    public static void SearchAsync(string query, CrateType crateType, Action<SearchResults> onComplete)
     {
         ThreadPool.QueueUserWorkItem(_ =>
         {
-            if (string.IsNullOrWhiteSpace(query))
+            if (string.IsNullOrWhiteSpace(query) || !AssetWarehouse.ready)
             {
-                onComplete(Enumerable.Empty<SpawnableCrate>());
+                onComplete(SearchResults.Empty);
                 return;
             }
-        
-            var lowerQuery = query.ToLowerInvariant();
-        
-            var result = SearchableCrates
-                .AsParallel()
-                .Select(crate => 
-                    new ScoredCrate(crate, Fuzz.PartialTokenSortRatio(lowerQuery, crate.SearchableString, PreprocessMode.Full))
-                )
-                .Where(c => c.Score > RequiredMatchRate)
-                .OrderByDescending(c => c.Score)
-                .Select(c => c.Crate.SpawnableCrate)
-                .ToList();
+            
+            CrateLock.EnterReadLock();
+            try
+            {
+                var lowerQuery = query.ToLowerInvariant();
 
-            MelonCoroutines.Start(InvokeOnMainThread(result, onComplete));
+                var result = SearchableCrates
+                    .AsParallel()
+                    .Where(c => c.Type == crateType)
+                    .Select(crate => 
+                        new ScoredCrate(crate, Fuzz.PartialTokenSortRatio(lowerQuery, crate.SearchableString, PreprocessMode.Full))
+                    )
+                    .Where(c => c.Score > RequiredMatchRate)
+                    .OrderByDescending(c => c.Score)
+                    .Select(c => new SearchResultEntry(c.Crate.Barcode, c.Score))
+                    .ToList();
+
+                MelonCoroutines.Start(InvokeOnMainThread(new SearchResults(result), onComplete));
+            }
+            finally
+            {
+                CrateLock.ExitReadLock();
+            }
         });
     }
     
-    private static System.Collections.IEnumerator InvokeOnMainThread(IEnumerable<SpawnableCrate> result, Action<IEnumerable<SpawnableCrate>> onComplete)
+    private static System.Collections.IEnumerator InvokeOnMainThread(SearchResults result, Action<SearchResults> onComplete)
     {
         yield return null; // Wait one frame to ensure we're on main thread
         onComplete(result);

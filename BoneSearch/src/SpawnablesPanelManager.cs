@@ -1,4 +1,5 @@
-﻿using BoneSearch.Extensions;
+﻿using System.Diagnostics.CodeAnalysis;
+using BoneSearch.Extensions;
 using Il2CppSLZ.UI;
 
 namespace BoneSearch;
@@ -24,6 +25,17 @@ public static class SpawnablesPanelManager
             _extension.Show();
         else
             _extension.Hide();
-        
+    }
+
+    public static bool TryGet(SpawnablesPanelView instance, [MaybeNullWhen(false)] out SpawnablePanelExtension extension)
+    {
+        if (_extension != null && _extension.Is(instance))
+        {
+            extension = _extension;
+            return true;
+        }
+
+        extension = null;
+        return false;
     }
 }

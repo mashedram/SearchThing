@@ -145,9 +145,9 @@ public class Keyboard
         }
 
         // Add special keys
-        CreateKey("Backspace", new Vector2(-280, currentY), new Vector2(240, 60), OnBackspace);
-        CreateKey("Space", new Vector2(0, currentY), new Vector2(249, 60), OnSpace);
-        CreateKey("Clear", new Vector2(280, currentY), new Vector2(240, 60), () => SetText(""));
+        CreateKey("Backspace", new Vector2(-280, currentY), new Vector2(240, 80), OnBackspace);
+        CreateKey("Space", new Vector2(0, currentY), new Vector2(249, 80), OnSpace);
+        CreateKey("Clear", new Vector2(280, currentY), new Vector2(240, 80), () => SetText(""));
     }
 
     private void OnInternalTextChanged(string text)

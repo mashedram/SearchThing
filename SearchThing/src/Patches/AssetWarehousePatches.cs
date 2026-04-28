@@ -1,9 +1,9 @@
-﻿using BoneSearch.Search;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Il2CppSLZ.Marrow.Warehouse;
 using MelonLoader;
+using SearchThing.Search;
 
-namespace BoneSearch.Patches;
+namespace SearchThing.Patches;
 
 [HarmonyPatch(typeof(AssetWarehouse))]
 public static class AssetWarehousePatches

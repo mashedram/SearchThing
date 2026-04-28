@@ -1,5 +1,5 @@
 ﻿using BoneLib;
-using BoneSearch.Extensions;
+using SearchThing.Extensions;
 using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppSLZ.Marrow.Warehouse;
@@ -7,10 +7,11 @@ using Il2CppSLZ.UI;
 using Il2CppTMPro;
 using LabFusion.Marrow.Proxies;
 using MelonLoader;
+using SearchThing.Util;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace BoneSearch.Patches;
+namespace SearchThing.Patches;
 
 [HarmonyPatch(typeof(SpawnablesPanelView))]
 public static class ToolUiPatches
@@ -97,7 +98,12 @@ public static class ToolUiPatches
         if (selectedAvatarCrate == null)
             return true;
 
-        Player.RigManager.SwapAvatarCrate(selectedAvatarCrate._barcode);
+        var reference = new AvatarCrateReference(selectedAvatarCrate._barcode);
+        var cordDevice = BodylogAccessor.GetCordDevice();
+        if (cordDevice != null)
+        {
+            cordDevice.SwapAvatar(reference).Forget();
+        }
         
         return false;
     }

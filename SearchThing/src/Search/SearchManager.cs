@@ -10,7 +10,7 @@ using UnityEngine;
 using Avatar = Il2CppSLZ.VRMK.Avatar;
 using Type = Il2CppSystem.Type;
 
-namespace BoneSearch.Search;
+namespace SearchThing.Search;
 
 public enum CrateType
 {
@@ -54,6 +54,7 @@ public static class SearchManager
     
     public static void AddPallet(Pallet pallet)
     {
+        // Due to the fact that searching exists on another thread, we need to wait for it to exit to avoid conflicts
         CrateLock.EnterWriteLock();
         try
         {

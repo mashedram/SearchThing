@@ -1,6 +1,6 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
 
-namespace BoneSearch.Search;
+namespace SearchThing.Search;
 
 public class SearchResultEntry
 {
@@ -32,7 +32,7 @@ public class SearchResultEntry
 public class SearchResults
 {
     public static SearchResults Empty { get; } = new(new List<SearchResultEntry>());
-    public IReadOnlyList<SearchResultEntry> Entries { get; }
+    private IReadOnlyList<SearchResultEntry> Entries { get; }
     
     public SearchResults(List<SearchResultEntry> entries)
     {

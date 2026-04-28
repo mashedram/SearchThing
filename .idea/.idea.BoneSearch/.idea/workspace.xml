@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="85359f0c-6ca7-46a9-9424-ca5c4035b471" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/.idea.BoneSearch/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.run/Copy Mod to Runtime.run.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SearchThing/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SearchThing/src/Util/BodylogAccessor.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SearchThing/staging/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SearchThing/staging/manifest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch.sln" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/BoneSearch.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/SearchThing.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/LICENSE.md" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/LICENSE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/dependencies/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/dependencies/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/dependencies/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/dependencies/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/resources/SearchIcon.png" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/resources/SearchIcon.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/Extensions/SpawnablePanelExtension.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/Extensions/SpawnablePanelExtension.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/Keyboard/Keyboard.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/Keyboard/Keyboard.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/Mod.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/Mod.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/Patches/AssetWarehousePatches.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/Patches/AssetWarehousePatches.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/Patches/ToolUiPatches.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/Patches/ToolUiPatches.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/Search/SearchManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/Search/SearchManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/Search/SearchResults.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/Search/SearchResults.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/SpawnablesPanelManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/SpawnablesPanelManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BoneSearch/src/Util/ImageHelper.cs" beforeDir="false" afterPath="$PROJECT_DIR$/SearchThing/src/Util/ImageHelper.cs" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_C:/Users/mash/RiderProjects/BoneSearch" value="3Cv4I0bGG0TADYP4Jr2Ittv0yd4" />
+    </persistenceIdMap>
+  </component>
+  <component name="CopilotUserSelectedChatMode">
+    <option name="chatModeId" value="Ask" />
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="agent-panel" value="Claude Haiku 4.5" />
+      <entry key="chat-panel" value="Claude Haiku 4.5" />
+    </selectedModels>
+  </component>
+  <component name="DarkyenusTimeTracker">
+    <option name="totalTimeSeconds" value="30951" />
+  </component>
+  <component name="DpaMonitoringSettings">
+    <option name="firstShow" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/0acd3d4d0f9e4019a4cfd91f6a4d04ca32fc00/68/133fcaab/Texture.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/23d1748b8cc74959985ee44903803fc8544000/18/62c6a798/GUIMenu.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/23d1748b8cc74959985ee44903803fc8544000/23/8236e785/Keyboard.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/23d1748b8cc74959985ee44903803fc8544000/5b/114fc145/GUIStringElement.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/40843ea4decc4b9cbcbeb982dd145aa08a7800/f2/228a91c1/SpawnablesPanelView.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/6e3861eb3fdc441ea30d1945cfdeb066496000/62/7c318be4/AvatarCrate.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/6e3861eb3fdc441ea30d1945cfdeb066496000/9d/4da619c7/SpawnableCrate.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/b03eb1da0d484b0ab2d94039b6638a751de600/2f/1e253176/MenuCreator.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/d675ac3fed434469ba33837d3ccb57a1c4a00/6b/6ae85863/Selectable.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/f2afaaedc75f41a6bbcbb4de70a014f8619a00/cf/bf724a3e/Object.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/SearchThing/src/Util/BodylogAccessor.cs" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3Cv4I0bGG0TADYP4Jr2Ittv0yd4" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Attach to Process.12472:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.13596:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.18620:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.19304:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.22156:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.22852:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.23392:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.24792:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.25412:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.2668:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.28060:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.32216:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.34020:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.34160:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.34944:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.36108:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.37552:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.4016:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.40832:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.41432:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.42068:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.42572:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.45040:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.47868:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.49860:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.50264:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.51068:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.7100:BONELAB_Steam_Windows64.executor": "Debug",
+    "Attach to Process.8576:BONELAB_Steam_Windows64.executor": "Debug",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Shell Script.Copy BoneStrike to Runtime.executor": "Run",
+    "Shell Script.Copy Mod to Runtime.executor": "Run",
+    "Shell Script.Run Mod.executor": "Run",
+    "git-widget-placeholder": "master",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "SolutionBuilderGeneralOptionsPage",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RunManager" selected="Shell Script.Run Mod">
+    <list>
+      <item itemvalue="Shell Script.Copy Mod to Runtime" />
+      <item itemvalue="Shell Script.Run Mod" />
+    </list>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="85359f0c-6ca7-46a9-9424-ca5c4035b471" name="Changes" comment="" />
+      <created>1777252626408</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1777252626408</updated>
+      <workItem from="1777252628133" duration="4513000" />
+      <workItem from="1777257163951" duration="3382000" />
+      <workItem from="1777316273741" duration="5511000" />
+      <workItem from="1777326752495" duration="8354000" />
+      <workItem from="1777335651233" duration="4580000" />
+      <workItem from="1777341035651" duration="1772000" />
+      <workItem from="1777372662606" duration="7562000" />
+    </task>
+    <task id="LOCAL-00001" summary="So yeah 6 hour lock in lesgo">
+      <option name="closed" value="true" />
+      <created>1777335069202</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1777335069202</updated>
+    </task>
+    <task id="LOCAL-00002" summary="- Made searching async to not pause the game thread">
+      <option name="closed" value="true" />
+      <created>1777343219666</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1777343219666</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="UnityProjectDiscoverer">
+    <option name="hasUnityReference" value="true" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="So yeah 6 hour lock in lesgo" />
+    <MESSAGE value="- Made searching async to not pause the game thread" />
+    <option name="LAST_COMMIT_MESSAGE" value="- Made searching async to not pause the game thread" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.OperationCanceledException" breakIfHandledByOtherCode="false" displayValue="System.OperationCanceledException" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.Tasks.TaskCanceledException" breakIfHandledByOtherCode="false" displayValue="System.Threading.Tasks.TaskCanceledException" />
+          <option name="timeStamp" value="2" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
+          <option name="timeStamp" value="3" />
+        </breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/SearchThing/src/Patches/ToolUiPatches.cs</url>
+          <line>101</line>
+          <properties documentPath="C:\Users\mash\RiderProjects\BoneSearch\SearchThing\src\Patches\ToolUiPatches.cs" containingFunctionPresentation="Method 'SelectItem_Prefix'">
+            <startOffsets>
+              <option value="2903" />
+            </startOffsets>
+            <endOffsets>
+              <option value="2952" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>

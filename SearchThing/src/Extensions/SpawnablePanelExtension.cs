@@ -1,6 +1,4 @@
 ﻿using System;
-using BoneSearch.Search;
-using BoneSearch.Util;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppSLZ.Bonelab;
 using Il2CppSLZ.Marrow.Warehouse;
@@ -9,23 +7,27 @@ using Il2CppSystem.Runtime.InteropServices;
 using Il2CppTMPro;
 using LabFusion.Extensions;
 using MelonLoader;
+using SearchThing.Search;
+using SearchThing.Util;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace BoneSearch.Extensions;
+namespace SearchThing.Extensions;
 
 public class SpawnablePanelExtension
 {
     public const int SearchTabIndex = 5;
     public const int ItemsPerPage = 12;
+
+    private const string SourceTabButtonPath = "group_tabs/grid_tabs/button_tab_05";
+    private const string SearchTabName = "button_tab_search";
     
     private string _searchQuery = "";
     private readonly SpawnablesPanelView _panelView;
     private readonly Keyboard.Keyboard _keyboard;
-    private const string SourceTabButtonPath = "group_tabs/grid_tabs/button_tab_05";
 
-    private static readonly Texture2D IconTexture = ImageHelper.LoadEmbeddedImage("BoneSearch.resources.SearchIcon.png");
+    private static readonly Texture2D IconTexture = ImageHelper.LoadEmbeddedImage("SearchThing.resources.SearchIcon.png");
 
     private SearchResults? _results;
     private int _pageIndex = -1;
@@ -39,15 +41,16 @@ public class SpawnablePanelExtension
             return;
         }
         
+        // Prevent accidentally adding the button if we have already found it
+        if (sourceButton.transform.FindChild(SearchTabName) != null)
+            return;
+        
         var searchButton = UnityEngine.Object.Instantiate(sourceButton.gameObject, sourceButton.parent);
-        searchButton.name = "button_tab_search";
-
-        var image = searchButton.transform.FindChild("image_icon")?.GetComponent<Image>();
-        if (image != null)
-            image.sprite = Sprite.Create(IconTexture, new Rect(0, 0, IconTexture.width, IconTexture.height), Vector2.zero);
+        searchButton.name = SearchTabName;
         
         var searchTabButton = searchButton.GetComponent<Button>();
-        if (searchTabButton == null)
+        var tabButtonReferenceHolder = searchButton.GetComponent<ButtonReferenceHolder>();
+        if (searchTabButton == null || tabButtonReferenceHolder == null)
         {
             MelonLogger.Error("Failed to find Button component in search button.");
             return;
@@ -56,8 +59,12 @@ public class SpawnablePanelExtension
         searchTabButton.onClick.RemoveAllListeners();
         searchTabButton.onClick.AddListener((UnityAction)OnSearchButtonClicked);
 
+        var image = searchButton.transform.FindChild("image_icon")?.GetComponent<Image>();
+        if (image != null)
+            image.sprite = Sprite.Create(IconTexture, new Rect(0, 0, IconTexture.width, IconTexture.height), Vector2.zero);
+
         var tabButtons = _panelView.tabButtons.ToList();
-        tabButtons.Add(searchTabButton.GetComponent<ButtonReferenceHolder>());
+        tabButtons.Add(tabButtonReferenceHolder);
         _panelView.tabButtons = new Il2CppReferenceArray<ButtonReferenceHolder>(tabButtons.ToArray());
 
         var text = searchButton.transform.Find("text_spawnable_val")?.GetComponent<TextMeshPro>();
@@ -80,11 +87,15 @@ public class SpawnablePanelExtension
     public SpawnablePanelExtension(SpawnablesPanelView panelView)
     {
         _panelView = panelView;
-        _keyboard = new Keyboard.Keyboard(_panelView.gameObject);
+        
+        AddTab();
+        
+        // Find the buttonReference we want to use for our style
+        var buttonStyleReference = _panelView.transform.Find("group_spawnSelect/section_SpawnablesList/grid_buttons/button_item_01").GetComponent<ButtonReferenceHolder>();
+        
+        _keyboard = new Keyboard.Keyboard(_panelView.gameObject, buttonStyleReference);
         _keyboard.OnTextChanged += OnSearchQueryChanged;
         _keyboard.Hide();
-
-        AddTab();
     }
 
     private void OnSearchQueryChanged(string query)

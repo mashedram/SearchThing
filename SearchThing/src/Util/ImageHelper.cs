@@ -1,7 +1,6 @@
-﻿using MelonLoader;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace BoneSearch.Util;
+namespace SearchThing.Util;
 
 public static class ImageHelper
 {

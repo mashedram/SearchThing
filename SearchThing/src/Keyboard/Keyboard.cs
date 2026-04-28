@@ -1,9 +1,10 @@
 ﻿using Il2CppTMPro;
 using Il2CppSLZ.Bonelab;
+using Il2CppSLZ.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BoneSearch.Keyboard;
+namespace SearchThing.Keyboard;
 
 public class Keyboard
 {
@@ -11,27 +12,30 @@ public class Keyboard
     private static readonly Vector2 KeySpacing = new Vector2(10, 10);
     
     private const int KeyboardLayer = 5;
-    
-    private readonly GameObject _parent;
-    private GameObject? _keyboardRoot;
-    private string _text = "";
-    public event Action<string>? OnTextChanged;
-
-    private readonly string[] _keyRows =
+    private static readonly string[] KeyRows =
     {
         "1234567890",
         "QWERTYUIOP",
         "ASDFGHJKL",
         "ZXCVBNM"
     };
+    
+    private readonly GameObject _parent;
+    private GameObject? _keyboardRoot;
+    private string _text = "";
+    private TMP_FontAsset _font;
+    private Sprite _bg;
+    private Sprite _outlineBg;
+    public event Action<string>? OnTextChanged;
 
-    public Keyboard(GameObject parent)
+    public Keyboard(GameObject parent, ButtonReferenceHolder resources)
     {
         _parent = parent;
+        _font = resources.tmp.font;
+        _bg = resources.background.sprite;
+        _outlineBg = resources.highlight.sprite;
         Create();
     }
-
-    public string Text => _text;
 
     public void SetText(string text)
     {
@@ -62,6 +66,7 @@ public class Keyboard
         CreateKeys();
     }
 
+    // TODO : Maybe make a class that prepares a key with references that we just clone instead of this abomination lol
     private void CreateKey(string text, Vector2 position, Vector2 size, Action action, Vector2? margin = null)
     {
         if (_keyboardRoot == null)
@@ -74,13 +79,23 @@ public class Keyboard
         var keyRect = keyGo.AddComponent<RectTransform>();
         keyGo.AddComponent<CanvasRenderer>();
 
-        var button = keyGo.AddComponent<Button>();
-        var image = keyGo.AddComponent<Image>();
-        image.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+        var bgGo = new GameObject("bg");
+        bgGo.transform.SetParent(keyGo.transform, false);
+        var bgRect = bgGo.AddComponent<RectTransform>();
+        bgRect.sizeDelta = size;
+        var bg = bgGo.AddComponent<Image>();
+        bg.sprite = _bg;
+        bg.type = Image.Type.Sliced;
 
-        var outline = keyGo.AddComponent<Outline>();
-        outline.effectColor = Color.white;
-        outline.effectDistance = new Vector2(2, -2);
+        var outlineGo = new GameObject("image_backline");
+        outlineGo.transform.SetParent(keyGo.transform, false);
+        var outlineRect = outlineGo.AddComponent<RectTransform>();
+        outlineRect.sizeDelta = size;
+        var outline = outlineGo.AddComponent<Image>();
+        outline.sprite = _outlineBg;
+        outline.type = Image.Type.Sliced;
+        outline.raycastTarget = false;
+        outline.fillCenter = false;
 
         var colliderGo = new GameObject("Collider");
         colliderGo.transform.SetParent(keyGo.transform, false);
@@ -88,23 +103,28 @@ public class Keyboard
         var sizeWithMargin = size + margin.GetValueOrDefault();
         collider.size = new Vector3(sizeWithMargin.x, sizeWithMargin.y, 1);
         collider.isTrigger = true;
-
-        keyGo.AddComponent<ButtonHoverClick>();
-
+        
+        var button = keyGo.AddComponent<Button>();
         button.onClick.AddListener(action);
-        
-        
-        button.transition = Selectable.Transition.ColorTint;
-        button.targetGraphic = image;
-        var colors = button.colors;
-        colors.normalColor = new Color(1f, 1f, 1f, 1f);
-        colors.highlightedColor = new Color(0.6f, 0.6f, 0.6f, 1f);
-        button.colors = colors;
 
+        button.transition = Selectable.Transition.ColorTint;
+        button.targetGraphic = bg;
+        var colors = button.colors;
+        colors.normalColor = new Color(0f, 0f, 0f, 0.6118f);
+        colors.highlightedColor = new Color(0.6038f, 0.6038f, 0.6038f, 0.209f);
+        colors.pressedColor = new Color(0.7176f, 0.7176f, 0.7176f, 1);
+        // Prevent weird coloration because the button stays selected after press
+        colors.selectedColor = colors.normalColor;
+        button.colors = colors;
+        
+        
+        keyGo.AddComponent<ButtonHoverClick>();
+        
         var textGo = new GameObject("Text");
         textGo.transform.SetParent(keyGo.transform, false);
         var textComponent = textGo.AddComponent<TextMeshProUGUI>();
         textComponent.text = text;
+        textComponent.font = _font;
         textComponent.fontSize = 40;
         textComponent.color = Color.white;
         textComponent.alignment = TextAlignmentOptions.Center;
@@ -129,19 +149,18 @@ public class Keyboard
 
         float currentY = 0;
 
-        for (var i = 0; i < _keyRows.Length; i++)
+        foreach (var row in KeyRows)
         {
-            var row = _keyRows[i];
-            var rowWidth = (row.Length * KeySize.x) + ((row.Length - 1) * KeySpacing.x);
+            var rowWidth = row.Length * KeySize.x + (row.Length - 1) * KeySpacing.x;
             var startX = -rowWidth / 2f;
 
             for (var j = 0; j < row.Length; j++)
             {
                 var keyChar = row[j];
                 var position = new Vector2(startX + j * (KeySize.x + KeySpacing.x) + KeySize.x / 2, currentY);
-                CreateKey(keyChar.ToString(), position, KeySize, () => OnKeyPress(keyChar));
+                CreateKey(keyChar.ToString(), position, KeySize, () => OnKeyPress(keyChar), KeySpacing / 2f);
             }
-            currentY -= (KeySize.y + KeySpacing.y);
+            currentY -= KeySize.y + KeySpacing.y;
         }
 
         // Add special keys

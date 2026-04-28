@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using BoneSearch.Extensions;
 using Il2CppSLZ.UI;
+using SearchThing.Extensions;
 
-namespace BoneSearch;
+namespace SearchThing;
 
 public static class SpawnablesPanelManager
 {

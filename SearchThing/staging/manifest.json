@@ -1,7 +1,7 @@
 {
   "name": "SearchThing",
-  "version_number": "0.1.0",
-  "website_url": "https://github.com/mashedram/Bodylog-Extender",
+  "version_number": "0.1.2",
+  "website_url": "https://github.com/mashedram/SearchThing",
   "description": "Adds a search menu to the spawn menu.",
   "dependencies": [
     "bonelib-BoneLib-3.2.1"

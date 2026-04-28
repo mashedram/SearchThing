@@ -11,7 +11,10 @@ public static class SpawnablesPanelManager
     public static void Load(SpawnablesPanelView panelView)
     {
         if (_extension != null && _extension.Is(panelView))
+        {
+            _extension.Refresh();
             return;
+        }
         
         _extension = new SpawnablePanelExtension(panelView);
     }

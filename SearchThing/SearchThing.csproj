@@ -382,4 +382,8 @@
         </Reference>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="staging\Mods\" />
+    </ItemGroup>
+
 </Project>

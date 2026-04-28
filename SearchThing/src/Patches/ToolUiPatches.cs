@@ -109,9 +109,6 @@ public static class ToolUiPatches
         if (cordDevice != null)
         {
             cordDevice.SwapAvatar(reference).Forget();
-            
-            // Seperate store to history
-            HistoryManager.AddEntry(selectedAvatarCrate);
         }
         
         return false;

@@ -29,7 +29,20 @@ public static class SearchHelper
     
         return $"{name} {spacedName} {palletName} {spacedPallet} {author} {string.Join(" ", tags)}"
             .ToLowerInvariant();
-    } 
+    }
+
+    public static bool IsCrate<T>(this Crate crate) where T : Crate
+    {
+        return crate.TryCast<T>() != null;
+    }
+    
+    public static CrateType GetCrateType(this Crate crate)
+    {
+        if (crate.IsCrate<AvatarCrate>())
+            return CrateType.Avatar;
+        
+        return CrateType.Prop;
+    }
     
     public static SearchResults ToSearchResults(this IEnumerable<Barcode> scoredCrates)
     {

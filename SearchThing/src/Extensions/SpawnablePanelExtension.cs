@@ -36,7 +36,8 @@ public class SpawnablePanelExtension
     private readonly IPanelPage[] _pages = {
         new PropTagPanelPage(),
         new AvatarTagPanelPage(),
-        new HistoryPanelPage()
+        new PropHistoryPanel(),
+        new AvatarHistoryPanel()
     };
     
     private void AddTab()

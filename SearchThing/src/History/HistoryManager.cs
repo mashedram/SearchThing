@@ -11,12 +11,14 @@ public struct HistoryEntry
     public string SearchString { get; }
     public string PreprocessedString { get; }
     public DateTime Timestamp { get; }
+    public CrateType CrateType { get; }
     public Barcode Barcode { get; }
     
     public HistoryEntry(Crate crate)
     {
         SearchString = crate.GetSearchString();
         PreprocessedString = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(SearchString);
+        CrateType = crate.GetCrateType();
         Barcode = crate.Barcode;
         Timestamp = DateTime.Now;
     }
@@ -65,10 +67,11 @@ public static class HistoryManager
     }
 
     // No threading needed, searching is pretty fast just not on thousands of items, and we only have 100
-    public static SearchResults Search(string query)
+    public static SearchResults Search(string query, Func<HistoryEntry, bool>? filter = null)
     {
         if (string.IsNullOrWhiteSpace(query))
             return GetEntries()
+                .Where(filter ?? (_ => true))
                 .Select(c => c.Barcode)
                 .ToSearchResults();
         
@@ -76,6 +79,7 @@ public static class HistoryManager
         var preprocessedQuery = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(lowerQuery);
         
         return GetEntries()
+            .Where(filter ?? (_ => true))
             .Where(entry => SearchManager.ScoreCrate(preprocessedQuery, entry.PreprocessedString) >= 80)
             .Select(c => c.Barcode)
             .ToSearchResults();

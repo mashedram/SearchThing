@@ -14,12 +14,6 @@ using Type = Il2CppSystem.Type;
 
 namespace SearchThing.Search;
 
-public enum CrateType
-{
-    Prop,
-    Avatar
-}
-
 public struct SearchableCrate
 {
     public readonly string SearchableString;
@@ -34,8 +28,8 @@ public struct SearchableCrate
         PreprocessedString = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(SearchableString);
 
         RandomId = Random.Shared.Next();
-        
-        Type = spawnableCrate.TryCast<AvatarCrate>() != null ? CrateType.Avatar : CrateType.Prop;
+
+        Type = spawnableCrate.GetCrateType();
         
         Barcode = spawnableCrate.Barcode;
     }
@@ -88,6 +82,7 @@ public static class SearchManager
                     var emptyResult =
                         SearchableCrates
                             .AsParallel()
+                            .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2)) 
                             .Where(filter)
                             .OrderByDescending(c => c.RandomId) // Tie-breaker
                             .Select(c => c.Barcode)
@@ -97,17 +92,15 @@ public static class SearchManager
                     MelonCoroutines.Start(InvokeOnMainThread(emptyResult, onComplete));
                     return;
                 }
-                
-#if DEBUG
-                var stopwatch = Stopwatch.StartNew();
-#endif
 
                 var result = SearchableCrates
                     .AsParallel()
-                    .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2)) // Limit to half of the cores to avoid overwhelming the system, especially since this runs alongside the game
+                    // Avoid starving the game thread of cores
+                    .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
                     .Where(filter)
-                    .Where(crate => QuickScoreCrate(preprocessedQuery, crate.PreprocessedString) > RequiredMatchRate - 20) // Pre-filtering to improve performance
-                    .Select(crate => 
+                    .Where(crate => QuickScoreCrate(preprocessedQuery, crate.PreprocessedString) >
+                                    RequiredMatchRate - 20) // Pre-filtering to improve performance
+                    .Select(crate =>
                         new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate.PreprocessedString))
                     )
                     .Where(c => c.Score > RequiredMatchRate)
@@ -115,11 +108,6 @@ public static class SearchManager
                     .ThenByDescending(c => c.Crate.RandomId) // Tie-breaker
                     .Select(c => c.Crate.Barcode)
                     .ToSearchResults();
-                
-#if DEBUG
-                stopwatch.Stop();
-                MelonLogger.Msg($"Search for '{query}' took {stopwatch.ElapsedMilliseconds} ms and found {result.GetPageCount(1)} results");
-#endif
 
                 MelonCoroutines.Start(InvokeOnMainThread(result, onComplete));
             }

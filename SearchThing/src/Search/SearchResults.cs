@@ -36,10 +36,22 @@ public class SearchResults
     {
         Entries = entries;
     }
+    
+    private IEnumerable<SearchResultEntry> GetPageIterator(int start, int end)
+    {
+        for (var i = start; i < end; i++)
+            yield return Entries[i];
+    }
 
     public IEnumerable<SearchResultEntry> GetPage(int page, int pageSize)
     {
-        return Entries.Skip(page * pageSize).Take(pageSize);
+        var start = page * pageSize;
+        var end = Math.Min(start + pageSize, Entries.Count);
+
+        if (start >= Entries.Count)
+            return Array.Empty<SearchResultEntry>();
+
+        return GetPageIterator(start, end);
     }
     
     public int GetPageCount(int pageSize)

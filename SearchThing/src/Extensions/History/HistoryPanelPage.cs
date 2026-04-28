@@ -1,16 +1,19 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-using SearchThing.Extensions.Abstract;
+﻿using SearchThing.Extensions.Abstract;
 using SearchThing.History;
 using SearchThing.Search;
 
 namespace SearchThing.Extensions.History;
 
-public class HistoryPanelPage : SearchPanelPage
+public abstract class HistoryPanelPage : SearchPanelPage
 {
-    public override string Tag => "History";
+    public override bool ResearchOnPageChange => true;
+    
+    public override abstract string Tag { get; }
+    protected abstract bool Filter(HistoryEntry entry);
+    
     protected override void Search(string query, Action<SearchResults> callback)
     {
-        var result = HistoryManager.Search(query);
+        var result = HistoryManager.Search(query, Filter);
         callback(result);
     }
 }

@@ -87,6 +87,10 @@ public static class ToolUiPatches
         extension.SelectCategory(idx);
     }
 
+    
+    // Funny thing, not doing this will cause the spawn gun to actually load the avatar
+    // In SP, this will just turn you into the avatar
+    // In Fusion, the avatar will spawn in, as just the mesh
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
     [HarmonyPrefix]
     public static bool SelectItem_Prefix(SpawnablesPanelView __instance, int idx)

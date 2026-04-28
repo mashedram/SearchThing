@@ -23,9 +23,9 @@ public class Keyboard
     private readonly GameObject _parent;
     private GameObject? _keyboardRoot;
     private string _text = "";
-    private TMP_FontAsset _font;
-    private Sprite _bg;
-    private Sprite _outlineBg;
+    private readonly TMP_FontAsset _font;
+    private readonly Sprite _bg;
+    private readonly Sprite _outlineBg;
     public event Action<string>? OnTextChanged;
 
     public Keyboard(GameObject parent, ButtonReferenceHolder resources)

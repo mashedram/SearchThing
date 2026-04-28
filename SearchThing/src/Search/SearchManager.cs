@@ -6,8 +6,10 @@ using Il2CppSLZ.Marrow.Data;
 using Il2CppSLZ.Marrow.Warehouse;
 using LabFusion.Extensions;
 using MelonLoader;
+using SearchThing.Util;
 using UnityEngine;
 using Avatar = Il2CppSLZ.VRMK.Avatar;
+using Random = System.Random;
 using Type = Il2CppSystem.Type;
 
 namespace SearchThing.Search;
@@ -21,22 +23,17 @@ public enum CrateType
 public struct SearchableCrate
 {
     public readonly string SearchableString;
+    public readonly string PreprocessedString;
+    public readonly int RandomId; // Used for tie-breaking to ensure consistent ordering
     public readonly CrateType Type;
     public readonly Barcode Barcode;
-
-    private static string StripDecoration(string value)
-    {
-        // Regex to remove unity rich text
-        return System.Text.RegularExpressions.Regex.Replace(value, @"</?[a-zA-Z]*=[^>]*>|</?[a-zA-Z]+>", "");
-    }
     
     public SearchableCrate(SpawnableCrate spawnableCrate)
     {
-        var name = StripDecoration(spawnableCrate.name);
-        var palletName = StripDecoration(spawnableCrate._pallet.name);
-        var author = spawnableCrate._pallet._author;
-        var tags = spawnableCrate._tags.ToArray();
-        SearchableString =  $"{name} {palletName} {author} {string.Join(" ", tags)}".ToLowerInvariant();
+        SearchableString = spawnableCrate.GetSearchString();
+        PreprocessedString = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(SearchableString);
+
+        RandomId = Random.Shared.Next();
         
         Type = spawnableCrate.TryCast<AvatarCrate>() != null ? CrateType.Avatar : CrateType.Prop;
         
@@ -48,7 +45,7 @@ public record struct ScoredCrate(SearchableCrate Crate, int Score);
 
 public static class SearchManager
 {
-    private const int RequiredMatchRate = 82;
+    private const int RequiredMatchRate = 75;
     private static readonly ReaderWriterLockSlim CrateLock = new();
     private static readonly List<SearchableCrate> SearchableCrates = new();
     
@@ -76,33 +73,55 @@ public static class SearchManager
         }
     }
     
-    public static void SearchAsync(string query, CrateType crateType, Action<SearchResults> onComplete)
+    public static void SearchAsync(string query, Func<SearchableCrate, bool> filter, Action<SearchResults> onComplete)
     {
+        var lowerQuery = query.ToLowerInvariant();
+        var preprocessedQuery = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(lowerQuery);
+        
         ThreadPool.QueueUserWorkItem(_ =>
         {
-            if (string.IsNullOrWhiteSpace(query) || !AssetWarehouse.ready)
-            {
-                onComplete(SearchResults.Empty);
-                return;
-            }
-            
             CrateLock.EnterReadLock();
             try
             {
-                var lowerQuery = query.ToLowerInvariant();
+                if (string.IsNullOrWhiteSpace(query) || !AssetWarehouse.ready)
+                {
+                    var emptyResult =
+                        SearchableCrates
+                            .AsParallel()
+                            .Where(filter)
+                            .OrderByDescending(c => c.RandomId) // Tie-breaker
+                            .Select(c => c.Barcode)
+                            .ToSearchResults();
+                    
+                    
+                    MelonCoroutines.Start(InvokeOnMainThread(emptyResult, onComplete));
+                    return;
+                }
+                
+#if DEBUG
+                var stopwatch = Stopwatch.StartNew();
+#endif
 
                 var result = SearchableCrates
                     .AsParallel()
-                    .Where(c => c.Type == crateType)
+                    .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2)) // Limit to half of the cores to avoid overwhelming the system, especially since this runs alongside the game
+                    .Where(filter)
+                    .Where(crate => QuickScoreCrate(preprocessedQuery, crate.PreprocessedString) > RequiredMatchRate - 20) // Pre-filtering to improve performance
                     .Select(crate => 
-                        new ScoredCrate(crate, Fuzz.PartialTokenSortRatio(lowerQuery, crate.SearchableString, PreprocessMode.Full))
+                        new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate.PreprocessedString))
                     )
                     .Where(c => c.Score > RequiredMatchRate)
                     .OrderByDescending(c => c.Score)
-                    .Select(c => new SearchResultEntry(c.Crate.Barcode, c.Score))
-                    .ToList();
+                    .ThenByDescending(c => c.Crate.RandomId) // Tie-breaker
+                    .Select(c => c.Crate.Barcode)
+                    .ToSearchResults();
+                
+#if DEBUG
+                stopwatch.Stop();
+                MelonLogger.Msg($"Search for '{query}' took {stopwatch.ElapsedMilliseconds} ms and found {result.GetPageCount(1)} results");
+#endif
 
-                MelonCoroutines.Start(InvokeOnMainThread(new SearchResults(result), onComplete));
+                MelonCoroutines.Start(InvokeOnMainThread(result, onComplete));
             }
             finally
             {
@@ -115,5 +134,23 @@ public static class SearchManager
     {
         yield return null; // Wait one frame to ensure we're on main thread
         onComplete(result);
+    }
+    
+    private static int QuickScoreCrate(string preprocessedQuery, string preprocessedCrate)
+    {
+        // Just one cheap algorithm for pre-filtering
+        return Fuzz.PartialRatio(preprocessedQuery, preprocessedCrate, PreprocessMode.None);
+    }
+    
+    public static int ScoreCrate(string preprocessedQuery, string preprocessedCrate)
+    {
+        // Use only PartialRatio - it's the fastest and handles most cases well
+        var score = Fuzz.PartialRatio(preprocessedQuery, preprocessedCrate, PreprocessMode.None);
+    
+        // Prefix boost for exact starts
+        if (preprocessedCrate.StartsWith(preprocessedQuery, StringComparison.OrdinalIgnoreCase))
+            score = Math.Min(100, score + 15);
+
+        return score;
     }
 }

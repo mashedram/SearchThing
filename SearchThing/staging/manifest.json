@@ -1,6 +1,6 @@
 {
   "name": "SearchThing",
-  "version_number": "0.1.2",
+  "version_number": "0.2.0",
   "website_url": "https://github.com/mashedram/SearchThing",
   "description": "Adds a search menu to the spawn menu.",
   "dependencies": [

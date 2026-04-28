@@ -2,11 +2,13 @@
 using SearchThing.Extensions;
 using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using Il2CppSLZ.Bonelab;
 using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.UI;
 using Il2CppTMPro;
 using LabFusion.Marrow.Proxies;
 using MelonLoader;
+using SearchThing.History;
 using SearchThing.Util;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -86,7 +88,7 @@ public static class ToolUiPatches
 
         extension.SelectCategory(idx);
     }
-
+    
     
     // Funny thing, not doing this will cause the spawn gun to actually load the avatar
     // In SP, this will just turn you into the avatar
@@ -107,6 +109,9 @@ public static class ToolUiPatches
         if (cordDevice != null)
         {
             cordDevice.SwapAvatar(reference).Forget();
+            
+            // Seperate store to history
+            HistoryManager.AddEntry(selectedAvatarCrate);
         }
         
         return false;

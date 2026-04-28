@@ -12,7 +12,7 @@ public static class SpawnablesPanelManager
     {
         if (_extension != null && _extension.Is(panelView))
         {
-            _extension.Refresh();
+            _extension.Rerender();
             return;
         }
         

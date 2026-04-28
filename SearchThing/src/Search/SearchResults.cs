@@ -5,7 +5,6 @@ namespace SearchThing.Search;
 public class SearchResultEntry
 {
     public Barcode Barcode;
-    public int Score;
 
     private SpawnableCrate? _crate;
     public SpawnableCrate? Crate
@@ -22,10 +21,9 @@ public class SearchResultEntry
         }
     }
     
-    public SearchResultEntry(Barcode barcode, int score)
+    public SearchResultEntry(Barcode barcode)
     {
         Barcode = barcode;
-        Score = score;
     }
 }
 

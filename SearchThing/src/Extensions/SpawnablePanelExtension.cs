@@ -7,6 +7,8 @@ using Il2CppSystem.Runtime.InteropServices;
 using Il2CppTMPro;
 using LabFusion.Extensions;
 using MelonLoader;
+using SearchThing.Extensions.Filter;
+using SearchThing.Extensions.History;
 using SearchThing.Search;
 using SearchThing.Util;
 using UnityEngine;
@@ -29,8 +31,13 @@ public class SpawnablePanelExtension
 
     private static readonly Texture2D IconTexture = ImageHelper.LoadEmbeddedImage("SearchThing.resources.SearchIcon.png");
 
-    private SearchResults? _results;
-    private int _pageIndex = -1;
+    private int _lastSelectedTag = -1;
+
+    private readonly IPanelPage[] _pages = {
+        new PropTagPanelPage(),
+        new AvatarTagPanelPage(),
+        new HistoryPanelPage()
+    };
     
     private void AddTab()
     {
@@ -83,6 +90,15 @@ public class SpawnablePanelExtension
         // Tab 5 is the new tab we added
         _panelView.SelectTab(SearchTabIndex);
     }
+    
+    private IPanelPage GetSelectedPage()
+    {
+        var selectedTagIndex = _panelView._selectedTagIndex;
+        if (selectedTagIndex < 0 || selectedTagIndex >= _pages.Length)
+            return _pages.First();
+
+        return _pages[selectedTagIndex];
+    }
 
     public SpawnablePanelExtension(SpawnablesPanelView panelView)
     {
@@ -106,12 +122,8 @@ public class SpawnablePanelExtension
 
     public void RequestRefresh()
     {
-        var filter = _panelView._selectedTagIndex switch
-        {
-            1 => CrateType.Avatar,
-            _ => CrateType.Prop
-        };
-        SearchManager.SearchAsync(_searchQuery, filter, OnSearchCompleted);
+        var panel = _pages[_panelView._selectedTagIndex];
+        panel.OnQueryChange(this, _searchQuery);
     }
 
     public void EnsureList(string name)
@@ -148,12 +160,10 @@ public class SpawnablePanelExtension
         _panelView.UpdateTagPageText(_panelView._selectedTagIndex, tagePageCount);
     }
     
-    public void EnableTags(string defaultTag, params string[] tags)
+    public void EnableTags(params string[] tags)
     {
         var activeTags = _panelView._activeTags;
         activeTags.Clear();
-        EnsureList(defaultTag);
-        activeTags.Add(defaultTag);
         foreach (var tag in tags)
         {
             EnsureList(tag);
@@ -161,51 +171,49 @@ public class SpawnablePanelExtension
         }
         
         if (!activeTags.Contains(_panelView._selectedTag))
-            _panelView._selectedTag = defaultTag;
+            _panelView._selectedTag = activeTags.Count > 0 ? activeTags[0] : "All";
         
         UpdateTagVisuals();
     }
-    
-    public void OnSearchCompleted(SearchResults results)
-    {
-        _results = results;
-        _pageIndex = 0;
-        Refresh();
-    }
 
-    public void Refresh()
+    public void Rerender()
     {
-        if (_results == null)
-            return; 
+        var selectedPage = GetSelectedPage();
         
-        var selectedTag = _panelView._selectedTag;
+        // Ensure that we go to page 0 when hopping between them
+        var selectedTagIndex = _panelView._selectedTagIndex;
+        if (_lastSelectedTag != selectedTagIndex)
+        {
+            _lastSelectedTag = selectedTagIndex;
+            selectedPage.Page = 0;
+        }
+
+        var selectedTag = selectedPage.Tag;
+        _panelView._selectedItemTag = selectedTag;
         var contents = GetAndClearList(selectedTag);
 
         // TODO : This doesn't filter, currently
-        var entries = _results.GetPage(_pageIndex, ItemsPerPage);
+        var entries = selectedPage
+            .Render(selectedPage.Page);
         foreach (var entry in entries)
         {
-            if (entry.Crate != null)
-                contents.Add(entry.Crate);
+            contents.Add(entry);
         }
 
-        var pageCount = _results.GetPageCount(ItemsPerPage);
+        var pageCount = selectedPage.PageCount;
         _panelView._numberOfPages = pageCount;
-        
+            
         _panelView.labelText.text = _searchQuery;
-        _panelView.UpdatePageItems(0, 12);
-        _panelView.UpdatePageText(_pageIndex, pageCount);
+        
+        // THIS CRASHES THE GAME WHEN QUERY IS EMPTY
+        _panelView.UpdatePageItems(0, IPanelPage.PageSize);
+        _panelView.UpdatePageText(selectedPage.Page, pageCount);
     }
 
     public void ChangePage(int offset)
     {
-        var newPage = _pageIndex + offset;
-        if (newPage < 0 || newPage >= _panelView._numberOfPages)
-            return;
-        
-        _pageIndex = newPage;
-        
-        Refresh();
+        var selectedPage = GetSelectedPage();
+        selectedPage.ChangePage(this, offset);
     }
     
     public void NextPage()
@@ -220,15 +228,12 @@ public class SpawnablePanelExtension
     
     public void SelectCategory(int idx)
     {
-        if (_results == null)
-            return;
-        
         RequestRefresh();
     }
 
     public void Show()
     {
-        EnableTags("Props", "Avatars");
+        EnableTags(_pages.Select(p => p.Tag).ToArray());
         ShowKeyboard();
         RequestRefresh();
     }

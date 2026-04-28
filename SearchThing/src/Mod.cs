@@ -1,7 +1,7 @@
 ﻿using SearchThing;
 using MelonLoader;
 
-[assembly: MelonInfo(typeof(Mod), "SearchThing", "0.1.0", "Mash")]
+[assembly: MelonInfo(typeof(Mod), "SearchThing", "0.2.1", "Mash")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 namespace SearchThing;
 

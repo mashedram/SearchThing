@@ -20,7 +20,6 @@ namespace SearchThing.Extensions;
 public class SpawnablePanelExtension
 {
     public const int SearchTabIndex = 5;
-    public const int ItemsPerPage = 12;
 
     private const string SourceTabButtonPath = "group_tabs/grid_tabs/button_tab_05";
     private const string SearchTabName = "button_tab_search";
@@ -31,8 +30,13 @@ public class SpawnablePanelExtension
 
     private static readonly Texture2D IconTexture = ImageHelper.LoadEmbeddedImage("SearchThing.resources.SearchIcon.png");
 
+    // There is no easily stealable default behavior for the sorting button, so we need to get references to it
+    private TextMeshPro _sortButtonText = null!;
+    private GameObject _sortButtonObject = null!;
+    
+    // Page selection stuff
     private int _lastSelectedTag = -1;
-
+    
     private readonly IPanelPage[] _pages = {
         new PropTagPanelPage(),
         new AvatarTagPanelPage(),
@@ -92,6 +96,16 @@ public class SpawnablePanelExtension
         _panelView.SelectTab(SearchTabIndex);
     }
     
+    private void FetchSortButton()
+    {
+        _sortButtonText = _panelView.transform.Find("group_treePath/text_treePath")!.GetComponent<TextMeshPro>();
+        // For some reason the text is centered by default and only goes to the left after a SwapSort call
+        // SwapSort forces you to tab 3, so we need to do this workaround
+        _sortButtonText.alignment = TextAlignmentOptions.Left;
+        
+        _sortButtonObject = _panelView.transform.Find("group_treePath/button_SwapSort")!.gameObject;
+    }
+    
     private IPanelPage GetSelectedPage()
     {
         var selectedTagIndex = _panelView._selectedTagIndex;
@@ -106,6 +120,7 @@ public class SpawnablePanelExtension
         _panelView = panelView;
         
         AddTab();
+        FetchSortButton();
         
         // Find the buttonReference we want to use for our style
         var buttonStyleReference = _panelView.transform.Find("group_spawnSelect/section_SpawnablesList/grid_buttons/button_item_01").GetComponent<ButtonReferenceHolder>();
@@ -124,7 +139,8 @@ public class SpawnablePanelExtension
     public void RequestRefresh()
     {
         var panel = _pages[_panelView._selectedTagIndex];
-        panel.OnQueryChange(this, _searchQuery);
+        panel.Query = _searchQuery;
+        panel.RequestSearch(this);
     }
 
     public void EnsureList(string name)
@@ -181,12 +197,13 @@ public class SpawnablePanelExtension
     {
         var selectedPage = GetSelectedPage();
         
-        // Ensure that we go to page 0 when hopping between them
         var selectedTagIndex = _panelView._selectedTagIndex;
         if (_lastSelectedTag != selectedTagIndex)
         {
             _lastSelectedTag = selectedTagIndex;
+            // Ensure that we go to page 0 when hopping between them
             selectedPage.Page = 0;
+            selectedPage.SelectedOrderIndex = 0;
         }
 
         var selectedTag = selectedPage.Tag;
@@ -206,9 +223,26 @@ public class SpawnablePanelExtension
             
         _panelView.labelText.text = _searchQuery;
         
-        // THIS CRASHES THE GAME WHEN QUERY IS EMPTY
+        // This function crashes if called from a non-unity thread
         _panelView.UpdatePageItems(0, IPanelPage.PageSize);
         _panelView.UpdatePageText(selectedPage.Page, pageCount);
+        
+        // Update sort button
+        if (selectedPage.SupportedOrders.Length > 1)
+        {
+            _sortButtonObject.SetActive(true);
+            _sortButtonText.gameObject.SetActive(true);
+            
+            var order = selectedPage.SupportedOrders[selectedPage.SelectedOrderIndex];
+            _sortButtonText.text = order.Name;
+            // We do what FetchSortButton does every tick in case a tab switch undoes the left alignment
+            _sortButtonText.alignment = TextAlignmentOptions.Left;
+        }
+        else
+        {
+            _sortButtonObject.SetActive(false);
+            _sortButtonText.gameObject.SetActive(false);
+        }
     }
 
     public void ChangePage(int offset)
@@ -229,6 +263,13 @@ public class SpawnablePanelExtension
     
     public void SelectCategory(int idx)
     {
+        RequestRefresh();
+    }
+    
+    public void SwapSortButton()
+    {
+        var selectedPage = GetSelectedPage();
+        selectedPage.SelectedOrderIndex = (selectedPage.SelectedOrderIndex + 1) % selectedPage.SupportedOrders.Length;
         RequestRefresh();
     }
 

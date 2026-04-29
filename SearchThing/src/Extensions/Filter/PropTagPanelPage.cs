@@ -8,6 +8,6 @@ public class PropTagPanelPage : FilterSearchPanelPage
     public override string Tag => "Props";
     protected override bool Filter(SearchableCrate searchableCrate)
     {
-        return searchableCrate.Type == CrateType.Prop;
+        return searchableCrate.CrateType == CrateType.Prop;
     }
 }

@@ -8,6 +8,6 @@ public class AvatarTagPanelPage : FilterSearchPanelPage
     public override string Tag => "Avatar";
     protected override bool Filter(SearchableCrate searchableCrate)
     {
-        return searchableCrate.Type == CrateType.Avatar;
+        return searchableCrate.CrateType == CrateType.Avatar;
     }
 }

@@ -11,9 +11,9 @@ public abstract class HistoryPanelPage : SearchPanelPage
     public override abstract string Tag { get; }
     protected abstract bool Filter(HistoryEntry entry);
     
-    protected override void Search(string query, Action<SearchResults> callback)
+    protected override void Search(string query, ISearchOrder searchOrder, Action<SearchResults> callback)
     {
-        var result = HistoryManager.Search(query, Filter);
+        var result = HistoryManager.Search(query, searchOrder, Filter);
         callback(result);
     }
 }

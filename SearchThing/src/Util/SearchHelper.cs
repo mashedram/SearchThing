@@ -16,19 +16,29 @@ public static class SearchHelper
         return UnityRichTextRegex.Replace(value, "");
     }
     
+    private static string ToToken(string value)
+    {
+        // Remove all the spaces from the string
+        return value.Replace(" ", "");
+    }
+    
     public static string GetSearchString(this Crate crate)
     {
-        var name = StripDecoration(crate.name);
-        var palletName = StripDecoration(crate._pallet.name);
+        var name = ToToken(StripDecoration(crate.name));
+        var palletName = ToToken(StripDecoration(crate._pallet.name));
         var author = crate._pallet._author;
         var tags = crate._tags.ToArray();
     
-        // Convert camelCase/PascalCase to spaces: "StickyBomb" -> "sticky bomb"
-        var spacedName = CamelCaseRegex.Replace(name, "$1 $2");
-        var spacedPallet = CamelCaseRegex.Replace(palletName, "$1 $2");
-    
-        return $"{name} {spacedName} {palletName} {spacedPallet} {author} {string.Join(" ", tags)}"
+        return $"{name} {palletName} {author} {string.Join(" ", tags)}"
             .ToLowerInvariant();
+    }
+    
+    public static int GetSalt(this string str)
+    {
+        unchecked
+        {
+            return str.Aggregate(23, (current, c) => current * 31 + c);
+        }
     }
 
     public static bool IsCrate<T>(this Crate crate) where T : Crate

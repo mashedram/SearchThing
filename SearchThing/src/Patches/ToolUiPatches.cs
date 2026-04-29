@@ -88,7 +88,23 @@ public static class ToolUiPatches
 
         extension.SelectCategory(idx);
     }
-    
+
+    [HarmonyPatch(nameof(SpawnablesPanelView.SwapSortButton))]
+    [HarmonyPrefix]
+    public static bool SwapSortButton_Prefix(SpawnablesPanelView __instance)
+    {
+        if (__instance == null)
+            return true;
+
+        if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
+            return true;
+
+        if (!extension.IsSearchActive())
+            return true;
+
+        extension.SwapSortButton();
+        return false;
+    }
     
     // Funny thing, not doing this will cause the spawn gun to actually load the avatar
     // In SP, this will just turn you into the avatar

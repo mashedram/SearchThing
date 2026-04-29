@@ -6,12 +6,14 @@ using SearchThing.Util;
 
 namespace SearchThing.History;
 
-public struct HistoryEntry
+public struct HistoryEntry : ISearchableCrate
 {
     public string SearchString { get; }
     public string PreprocessedString { get; }
-    public DateTime Timestamp { get; }
     public CrateType CrateType { get; }
+    // No score
+    public int Score => 0;
+    public DateTime DateAdded { get; }
     public Barcode Barcode { get; }
     
     public HistoryEntry(Crate crate)
@@ -20,8 +22,16 @@ public struct HistoryEntry
         PreprocessedString = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(SearchString);
         CrateType = crate.GetCrateType();
         Barcode = crate.Barcode;
-        Timestamp = DateTime.Now;
+        DateAdded = DateTime.Now;
     }
+}
+
+public record struct ScoredHistoryEntry(HistoryEntry Entry, int Score) : ISearchableCrate
+{
+    public string PreprocessedString => Entry.PreprocessedString;
+    public CrateType CrateType => Entry.CrateType;
+    public DateTime DateAdded => Entry.DateAdded;
+    public Barcode Barcode => Entry.Barcode;
 }
 
 public static class HistoryManager
@@ -50,7 +60,7 @@ public static class HistoryManager
             return;
         
         var entry = new HistoryEntry(crate);
-        HistoryEntries[entry.Timestamp] = entry;
+        HistoryEntries[entry.DateAdded] = entry;
         RecentBarcodes.Add(entry.Barcode._id);
         
         // If we have more than the max entries, remove the oldest one
@@ -63,15 +73,17 @@ public static class HistoryManager
     private static IEnumerable<HistoryEntry> GetEntries()
     {
         // Get the most recent 100 entries
-        return HistoryEntries.Values.OrderByDescending(entry => entry.Timestamp).Take(MaxHistoryEntries);
+        return HistoryEntries.Values;
     }
 
     // No threading needed, searching is pretty fast just not on thousands of items, and we only have 100
-    public static SearchResults Search(string query, Func<HistoryEntry, bool>? filter = null)
+    public static SearchResults Search(string query, ISearchOrder order, Func<HistoryEntry, bool>? filter = null)
     {
         if (string.IsNullOrWhiteSpace(query))
             return GetEntries()
                 .Where(filter ?? (_ => true))
+                .OrderByDescending(entry => order.Score(entry))
+                .ThenByDescending(entry => entry.DateAdded) // Tie-breaker: more recent entries first
                 .Select(c => c.Barcode)
                 .ToSearchResults();
         
@@ -80,7 +92,10 @@ public static class HistoryManager
         
         return GetEntries()
             .Where(filter ?? (_ => true))
-            .Where(entry => SearchManager.ScoreCrate(preprocessedQuery, entry.PreprocessedString) >= 80)
+            .Select(entry => new ScoredHistoryEntry(entry, SearchManager.ScoreCrate(preprocessedQuery, entry.PreprocessedString)))
+            .Where(entry => entry.Score >= 80)
+            .OrderByDescending(entry => order.Score(entry))
+            .ThenByDescending(entry => entry.DateAdded) // Tie-breaker: more recent entries first
             .Select(c => c.Barcode)
             .ToSearchResults();
     }

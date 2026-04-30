@@ -9,6 +9,7 @@ using Il2CppTMPro;
 using LabFusion.Marrow.Proxies;
 using MelonLoader;
 using SearchThing.History;
+using SearchThing.Presets;
 using SearchThing.Util;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -52,7 +53,7 @@ public static class ToolUiPatches
         if (!extension.IsSearchActive())
             return true;
 
-        extension.NextPage();
+        extension.ChangePanelPage(1);
         return false;
     }
     
@@ -69,24 +70,59 @@ public static class ToolUiPatches
         if (!extension.IsSearchActive())
             return true;
 
-        extension.PrevPage();
+        extension.ChangePanelPage(-1);
         return false;
     }
     
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectCategory))]
-    [HarmonyPostfix]
-    public static void SelectCategory_Prefix(SpawnablesPanelView __instance, int idx)
+    [HarmonyPrefix]
+    public static bool SelectCategory_Prefix(SpawnablesPanelView __instance, int idx)
     {
         if (__instance == null)
-            return;
+            return true;
 
         if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
-            return;
+            return true;
 
         if (!extension.IsSearchActive())
-            return;
+            return true;
 
         extension.SelectCategory(idx);
+        return false;
+    }
+
+    [HarmonyPatch(nameof(SpawnablesPanelView.NextTagPage))]
+    [HarmonyPrefix]
+    private static bool NextTagPage_Prefix(SpawnablesPanelView __instance)
+    {
+        if (__instance == null)
+            return true;
+
+        if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
+            return true;
+
+        if (!extension.IsSearchActive())
+            return true;
+
+        extension.ChangeTagPage(1);
+        return false;
+    }
+    
+    [HarmonyPatch(nameof(SpawnablesPanelView.PrevTagPage))]
+    [HarmonyPrefix]
+    private static bool PrevTagPage_Prefix(SpawnablesPanelView __instance)
+    {
+        if (__instance == null)
+            return true;
+
+        if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
+            return true;
+
+        if (!extension.IsSearchActive())
+            return true;
+
+        extension.ChangeTagPage(-1);
+        return false;
     }
 
     [HarmonyPatch(nameof(SpawnablesPanelView.SwapSortButton))]
@@ -105,20 +141,72 @@ public static class ToolUiPatches
         extension.SwapSortButton();
         return false;
     }
+
+    [HarmonyPatch(nameof(SpawnablesPanelView.FavoriteItem))]
+    [HarmonyPrefix]
+    public static bool FavoriteItem_Prefix(SpawnablesPanelView __instance)
+    {
+        if (__instance == null)
+            return true;
+
+        if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
+            return true;
+
+        if (!extension.IsSearchActive())
+            return true;
+
+        extension.TogglePresetAssignmentMode();
+        return false;
+    }
     
+    [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
+    [HarmonyPostfix]
+    public static void SelectItem_Postfix(SpawnablesPanelView __instance, int idx)
+    {
+        if (__instance == null)
+            return;
+
+        if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
+            return;
+
+        if (!extension.IsSearchActive())
+            return;
+
+        // We need a seperate postfix for this because SelectItem may run after a render
+        extension.UpdateFavoriteVisual();
+    }
+
+    [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
+    [HarmonyPrefix]
+    public static void ToggleFavorite_Prefix(SpawnablesPanelView __instance, int idx)
+    {
+        if (__instance == null)
+            return;
+
+        if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
+            return;
+
+        if (!extension.IsSearchActive())
+            return;
+
+        extension.RefreshPresetAssignment();
+    }
+
+    private record SpawngunOverwriteInfo(SpawnGun SpawnGun, SpawnableCrate Crate);
     // Funny thing, not doing this will cause the spawn gun to actually load the avatar
     // In SP, this will just turn you into the avatar
     // In Fusion, the avatar will spawn in, as just the mesh
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
-    [HarmonyPrefix]
-    public static bool SelectItem_Prefix(SpawnablesPanelView __instance, int idx)
+    [HarmonyPostfix]
+    private static void SelectItem_Prefix(SpawnablesPanelView __instance, int idx, ref SpawngunOverwriteInfo? __state)
     {
+        __state = null;
         var selectedCrate = __instance.SpawnablesQuickMap[__instance._selectedTag][idx];
         var selectedAvatarCrate = selectedCrate.TryCast<AvatarCrate>();
         
         // If the selected crate is not an avatar, continue as normal
         if (selectedAvatarCrate == null)
-            return true;
+            return;
 
         var reference = new AvatarCrateReference(selectedAvatarCrate._barcode);
         var cordDevice = BodylogAccessor.GetCordDevice();
@@ -126,7 +214,5 @@ public static class ToolUiPatches
         {
             cordDevice.SwapAvatar(reference).Forget();
         }
-        
-        return false;
     }
 }

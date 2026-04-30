@@ -8,8 +8,11 @@ namespace SearchThing.Search;
 
 public struct SearchableCrate : ISearchableCrate
 {
-    public readonly string SearchableString;
-    public string PreprocessedString { get; }
+    public SearchTag Name { get; }
+    public SearchTag PalletName { get; }
+    public SearchTag Author { get; }
+    public SearchTag[] Tags { get; }
+    
     public readonly int RandomId; // Used for tie-breaking to ensure consistent ordering
     public CrateType CrateType { get; }
     // Default to zero for global searchables
@@ -19,8 +22,10 @@ public struct SearchableCrate : ISearchableCrate
     
     public SearchableCrate(SpawnableCrate spawnableCrate)
     {
-        SearchableString = spawnableCrate.GetSearchString();
-        PreprocessedString = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(SearchableString);
+        Name = new SearchTag(spawnableCrate.name);
+        PalletName = new SearchTag(spawnableCrate._pallet.name);
+        Author = new SearchTag(spawnableCrate._pallet._author);
+        Tags = spawnableCrate._tags.ToArray().Select(t => new SearchTag(t)).ToArray();
 
         RandomId = spawnableCrate.name.GetSalt();
         
@@ -43,7 +48,10 @@ public struct SearchableCrate : ISearchableCrate
 
 public record struct ScoredCrate(SearchableCrate Crate, int Score) : ISearchableCrate
 {
-    public string PreprocessedString => Crate.PreprocessedString;
+    public SearchTag Name => Crate.Name;
+    public SearchTag PalletName => Crate.PalletName;
+    public SearchTag Author => Crate.Author;
+    public SearchTag[] Tags => Crate.Tags;
     public CrateType CrateType => Crate.CrateType;
     public Barcode Barcode => Crate.Barcode;
     public DateTime DateAdded => Crate.DateAdded;
@@ -112,7 +120,7 @@ public static class SearchManager
                     .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
                     .Where(filter)
                     .Select(crate =>
-                        new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate.PreprocessedString))
+                        new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate))
                     )
                     .Where(c => c.Score > RequiredMatchRate)
                     .OrderByDescending(c => searchOrder.Score(c))
@@ -135,14 +143,13 @@ public static class SearchManager
         onComplete(result);
     }
     
-    public static int ScoreCrate(string preprocessedQuery, string preprocessedCrate)
+    public static int ScoreCrate(string preprocessedQuery, ISearchableCrate crate)
     {
-        var score = Fuzz.PartialRatio(preprocessedQuery, preprocessedCrate, PreprocessMode.None);
+        var nameScore = crate.Name.PartialRatio(preprocessedQuery); // Weight name higher
+        var palletScore = crate.PalletName.PartialRatio(preprocessedQuery);
+        var authorScore = crate.Author.PartialRatio(preprocessedQuery);
+        var tagScore = crate.Tags.Any(t => t.PartialRatio(preprocessedQuery) > 80) ? 90 : 0;
     
-        // Prefix boost for exact starts
-        if (preprocessedCrate.StartsWith(preprocessedQuery, StringComparison.OrdinalIgnoreCase))
-            score = Math.Min(100, score + 15);
-
-        return score;
+        return new [] { nameScore, palletScore, authorScore, tagScore }.Max();
     }
 }

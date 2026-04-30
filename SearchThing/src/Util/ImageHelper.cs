@@ -30,4 +30,10 @@ public static class ImageHelper
         texture.Apply();
         return texture;
     }
+    
+    public static Sprite LoadEmbeddedSprite(string resourceName)
+    {
+        var texture = LoadEmbeddedImage(resourceName);
+        return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.one * 0.5f);
+    }
 }

@@ -8,8 +8,10 @@ namespace SearchThing.History;
 
 public struct HistoryEntry : ISearchableCrate
 {
-    public string SearchString { get; }
-    public string PreprocessedString { get; }
+    public SearchTag Name { get; }
+    public SearchTag PalletName { get; }
+    public SearchTag Author { get; }
+    public SearchTag[] Tags { get; }
     public CrateType CrateType { get; }
     // No score
     public int Score => 0;
@@ -18,8 +20,11 @@ public struct HistoryEntry : ISearchableCrate
     
     public HistoryEntry(Crate crate)
     {
-        SearchString = crate.GetSearchString();
-        PreprocessedString = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(SearchString);
+        Name = new SearchTag(crate.name);
+        PalletName = new SearchTag(crate._pallet.name);
+        Author = new SearchTag(crate._pallet._author);
+        Tags = crate._tags.ToArray().Select(t => new SearchTag(t)).ToArray();
+        
         CrateType = crate.GetCrateType();
         Barcode = crate.Barcode;
         DateAdded = DateTime.Now;
@@ -28,7 +33,10 @@ public struct HistoryEntry : ISearchableCrate
 
 public record struct ScoredHistoryEntry(HistoryEntry Entry, int Score) : ISearchableCrate
 {
-    public string PreprocessedString => Entry.PreprocessedString;
+    public SearchTag Name => Entry.Name;
+    public SearchTag PalletName => Entry.PalletName;
+    public SearchTag Author => Entry.Author;
+    public SearchTag[] Tags => Entry.Tags;
     public CrateType CrateType => Entry.CrateType;
     public DateTime DateAdded => Entry.DateAdded;
     public Barcode Barcode => Entry.Barcode;
@@ -92,7 +100,7 @@ public static class HistoryManager
         
         return GetEntries()
             .Where(filter ?? (_ => true))
-            .Select(entry => new ScoredHistoryEntry(entry, SearchManager.ScoreCrate(preprocessedQuery, entry.PreprocessedString)))
+            .Select(entry => new ScoredHistoryEntry(entry, SearchManager.ScoreCrate(preprocessedQuery, entry)))
             .Where(entry => entry.Score >= 80)
             .OrderByDescending(entry => order.Score(entry))
             .ThenByDescending(entry => entry.DateAdded) // Tie-breaker: more recent entries first

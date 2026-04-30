@@ -46,4 +46,22 @@ public class SpawnGunPatches
         
         HistoryManager.AddEntry(crate);
     }
+
+    [HarmonyPatch(nameof(SpawnGun.OnSpawnableSelected))]
+    [HarmonyPrefix]
+    public static bool OnSpawnableSelected_Prefix(SpawnGun __instance, SpawnableCrate crate)
+    {
+        if (__instance == null)
+            return true;
+        
+        if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
+            return true;
+
+        // Ignore non-avatar crates
+        if (crate.TryCast<AvatarCrate>() == null)
+            return true;
+
+        // Do not allow setting the spawnable to an avatar
+        return false;
+    }
 }

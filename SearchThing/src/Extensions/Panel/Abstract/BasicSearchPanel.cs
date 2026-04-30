@@ -2,9 +2,9 @@
 using SearchThing.Extensions.Sort;
 using SearchThing.Search;
 
-namespace SearchThing.Extensions.Abstract;
+namespace SearchThing.Extensions.Panel.Abstract;
 
-public abstract class SearchPanelPage : IPanelPage
+public abstract class BasicSearchPanel : ISearchPanel
 {
     private bool _isDirty = true;
     private SearchResults? _results;
@@ -13,12 +13,17 @@ public abstract class SearchPanelPage : IPanelPage
     public abstract string Tag { get; }
     protected abstract void Search(string query, ISearchOrder order, Action<SearchResults> callback);
 
+    public Guid Id { get; } = Guid.NewGuid();
+
     private string _query = "";
     public string Query
     {
         get => _query;  
         set
         {
+            if (value == _query)
+                return;
+            
             _isDirty = true;
             _query = value;
         }
@@ -31,6 +36,9 @@ public abstract class SearchPanelPage : IPanelPage
         get => _selectedOrderIndex;
         set
         {
+            if (value == _selectedOrderIndex)
+                return;
+            
             if (value < 0 || value >= SupportedOrders.Length)
                 return;
             
@@ -62,7 +70,7 @@ public abstract class SearchPanelPage : IPanelPage
         {
             _results = results;
             Page = 0;
-            PageCount = results.GetPageCount(IPanelPage.PageSize);
+            PageCount = results.GetPageCount(ISearchPanel.PanelSize);
             extension.Rerender();
         });
     }
@@ -79,13 +87,19 @@ public abstract class SearchPanelPage : IPanelPage
         Page = newPage;
         extension.Rerender();
     }
+    
+    public virtual bool OnSelected(SpawnablePanelExtension extension)
+    {
+        // No special logic needed
+        return true;
+    }
 
     public IEnumerable<SpawnableCrate> Render(int page)
     {
         if (_results == null)
             return Array.Empty<SpawnableCrate>();
         
-        return _results.GetPage(page, IPanelPage.PageSize)
+        return _results.GetPage(page, ISearchPanel.PanelSize)
             .Select(entry => entry.Crate)
             .Where(crate => crate != null)
             .Select(crate => crate!);

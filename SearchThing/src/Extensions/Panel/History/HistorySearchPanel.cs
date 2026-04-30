@@ -1,10 +1,10 @@
-﻿using SearchThing.Extensions.Abstract;
+﻿using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.History;
 using SearchThing.Search;
 
-namespace SearchThing.Extensions.History;
+namespace SearchThing.Extensions.Panel.History;
 
-public abstract class HistoryPanelPage : SearchPanelPage
+public abstract class HistorySearchPanel : BasicSearchPanel
 {
     public override bool ResearchOnPageChange => true;
     

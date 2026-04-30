@@ -1,9 +1,9 @@
-﻿using SearchThing.Extensions.Abstract;
+﻿using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Search;
 
-namespace SearchThing.Extensions.Filter;
+namespace SearchThing.Extensions.Panel.Filter;
 
-public class AvatarTagPanelPage : FilterSearchPanelPage
+public class AvatarTagSearchPanel : FilterSearchSearchPanel
 {
     public override string Tag => "Avatar";
     protected override bool Filter(SearchableCrate searchableCrate)

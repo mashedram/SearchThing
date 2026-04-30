@@ -1,10 +1,15 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
+using SearchThing.Util;
 
 namespace SearchThing.Search;
 
 public interface ISearchableCrate
 {
-    string PreprocessedString { get; }
+    SearchTag Name { get; }
+    SearchTag PalletName { get; }
+    SearchTag Author { get; }
+    SearchTag[] Tags { get; }
+    
     CrateType CrateType { get; }
     int Score { get; }
     DateTime DateAdded { get; }

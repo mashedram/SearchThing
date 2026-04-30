@@ -8,6 +8,6 @@ public class AlphabeticalSearchOrder : ISelectableSearchOrder
 
     public int Score(ISearchableCrate searchableCrate)
     {
-        return -string.Compare(searchableCrate.PreprocessedString, string.Empty, StringComparison.Ordinal);
+        return -string.Compare(searchableCrate.Name.Original, string.Empty, StringComparison.Ordinal);
     }
 }

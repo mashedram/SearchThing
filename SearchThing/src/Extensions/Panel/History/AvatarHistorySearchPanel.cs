@@ -1,9 +1,9 @@
 ﻿using SearchThing.History;
 using SearchThing.Search;
 
-namespace SearchThing.Extensions.History;
+namespace SearchThing.Extensions.Panel.History;
 
-public class AvatarHistoryPanel : HistoryPanelPage
+public class AvatarHistorySearchPanel : HistorySearchPanel
 {
 
     public override string Tag => "Avatar History";

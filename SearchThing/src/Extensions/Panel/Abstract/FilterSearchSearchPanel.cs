@@ -1,8 +1,8 @@
 ﻿using SearchThing.Search;
 
-namespace SearchThing.Extensions.Abstract;
+namespace SearchThing.Extensions.Panel.Abstract;
 
-public abstract class FilterSearchPanelPage : SearchPanelPage
+public abstract class FilterSearchSearchPanel : BasicSearchPanel
 {
     public override abstract string Tag { get; }
     protected abstract bool Filter(SearchableCrate searchableCrate);

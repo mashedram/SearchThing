@@ -1,5 +1,7 @@
-﻿using SearchThing;
+﻿using BoneLib;
+using SearchThing;
 using MelonLoader;
+using SearchThing.Presets;
 
 [assembly: MelonInfo(typeof(Mod), "SearchThing", "0.3.0", "Mash")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
@@ -12,5 +14,12 @@ public class Mod : MelonMod
     public override void OnInitializeMelon()
     {
         IsFusionLoaded = FindMelon("LabFusion", "Lakatrazz") != null;
+        
+        Hooking.OnWarehouseReady += OnWarehouseReady;
+    }
+    
+    private static void OnWarehouseReady()
+    {
+        PresetManager.LoadPresets();
     }
 }

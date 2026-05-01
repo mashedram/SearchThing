@@ -12,6 +12,9 @@ public static class SpawnablesPanelManager
     {
         if (_extension != null && _extension.Is(panelView))
         {
+            if (!_extension.IsSearchActive())
+                return;
+            
             _extension.RequestRefresh();
             return;
         }

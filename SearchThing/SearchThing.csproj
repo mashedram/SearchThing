@@ -7,6 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="resources\AddIcon.png" />
+        <EmbeddedResource Include="resources\EditIcon.png" />
         <EmbeddedResource Include="resources\SearchIcon.png"/>
     </ItemGroup>
 

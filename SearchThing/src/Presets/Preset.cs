@@ -22,7 +22,7 @@ internal class BarcodeComparison : IEqualityComparer<Barcode>
     
     public int GetHashCode(Barcode obj)
     {
-        return (int)obj._shortCode;
+        return obj._id.GetHashCode();
     }
 }
 
@@ -32,6 +32,7 @@ public class Preset : BasicSearchPanel
     
     private string _tag = DefaultTag;
     public override string Tag => IsInitialized ? _tag : (PresetManager.IsAssignmentMode ? "Add Presset" : "Empty Preset");
+    public override bool TagEditable => true;
     public bool IsInitialized { get; private set; }
     public override bool ResearchOnPageChange => true;
     public HashSet<Barcode> AssignedBarcodes { get; } = new(new BarcodeComparison());
@@ -46,7 +47,27 @@ public class Preset : BasicSearchPanel
         _tag = tag;
         IsInitialized = true;
     }
+
+    public override bool IsForceHighlighted(SpawnablePanelExtension extension, SpawnableCrate? selectedCrate)
+    {
+        return IsInitialized && PresetManager.IsAssignmentMode && selectedCrate != null && AssignedBarcodes.Contains(selectedCrate._barcode);
+    }
     
+    private bool IsTagValid(string tag)
+    {
+        return !string.IsNullOrEmpty(tag);
+    }
+
+    public override void OnTagEdited(SpawnablePanelExtension extension, string newTag)
+    {
+        // If the tag is valid, assign it
+        if (!IsTagValid(newTag)) 
+            return;
+        
+        _tag = newTag;
+        IsInitialized = true;
+    }
+
     public override bool OnSelected(SpawnablePanelExtension extension)
     {
         if (!PresetManager.IsAssignmentMode)
@@ -59,27 +80,32 @@ public class Preset : BasicSearchPanel
         {
             _tag = $"Preset {Random.Shared.Next(1000, 9999)}";
             IsInitialized = true;
-            
-            // If we aren't selected, we won't rerender later, so we do it now
-            if (!isSelected)
-                extension.Rerender();
         }
 
         var barcode = extension.GetSelectedSpawnable();
         if (barcode == null)
             return false;
-        
-        AssignedBarcodes.Add(barcode._barcode);
+
+        if (!AssignedBarcodes.Add(barcode._barcode))
+        {
+            AssignedBarcodes.Remove(barcode._barcode);
+        }
         
         if (isSelected)
+        {
             extension.RequestRefresh();
+        }
+        else
+        {
+            extension.RenderTags();
+        }
         
         return false;
     }
     
     protected override void Search(string query, ISearchOrder order, Action<SearchResults> callback)
     {
-        // Actually search here
+        // Presets cannot search for now
         var results = AssignedBarcodes
             .ToSearchResults();
         

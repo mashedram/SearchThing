@@ -9,12 +9,35 @@ public interface ISearchPanel
     
     Guid Id { get; }
     string Tag { get; }
+    bool TagEditable { get; }
     string Query { get; set; }
     int SelectedOrderIndex { get; set; }
     ISelectableSearchOrder[] SupportedOrders { get; }
-    void RequestSearch(SpawnablePanelExtension extension);
     int Page { get; set; }
     int PageCount { get; }
+    /// <summary>
+    /// Get's called when the tag edit is complete, this is where you should save the new tag
+    /// </summary>
+    /// <remarks>It's the panel's responsibility to call extension.Rerender() when the tag is changed</remarks>
+    /// <param name="extension"></param>
+    /// <param name="newTag"></param>
+    void OnTagEdited(SpawnablePanelExtension extension, string newTag);
+    /// <summary>
+    /// Get's called for every crate that is rendered, return true to force the crate to be highlighted in the menu
+    /// </summary>
+    /// <returns></returns>
+    bool IsForceHighlighted(SpawnablePanelExtension extension, SpawnableCrate? selectedCrate);
+    /// <summary>
+    /// Called when the panel should perform a search
+    /// </summary>
+    /// <remarks>It's the panel's responsibility to call extension.Rerender() when the search is done</remarks>
+    /// <param name="extension"></param>
+    void RequestSearch(SpawnablePanelExtension extension);
+    /// <summary>
+    /// Called when the pag should change
+    /// </summary>
+    /// <param name="extension"></param>
+    /// <param name="offset"></param>
     void ChangePage(SpawnablePanelExtension extension, int offset);
     /// <summary>
     /// Called when the panel is selected, return false to prevent the panel from being selected

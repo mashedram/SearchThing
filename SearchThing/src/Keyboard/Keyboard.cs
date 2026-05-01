@@ -37,10 +37,11 @@ public class Keyboard
         Create();
     }
 
-    public void SetText(string text)
+    public void SetText(string text, bool triggerEvent = true)
     {
         _text = text;
-        OnInternalTextChanged(_text);
+        if (triggerEvent)
+            OnInternalTextChanged(_text);
     }
 
     private void Create()

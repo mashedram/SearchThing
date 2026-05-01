@@ -35,7 +35,7 @@ public static class PresetManager
         }
     }
     
-    public static IEnumerable<ISearchPage> GetPages()
+    public static IReadOnlyList<ISearchPage> GetPages()
     {
         return PresetPages;
     }

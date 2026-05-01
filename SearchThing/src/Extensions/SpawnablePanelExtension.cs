@@ -29,8 +29,15 @@ public class SpawnablePanelExtension
 
     private static readonly Sprite TabIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.SearchIcon.png");
     // TODO: Change to a good icon
-    private static readonly Sprite PresetAddIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.SearchIcon.png");
+    private static readonly Sprite PresetAddIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.AddIcon.png");
+    // TODO: Change to a good icon
+    private static readonly Sprite EditIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.EditIcon.png");
     
+    // Editing
+    private SpawnInfoFocus _currentFocus = SpawnInfoFocus.SelectedItem;
+    private string _editValue = "";
+    private bool _isEditing = false;
+    private bool _isEditValid = false;
     // Favorite button
     private Image _fadedButtonImage = null!;
     private Image _favoriteButtonImage = null!; 
@@ -44,10 +51,7 @@ public class SpawnablePanelExtension
     // We need the selected tag in a prefix context, so we need to store it
     private int _selectedTagIndex = 0;
     private int _selectedPageIndex = 0;
-    private readonly ISearchPage[] _pages = {
-        new BasicSearchPage(new PropTagSearchPanel(), new AvatarTagSearchPanel(), new PropHistorySearchPanel(), new AvatarHistorySearchPanel()),
-        PresetManager.GetPages().First()
-    };
+    private readonly SpawnablePageProvider _pages = new SpawnablePageProvider();
     
     private void AddTab()
     {
@@ -74,7 +78,7 @@ public class SpawnablePanelExtension
         }
 
         searchTabButton.onClick.RemoveAllListeners();
-        searchTabButton.onClick.AddListener((UnityAction)OnSearchButtonClicked);
+        searchTabButton.onClick.AddListener((UnityAction)OnSearchTabClicked);
 
         var image = searchButton.transform.FindChild("image_icon")?.GetComponent<Image>();
         if (image != null)
@@ -95,7 +99,7 @@ public class SpawnablePanelExtension
         }
     }
 
-    private void OnSearchButtonClicked()
+    private void OnSearchTabClicked()
     {
         // Tab 5 is the new tab we added
         _panelView.SelectTab(SearchTabIndex);
@@ -141,10 +145,10 @@ public class SpawnablePanelExtension
     private ISearchPage GetRenderPage()
     {
         var selectedPageIndex = _renderedPageIndex;
-        if (selectedPageIndex < 0 || selectedPageIndex >= _pages.Length)
-            return _pages.First();
+        if (selectedPageIndex < 0 || selectedPageIndex >= _pages.PageCount)
+            return _pages.GetBasePage();
         
-        return _pages[selectedPageIndex];
+        return _pages.GetPage(selectedPageIndex);
     }
     
     private ISearchPanel GetRenderPanel(int idx)
@@ -159,10 +163,10 @@ public class SpawnablePanelExtension
     private ISearchPage GetSelectedPage()
     {
         var selectedPageIndex = _selectedPageIndex;
-        if (selectedPageIndex < 0 || selectedPageIndex >= _pages.Length)
-            return _pages.First();
+        if (selectedPageIndex < 0 || selectedPageIndex >= _pages.PageCount)
+            return _pages.GetBasePage();
         
-        return _pages[selectedPageIndex];
+        return _pages.GetPage(selectedPageIndex);
     }
     
     private ISearchPanel GetSelectedPanel(int idx = -1)
@@ -193,8 +197,49 @@ public class SpawnablePanelExtension
 
     private void OnSearchQueryChanged(string query)
     {
-        _searchQuery = query;
-        RequestRefresh();
+        if (_isEditing)
+        {
+            _editValue = query;
+            RenderTags();
+            RenderFocus();
+        }
+        else
+        {
+            _searchQuery = query;
+            RequestRefresh();
+        }
+    }
+    
+    public void SetIsEditing(bool isEditing)
+    {
+        // Skip if we are already in the correct mode
+        if (isEditing == _isEditing)
+            return;
+        
+        _isEditing = isEditing;
+        var panel = GetSelectedPanel();
+        // Enter editing
+        if (_isEditing)
+        {
+            // Ensure we aren't assigning
+            PresetManager.IsAssignmentMode = false;
+            // Force the tag to know its in edit mode
+            _editValue = panel.Tag;
+            // We don't want to trigger events to prevent circular calls
+            _keyboard.SetText(_editValue, false);
+        }
+        // Exit editing
+        else
+        {
+            // Reset back to the search query
+            _keyboard.SetText(_searchQuery, false);
+            panel.OnTagEdited(this, _editValue);
+            
+            // Render tags to ensure the new tag is shown if it was changed
+            RenderTags();
+        }
+        
+        RenderFavoriteButton();
     }
 
     public void RequestRefresh()
@@ -208,6 +253,9 @@ public class SpawnablePanelExtension
     {
         var contents = _panelView.SpawnablesQuickMap;
         var selectedTag = _panelView._selectedItemTag;
+        
+        if (selectedTag == null)
+            return null;
         
         if (!contents.TryGetValue(selectedTag, out var list))
             return null;
@@ -255,8 +303,14 @@ public class SpawnablePanelExtension
         // _panelView._selectedTagIndex = _selectedTagIndex;
         // // In case we are in a prefix, we need to manually request the panel
         // _panelView._selectedTag = GetSelectedPanel(_selectedTagIndex).Tag;
-        _panelView._numberOfTagPages = _pages.Length;
+        _panelView._numberOfTagPages = _pages.PageCount;
         
+        // Update values on the marrow side before we edit them manually if needed
+        // We only populate the first page and only wish to render that one
+        _panelView.UpdateTagPageItems(0, ISearchPage.PanelsPerPage);
+        _panelView.UpdateTagPageText(_renderedPageIndex, _pages.PageCount);
+        
+        var selectedCrate = GetSelectedSpawnable();
         // We need to manually set the outline, because we skip the method that does so internally
         var tagButtons = _panelView.treeButtons;
         for (var i = 0; i < tagButtons.Count; i++)
@@ -264,14 +318,15 @@ public class SpawnablePanelExtension
             var reference = tagButtons[i];
             if (reference == null)
                 continue;
+
+            var panel = GetRenderPanel(i);
+            var isSelected = i == _selectedTagIndex && _selectedPageIndex == _renderedPageIndex;
+            reference.highlight.enabled = isSelected || panel.IsForceHighlighted(this, selectedCrate);
             
-            reference.highlight.enabled = i == _selectedTagIndex && _selectedPageIndex == _renderedPageIndex;
+            reference.tmp.text = (_isEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected) 
+                ? _editValue 
+                : panel.Tag;
         }
-        
-        // We only populate the first page and only wish to render that one
-        
-        _panelView.UpdateTagPageItems(0, ISearchPage.PanelsPerPage);
-        _panelView.UpdateTagPageText(_renderedPageIndex, _pages.Length);
     }
     
     public void EnableTags(params string[] tags)
@@ -292,49 +347,18 @@ public class SpawnablePanelExtension
         var page = GetRenderPage();
         EnableTags(page.Panels.Select(p => p.Tag).ToArray());
     }
-    
-    public void Rerender()
+
+    public void RenderSpecialButtons(ISearchPanel? selectedPanel = null)
     {
-        var selectedPage = GetSelectedPanel();
-        
-        // Render tags page
-
-        RenderTags();
-  
-        // Render page
-        
-        var selectedTag = selectedPage.Tag;
-        
-        // Assign to the menu what we are writing too so it renders properly
-        _panelView._selectedTagIndex = _selectedTagIndex;
-        _panelView._selectedTag = selectedTag;
-        
-        // We realy don't care what the actual tag is, as long as we put things in it and virtualize it in our systems, it's fine.
-        var contents = GetAndClearList(selectedTag);
-
-        var entries = selectedPage
-            .Render(selectedPage.Page);
-        foreach (var entry in entries)
-        {
-            contents.Add(entry);
-        }
-
-        var pageCount = selectedPage.PageCount;
-        _panelView._numberOfPages = pageCount;
-            
-        _panelView.labelText.text = _searchQuery;
-        
-        // This function crashes if called from a non-unity thread
-        _panelView.UpdatePageItems(0, ISearchPanel.PanelSize);
-        _panelView.UpdatePageText(selectedPage.Page, pageCount);
+        selectedPanel ??= GetSelectedPanel();
         
         // Update sort button
-        if (selectedPage.SupportedOrders.Length > 1)
+        if (selectedPanel.SupportedOrders.Length > 1)
         {
             _sortButtonObject.SetActive(true);
             _sortButtonText.gameObject.SetActive(true);
             
-            var order = selectedPage.SupportedOrders[selectedPage.SelectedOrderIndex];
+            var order = selectedPanel.SupportedOrders[selectedPanel.SelectedOrderIndex];
             _sortButtonText.text = order.Name;
             // We do what FetchSortButton does every tick in case a tab switch undoes the left alignment
             _sortButtonText.alignment = TextAlignmentOptions.Left;
@@ -345,13 +369,124 @@ public class SpawnablePanelExtension
             _sortButtonText.gameObject.SetActive(false);
         }
         
-        UpdateFavoriteVisual();
+        RenderFavoriteButton();
+    }
+
+    public (Sprite, bool) GetFavoriteSprite()
+    {
+        if (_currentFocus == SpawnInfoFocus.SelectedPage)
+        {
+            return (EditIcon, _isEditing);
+        }
+        
+        return (PresetAddIcon, PresetManager.IsAssignmentMode);
+    }
+
+    public void RenderFavoriteButton()
+    {
+        var isFavorite = _panelView.selectedObject != null && _panelView.favoriteCrates.ContainsKey(_panelView.selectedObject._barcode._id);
+        if (!IsSearchActive())
+        {
+            // Toggle buttons
+            _fadedButtonImage.enabled = !isFavorite;
+            _favoriteButtonImage.enabled = isFavorite;
+            
+            // Reset sprite in case we were assignment mode or edit mode
+            _favoriteButtonImage.sprite = _originalFavoriteSprite;
+            _fadedButtonImage.sprite = _originalFavoriteSprite;
+            
+            return;
+        }
+        
+        var favoriteSprite = GetFavoriteSprite();
+
+        var overrideSprite = favoriteSprite.Item1;
+        var isToggledOn = favoriteSprite.Item2;
+        
+        // Assign values
+        _fadedButtonImage.enabled = !isToggledOn;
+        _favoriteButtonImage.enabled = isToggledOn;
+        // This also ensures sprite isn't null
+        _fadedButtonImage.sprite = overrideSprite;
+        _favoriteButtonImage.sprite = overrideSprite;
+    }
+
+    public void RenderFocus()
+    {
+        if (_currentFocus == SpawnInfoFocus.SelectedItem && _panelView.selectedObject != null)
+        {
+            var selectedCrate = _panelView.selectedObject;
+            _panelView.selectedTitle.text = selectedCrate.name;
+            _panelView.selectedDescription.text = selectedCrate._description;
+            _panelView.selectedAuthor.text = $"{selectedCrate._pallet._author}";
+            _panelView.selectedPallet.text = selectedCrate._pallet.name;
+            _panelView.selectedTags.text = string.Join(", ", selectedCrate._tags);
+        }
+        // The page is selected
+        else
+        {
+            var selectedPanel = GetSelectedPanel();
+            _panelView.selectedTitle.text = _isEditing ? _editValue : selectedPanel.Tag;
+            _panelView.selectedDescription.text = "N/A";
+            _panelView.selectedAuthor.text = "N/A";
+            _panelView.selectedPallet.text = "N/A";
+            _panelView.selectedTags.text = "N/A";
+        }
+        
+        RenderFavoriteButton();
+    }
+    
+    public void RenderAll()
+    {
+        var selectedPanel = GetSelectedPanel();
+        
+        // Render tags page
+
+        RenderTags();
+  
+        // Render page
+        
+        var selectedTag = selectedPanel.Tag;
+        
+        // Assign to the menu what we are writing too so it renders properly
+        _panelView._selectedTagIndex = _selectedTagIndex;
+        _panelView._selectedTag = selectedTag;
+        
+        // We realy don't care what the actual tag is, as long as we put things in it and virtualize it in our systems, it's fine.
+        var contents = GetAndClearList(selectedTag);
+
+        var entries = selectedPanel
+            .Render(selectedPanel.Page);
+        foreach (var entry in entries)
+        {
+            contents.Add(entry);
+        }
+
+        var pageCount = selectedPanel.PageCount;
+        _panelView._numberOfPages = pageCount;
+
+        _panelView.labelText.text = _searchQuery;
+        
+        // This function crashes if called from a non-unity thread
+        _panelView.UpdatePageItems(0, ISearchPanel.PanelSize);
+        _panelView.UpdatePageText(selectedPanel.Page, pageCount);
+
+        RenderFocus();
+        RenderSpecialButtons(selectedPanel);
     }
 
     public void ChangePanelPage(int offset)
     {
         var selectedPage = GetSelectedPanel();
         selectedPage.ChangePage(this, offset);
+    }
+
+    public void OnSelectItem(int idx)
+    {
+        // Test name overwrite
+        _currentFocus = SpawnInfoFocus.SelectedItem;
+        
+        SetIsEditing(false);
     }
     
     public void SelectCategory(int idx)
@@ -362,6 +497,12 @@ public class SpawnablePanelExtension
         if (!result)
             return;
 
+        // Test name overwrite
+        _currentFocus = SpawnInfoFocus.SelectedPage;
+        
+        // Force out of edit mode if we switch tabs
+        SetIsEditing(false);
+        
         // We've selected a new tag, so we need to update what we have selected to what we rendered
         _selectedPageIndex = _renderedPageIndex;
         _selectedTagIndex = idx;
@@ -371,7 +512,7 @@ public class SpawnablePanelExtension
     public void ChangeTagPage(int offset)
     {
         var newPage = _renderedPageIndex + offset;
-        if (newPage < 0 || newPage >= _pages.Length)            
+        if (newPage < 0 || newPage >= _pages.PageCount)            
             return;
         _renderedPageIndex = newPage;
         
@@ -387,26 +528,22 @@ public class SpawnablePanelExtension
     
     public void TogglePresetAssignmentMode()
     {
-        PresetManager.IsAssignmentMode = !PresetManager.IsAssignmentMode;
+        if (_currentFocus == SpawnInfoFocus.SelectedItem)
+        {
+            PresetManager.IsAssignmentMode = !PresetManager.IsAssignmentMode;
         
-        // Set the rendertarget to page 1 so we are at the presets if we aren't yet
-        if (_renderedPageIndex < 1)
-            _renderedPageIndex = 1;
+            // Set the rendertarget to page 1 so we are at the presets if we aren't yet
+            if (_renderedPageIndex < 1)
+                _renderedPageIndex = 1;
         
-        Rerender();
-    }
-
-    public void UpdateFavoriteVisual()
-    {
-        // If we have nothing selected, do nothing
-        if (_panelView._selectedItem < 0)
-            return;
-        
-        var isAssignmentMode = PresetManager.IsAssignmentMode;
-        var isFavorite = _panelView.selectedObject != null && _panelView.favoriteCrates.ContainsKey(_panelView.selectedObject._barcode._id);
-        _fadedButtonImage.enabled = !isAssignmentMode && !isFavorite;
-        _favoriteButtonImage.enabled = isAssignmentMode || isFavorite;
-        _favoriteButtonImage.sprite = isAssignmentMode ? PresetAddIcon : _originalFavoriteSprite;
+            RenderAll();
+        }
+        else if (GetSelectedPanel().TagEditable)
+        {
+            SetIsEditing(!_isEditing);
+            
+            RenderFavoriteButton();
+        }
     }
     
     public void RefreshPresetAssignment()
@@ -416,14 +553,18 @@ public class SpawnablePanelExtension
 
     public void Show()
     {
-        RenderTags();
+        // Show keyboard first
         ShowKeyboard();
+        // Render these to prevent flickers
+        RenderTags();
+        RenderSpecialButtons();
         RequestRefresh();
     }
 
     public void Hide()
     {
         CloseKeyboard();
+        RenderFavoriteButton();
         _favoriteButtonImage.sprite = _originalFavoriteSprite;
     }
 

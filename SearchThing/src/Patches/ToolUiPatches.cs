@@ -30,6 +30,8 @@ public static class ToolUiPatches
         SpawnablesPanelManager.Load(__instance);
     }
 
+    // TODO: Make this a prefix to render content before the switch and then fake and prevent the switch
+    // Should limit flickering
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectTab))]
     [HarmonyPostfix]
     public static void SpawnablesPanelView_SelectTab_Postfix(SpawnablesPanelView __instance, int idx)
@@ -72,6 +74,22 @@ public static class ToolUiPatches
 
         extension.ChangePanelPage(-1);
         return false;
+    }
+    
+    [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
+    [HarmonyPostfix]
+    public static void SelectItem_Prefix(SpawnablesPanelView __instance, int idx)
+    {
+        if (__instance == null)
+            return;
+
+        if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
+            return;
+
+        if (!extension.IsSearchActive())
+            return;
+
+        extension.OnSelectItem(idx);
     }
     
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectCategory))]
@@ -173,7 +191,7 @@ public static class ToolUiPatches
             return;
 
         // We need a seperate postfix for this because SelectItem may run after a render
-        extension.UpdateFavoriteVisual();
+        extension.RenderFavoriteButton();
     }
 
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]

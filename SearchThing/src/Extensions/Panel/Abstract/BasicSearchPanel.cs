@@ -11,6 +11,7 @@ public abstract class BasicSearchPanel : ISearchPanel
     
     public virtual bool ResearchOnPageChange => false;
     public abstract string Tag { get; }
+    public virtual bool TagEditable => false;
     protected abstract void Search(string query, ISearchOrder order, Action<SearchResults> callback);
 
     public Guid Id { get; } = Guid.NewGuid();
@@ -60,7 +61,7 @@ public abstract class BasicSearchPanel : ISearchPanel
         if (!ResearchOnPageChange && !_isDirty)
         {
             // We just have to rerender now, since the query is the same but the page might be different
-            extension.Rerender();
+            extension.RenderAll();
             return;
         }
         _isDirty = false;
@@ -71,7 +72,7 @@ public abstract class BasicSearchPanel : ISearchPanel
             _results = results;
             Page = 0;
             PageCount = results.GetPageCount(ISearchPanel.PanelSize);
-            extension.Rerender();
+            extension.RenderAll();
         });
     }
     
@@ -85,7 +86,18 @@ public abstract class BasicSearchPanel : ISearchPanel
             return;
 
         Page = newPage;
-        extension.Rerender();
+        extension.RenderAll();
+    }
+
+    public virtual void OnTagEdited(SpawnablePanelExtension extension, string newTag)
+    {
+        // No special logic needed
+    }
+
+    public virtual bool IsForceHighlighted(SpawnablePanelExtension extension, SpawnableCrate? selectedCrate)
+    {
+        // No special logic needed
+        return false;
     }
     
     public virtual bool OnSelected(SpawnablePanelExtension extension)

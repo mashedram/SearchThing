@@ -9,7 +9,7 @@ public class SearchableCrate : ISearchableCrate, IEquatable<SearchableCrate>
     public SearchTag PalletName { get; }
     public SearchTag Author { get; }
     public SearchTag[] Tags { get; }
-    
+    public string Description { get; }
     public int Salt { get; } // Used for tie-breaking to ensure consistent ordering
     public CrateType CrateType { get; }
     // Default to zero for global searchables
@@ -23,6 +23,7 @@ public class SearchableCrate : ISearchableCrate, IEquatable<SearchableCrate>
             throw new ArgumentNullException(nameof(spawnableCrate));
         
         Name = new SearchTag(spawnableCrate.name);
+        Description = spawnableCrate._description;
         PalletName = new SearchTag(spawnableCrate._pallet.name);
         Author = new SearchTag(spawnableCrate._pallet._author);
         Tags = spawnableCrate._tags.ToArray().Select(t => new SearchTag(t)).ToArray();

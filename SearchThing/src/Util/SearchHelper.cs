@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 using Il2CppSLZ.Marrow.Warehouse;
 using SearchThing.Search;
 
@@ -32,5 +33,10 @@ public static class SearchHelper
         var entries = scoredCrates.Select(searchableCrate => new SearchResultEntry(searchableCrate)).ToList();
 
         return new SearchResults(entries);
+    }
+    
+    public static bool TryGetCrate(this ISearchableCrate crate, [MaybeNullWhen(false)] out Crate outCrate)
+    {
+        return AssetWarehouse.Instance.TryGetCrate(crate.Barcode, out outCrate);
     }
 }

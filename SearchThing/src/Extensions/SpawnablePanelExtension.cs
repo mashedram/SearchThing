@@ -4,10 +4,9 @@ using Il2CppSLZ.UI;
 using Il2CppTMPro;
 using LabFusion.Extensions;
 using MelonLoader;
+using SearchThing.Extensions.Components;
 using SearchThing.Extensions.Pages;
 using SearchThing.Extensions.Panel;
-using SearchThing.Extensions.Panel.Filter;
-using SearchThing.Extensions.Panel.History;
 using SearchThing.Presets;
 using SearchThing.Search;
 using SearchThing.Util;
@@ -28,6 +27,16 @@ public class SpawnablePanelExtension
     private string _searchQuery = "";
     private readonly SpawnablesPanelView _panelView;
     private readonly Keyboard.Keyboard _keyboard;
+    
+    // Item List
+    private readonly List<ItemButton> _itemButtons = new List<ItemButton>();
+    private GameObject _itemPageNextButton;
+    private GameObject _itemPagePreviousButton;
+    
+    // Tag List
+    private readonly List<TagButton> _tagButtons = new List<TagButton>();
+    private GameObject _tagPageNextButton;
+    private GameObject _tagPagePreviousButton;
 
     private static readonly Sprite TabIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.SearchIcon.png");
     private static readonly Sprite PresetAddIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.AddIcon.png");
@@ -47,8 +56,9 @@ public class SpawnablePanelExtension
     private GameObject _sortButtonObject = null!;
     
     // The page currently selected in the tag page, but not used for rendering in case a rerender gets called when the page changes but selected tag doesn't
-    private int _renderedPageIndex;
+    private int _renderedTagPageIndex;
     // We need the selected tag in a prefix context, so we need to store it
+    private int _selectedItemIndex;
     private int _selectedTagIndex;
     private int _selectedPageIndex;
     private readonly SpawnablePageProvider _pages = new SpawnablePageProvider();
@@ -136,6 +146,52 @@ public class SpawnablePanelExtension
         _originalFavoriteSprite = _favoriteButtonImage.sprite;
     }
     
+    private void FetchTagButtons()
+    {
+        foreach (var panelViewTagButton in _panelView.treeButtons)
+        {
+            if (panelViewTagButton == null)
+                continue;
+
+            _tagButtons.Add(new TagButton(panelViewTagButton));
+        }
+
+        _tagPageNextButton = _panelView.treeScrollDownButton.gameObject;
+        _tagPagePreviousButton = _panelView.treeScrollUpButton.gameObject;
+    }
+    
+    private void FetchItemButtons()
+    {
+        foreach (var panelViewItemButton in _panelView.itemButtons)
+        {
+            if (panelViewItemButton == null)
+                continue;
+
+            _itemButtons.Add(new ItemButton(panelViewItemButton));
+        }
+
+        _itemPageNextButton = _panelView.itemScrollDownButton.gameObject;
+        _itemPagePreviousButton = _panelView.itemScrollUpButton.gameObject;
+    }
+    
+    public SpawnablePanelExtension(SpawnablesPanelView panelView)
+    {
+        _panelView = panelView;
+        
+        AddTab();
+        FetchSortButton();
+        FetchFavoriteButton();
+        FetchItemButtons();
+        FetchTagButtons();
+        
+        // Find the buttonReference we want to use for our style
+        var buttonStyleReference = _panelView.transform.Find("group_spawnSelect/section_SpawnablesList/grid_buttons/button_item_01").GetComponent<ButtonReferenceHolder>();
+        
+        _keyboard = new Keyboard.Keyboard(_panelView.gameObject, buttonStyleReference);
+        _keyboard.OnTextChanged += OnSearchQueryChanged;
+        _keyboard.Hide();
+    }
+    
     public bool IsPanelSelected(ISearchPanel page)
     {
         var selectedPage = GetSelectedPanel();
@@ -144,18 +200,18 @@ public class SpawnablePanelExtension
 
     private ISearchPage GetRenderPage()
     {
-        var selectedPageIndex = _renderedPageIndex;
+        var selectedPageIndex = _renderedTagPageIndex;
         if (selectedPageIndex < 0 || selectedPageIndex >= _pages.PageCount)
             return _pages.GetBasePage();
         
         return _pages.GetPage(selectedPageIndex);
     }
     
-    private ISearchPanel GetRenderPanel(int idx)
+    private ISearchPanel? GetRenderPanel(int idx)
     {
         var page = GetRenderPage();
         if (idx < 0 || idx >= page.Panels.Count)
-            return page.Panels[0];
+            return null;
         
         return page.Panels[idx];
     }
@@ -177,22 +233,6 @@ public class SpawnablePanelExtension
             return page.Panels[0];
         
         return page.Panels[idx >= 0 ? idx : selectedTagIndex];
-    }
-
-    public SpawnablePanelExtension(SpawnablesPanelView panelView)
-    {
-        _panelView = panelView;
-        
-        AddTab();
-        FetchSortButton();
-        FetchFavoriteButton();
-        
-        // Find the buttonReference we want to use for our style
-        var buttonStyleReference = _panelView.transform.Find("group_spawnSelect/section_SpawnablesList/grid_buttons/button_item_01").GetComponent<ButtonReferenceHolder>();
-        
-        _keyboard = new Keyboard.Keyboard(_panelView.gameObject, buttonStyleReference);
-        _keyboard.OnTextChanged += OnSearchQueryChanged;
-        _keyboard.Hide();
     }
 
     private void OnSearchQueryChanged(string query)
@@ -252,12 +292,11 @@ public class SpawnablePanelExtension
     public ISearchableCrate? GetSelectedSpawnable()
     {
         var selectedPanel = GetSelectedPanel();
-        var itemIndex = _panelView._selectedItemIndex;
         
-        if (itemIndex is < 0 or >= ISearchPanel.PanelSize)
+        if (_selectedItemIndex is < 0 or >= ISearchPanel.PanelSize)
             return null;
         
-        return selectedPanel.GetCrateAt(itemIndex);
+        return selectedPanel.GetCrateAt(_selectedItemIndex);
     }
 
     public void EnsureList(string name)
@@ -287,54 +326,83 @@ public class SpawnablePanelExtension
         return list;
     }
 
-    public void UpdateTagVisuals()
-    {
-        // We select tags ourself, so no need to set them on the marrow side
-        _panelView._numberOfTagPages = _pages.PageCount;
-        
-        // Update values on the marrow side before we edit them manually if needed
-        // We only populate the first page and only wish to render that one
-        _panelView.UpdateTagPageItems(0, ISearchPage.PanelsPerPage);
-        _panelView.UpdateTagPageText(_renderedPageIndex, _pages.PageCount);
-        
-        var selectedCrate = GetSelectedSpawnable();
-        // We need to manually set the outline, because we skip the method that does so internally
-        var tagButtons = _panelView.treeButtons;
-        for (var i = 0; i < tagButtons.Count; i++)
-        {
-            var reference = tagButtons[i];
-            if (reference == null)
-                continue;
+    // public void UpdateTagVisuals()
+    // {
+    //     // We select tags ourself, so no need to set them on the marrow side
+    //     _panelView._numberOfTagPages = _pages.PageCount;
+    //     
+    //     // Update values on the marrow side before we edit them manually if needed
+    //     // We only populate the first page and only wish to render that one
+    //     _panelView.UpdateTagPageItems(0, ISearchPage.PanelsPerPage);
+    //     _panelView.UpdateTagPageText(_renderedPageIndex, _pages.PageCount);
+    //     
+    //     var selectedCrate = GetSelectedSpawnable();
+    //     // We need to manually set the outline, because we skip the method that does so internally
+    //     var tagButtons = _panelView.treeButtons;
+    //     for (var i = 0; i < tagButtons.Count; i++)
+    //     {
+    //         var reference = tagButtons[i];
+    //         if (reference == null)
+    //             continue;
+    //
+    //         var panel = GetRenderPanel(i);
+    //         var isSelected = i == _selectedTagIndex && _selectedPageIndex == _renderedPageIndex;
+    //         var forceHighlight = panel.IsForceHighlighted(this, selectedCrate);
+    //         reference.highlight.enabled = isSelected || forceHighlight != null;
+    //         reference.highlight.color = forceHighlight ?? new Color(1, 1, 1, 0.5f);
+    //         
+    //         reference.tmp.text = (_isEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected) 
+    //             ? _editValue 
+    //             : panel.Tag;
+    //     }
+    // }
+    //
+    // public void EnableTags(params string[] tags)
+    // {
+    //     var activeTags = _panelView._activeTags;
+    //     activeTags.Clear();
+    //     foreach (var tag in tags)
+    //     {
+    //         EnsureList(tag);
+    //         activeTags.Add(tag);
+    //     }
+    //     
+    //     UpdateTagVisuals();
+    // }
 
-            var panel = GetRenderPanel(i);
-            var isSelected = i == _selectedTagIndex && _selectedPageIndex == _renderedPageIndex;
-            var forceHighlight = panel.IsForceHighlighted(this, selectedCrate);
-            reference.highlight.enabled = isSelected || forceHighlight != null;
-            reference.highlight.color = forceHighlight ?? new Color(1, 1, 1, 0.5f);
-            
-            reference.tmp.text = (_isEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected) 
-                ? _editValue 
-                : panel.Tag;
-        }
-    }
-    
-    public void EnableTags(params string[] tags)
-    {
-        var activeTags = _panelView._activeTags;
-        activeTags.Clear();
-        foreach (var tag in tags)
-        {
-            EnsureList(tag);
-            activeTags.Add(tag);
-        }
-        
-        UpdateTagVisuals();
-    }
-
+    // public void RenderTags()
+    // {
+    //     var page = GetRenderPage();
+    //     EnableTags(page.Panels.Select(p => p.Tag).ToArray());
+    // }
     public void RenderTags()
     {
-        var page = GetRenderPage();
-        EnableTags(page.Panels.Select(p => p.Tag).ToArray());
+        var selectedCrate = GetSelectedSpawnable();
+        // We need to manually set the outline, because we skip the method that does so internally
+        for (var i = 0; i < _tagButtons.Count; i++)
+        {
+            var button = _tagButtons[i];
+            var panel = GetRenderPanel(i);
+            
+            if (panel == null)
+            {
+                button.Hide();
+                continue;
+            }
+            
+            var isSelected = i == _selectedTagIndex && _selectedPageIndex == _renderedTagPageIndex;
+            var tag = (_isEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected) 
+                ? _editValue 
+                : panel.Tag;
+            var forceHighlight = panel.IsForceHighlighted(this, selectedCrate);
+            
+            button.SetTag(tag, isSelected || forceHighlight != null, forceHighlight);
+        }
+        
+        var pageCount = GetRenderPage().Panels.Count;
+        _panelView.treePageText .text = $"{_renderedTagPageIndex + 1}/{pageCount}";
+        _tagPageNextButton.SetActive(_renderedTagPageIndex < pageCount - 1);
+        _tagPagePreviousButton.SetActive(_renderedTagPageIndex > 0);
     }
 
     public void RenderSpecialButtons(ISearchPanel? selectedPanel = null)
@@ -407,14 +475,26 @@ public class SpawnablePanelExtension
 
     public void RenderFocus()
     {
-        if (_currentFocus == SpawnInfoFocus.SelectedItem && _panelView.selectedObject != null)
+        if (_currentFocus == SpawnInfoFocus.SelectedItem)
         {
-            var selectedCrate = _panelView.selectedObject;
-            _panelView.selectedTitle.text = selectedCrate.name;
-            _panelView.selectedDescription.text = selectedCrate._description;
-            _panelView.selectedAuthor.text = $"{selectedCrate._pallet._author}";
-            _panelView.selectedPallet.text = selectedCrate._pallet.name;
-            _panelView.selectedTags.text = string.Join(", ", selectedCrate._tags);
+            var selectedCrate = GetSelectedSpawnable();
+
+            if (selectedCrate == null)
+            {
+                _panelView.selectedTitle.text = "";
+                _panelView.selectedDescription.text = "";
+                _panelView.selectedAuthor.text = "";
+                _panelView.selectedPallet.text = "";
+                _panelView.selectedTags.text = "";
+            }
+            else
+            {
+                _panelView.selectedTitle.text = selectedCrate.Name.Original;
+                _panelView.selectedDescription.text = selectedCrate.Description;
+                _panelView.selectedPallet.text = selectedCrate.PalletName.Original;
+                _panelView.selectedAuthor.text = $"{selectedCrate.Author.Original}";
+                _panelView.selectedTags.text = string.Join(", ", selectedCrate.Tags.Select(t => t.Original));
+            }
         }
         // The page is selected
         else
@@ -429,44 +509,52 @@ public class SpawnablePanelExtension
         
         RenderFavoriteButton();
     }
-    
-    public void RenderAll()
+
+    public void RenderItemButtons()
     {
         var selectedPanel = GetSelectedPanel();
         
-        // Render tags page
-
-        RenderTags();
-  
-        // Render page
-        
-        var selectedTag = selectedPanel.Tag;
-        
-        // Assign to the menu what we are writing too so it renders properly
-        _panelView._selectedTagIndex = _selectedTagIndex;
-        _panelView._selectedTag = selectedTag;
-        
-        // We realy don't care what the actual tag is, as long as we put things in it and virtualize it in our systems, it's fine.
-        var contents = GetAndClearList(selectedTag);
-
         var entries = selectedPanel
-            .Render(selectedPanel.Page);
-        foreach (var entry in entries)
+            .GetPage(selectedPanel.Page);
+        
+        if (_selectedItemIndex >= entries.Count)
         {
-            contents.Add(entry);
+            _selectedItemIndex = entries.Count - 1;
+            RenderFocus();
+        }
+        
+        for (var i = 0; i < _itemButtons.Count; i++)
+        {
+            var button = _itemButtons[i];
+            if (i < entries.Count)
+            {
+                var entry = entries[i];
+                button.SetCrate(entry, _selectedItemIndex == i);
+            }
+            else
+            {
+                button.Hide();
+            }
         }
 
         var pageCount = selectedPanel.PageCount;
         _panelView._numberOfPages = pageCount;
 
         _panelView.labelText.text = _searchQuery;
+        _panelView.itemPageText.text = $"{selectedPanel.Page + 1}/{pageCount}";
         
-        // This function crashes if called from a non-unity thread
-        _panelView.UpdatePageItems(0, ISearchPanel.PanelSize);
-        _panelView.UpdatePageText(selectedPanel.Page, pageCount);
-
+        _itemPageNextButton.SetActive(selectedPanel.Page < selectedPanel.PageCount - 1);
+        _itemPagePreviousButton.SetActive(selectedPanel.Page > 0);
+    }
+    
+    public void RenderAll()
+    {
+        // Render tags page
+        RenderTags();
+        // Render page
+        RenderItemButtons();
         RenderFocus();
-        RenderSpecialButtons(selectedPanel);
+        RenderSpecialButtons();
     }
 
     public void ChangePanelPage(int offset)
@@ -475,21 +563,66 @@ public class SpawnablePanelExtension
         selectedPage.ChangePage(this, offset);
     }
 
+    private void AssignSpawnableCrate(SpawnableCrate spawnableCrate)
+    {
+        var spawngun = _panelView.spawnGun;
+        if (spawngun != null)
+        {
+            spawngun.OnSpawnableSelected(spawnableCrate);
+        }
+    }
+    
+    private void AssignAvatarCrate(Scannable avatarCrate)
+    {
+        var reference = new AvatarCrateReference(avatarCrate._barcode);
+        var cordDevice = BodylogAccessor.GetCordDevice();
+        if (cordDevice != null)
+        {
+            cordDevice.SwapAvatar(reference).Forget();
+        }
+    }
+
+    private void AssignCrate()
+    {
+        var selectedCrate = GetSelectedSpawnable();
+        if (selectedCrate == null)
+            return;
+        if (!selectedCrate.TryGetCrate(out var crate))
+            return;
+        
+        var selectedAvatarCrate = crate.TryCast<AvatarCrate>();
+        if (selectedAvatarCrate != null)
+        {
+            AssignAvatarCrate(selectedAvatarCrate);
+            return;
+        }
+        
+        var spawnableCrate = crate.TryCast<SpawnableCrate>();
+        if (spawnableCrate != null) {
+            AssignSpawnableCrate(spawnableCrate);
+        }
+    }
+
     public void OnSelectItem(int idx)
     {
         // Test name overwrite
         _currentFocus = SpawnInfoFocus.SelectedItem;
+        _selectedItemIndex = idx;
         
         SetIsEditing(false);
         
         // Update tags to ensure any forced highlights are updated
-        UpdateTagVisuals();
+        RenderItemButtons();
+        RenderTags();
+        RenderFocus();
+        
+        AssignCrate();
     }
     
     public void SelectCategory(int idx)
     {
         // Get the new selected panel instead of the one currently selected
-        var result = GetRenderPanel(idx).OnSelected(this);
+        var result = GetRenderPanel(idx)?.OnSelected(this) ?? false;
 
         if (!result)
             return;
@@ -501,17 +634,22 @@ public class SpawnablePanelExtension
         SetIsEditing(false);
         
         // We've selected a new tag, so we need to update what we have selected to what we rendered
-        _selectedPageIndex = _renderedPageIndex;
+        _selectedPageIndex = _renderedTagPageIndex;
         _selectedTagIndex = idx;
+        
+        // Clear the query so the user doesn't get an empty screen
+        _searchQuery = "";
+        
+        // Update everything to reflect the new selected panel
         RequestRefresh();
     }
 
     public void ChangeTagPage(int offset)
     {
-        var newPage = _renderedPageIndex + offset;
+        var newPage = _renderedTagPageIndex + offset;
         if (newPage < 0 || newPage >= _pages.PageCount)            
             return;
-        _renderedPageIndex = newPage;
+        _renderedTagPageIndex = newPage;
         
         RenderTags();
     }
@@ -523,7 +661,7 @@ public class SpawnablePanelExtension
         RequestRefresh();
     }
     
-    public void TogglePresetAssignmentMode()
+    public void OnFavoriteButton()
     {
         if (_currentFocus == SpawnInfoFocus.SelectedItem)
         {
@@ -542,8 +680,8 @@ public class SpawnablePanelExtension
                 PresetManager.IsAssignmentMode = !PresetManager.IsAssignmentMode;
         
                 // Set the rendertarget to page 1 so we are at the presets if we aren't yet
-                if (_renderedPageIndex < 1)
-                    _renderedPageIndex = 1;
+                if (_renderedTagPageIndex < 1)
+                    _renderedTagPageIndex = 1;
                 
                 RenderAll();
             }
@@ -575,14 +713,15 @@ public class SpawnablePanelExtension
         _fadedButtonImage.sprite = _originalFavoriteSprite;
         _favoriteButtonImage.sprite = _originalFavoriteSprite;
         
-        // Clear tag colors
-        var tagButtons = _panelView.treeButtons;
-        foreach (var reference in tagButtons)
+        // Clear button images
+        foreach (var itemButton in _itemButtons)
         {
-            if (reference == null)
-                continue;
-
-            reference.highlight.color = Color.white;
+            itemButton.Reset();
+        }
+        // Clear tag colors
+        foreach (var tagButton in _tagButtons)
+        {
+            tagButton.Reset();
         }
     }
 

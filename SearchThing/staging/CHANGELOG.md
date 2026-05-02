@@ -5,6 +5,7 @@
 >   3. Exit edit mode
 >   4. You can rename your presets by click on the preset and then the edit mode in the top right
 >   5. Type in the name of your preset, then click anywhere else
+>   6. Click an item in the preset and press the minus to remove it from the preset
 
 >>**Version 0.3.0**
 >1. Made some more tweaks to the searching algorithm

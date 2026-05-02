@@ -113,6 +113,17 @@ public abstract class BasicSearchPanel : ISearchPanel
         return _results?.GetEntryAt(Page, ISearchPanel.PanelSize, index)?.Source;
     }
 
+    public IReadOnlyList<ISearchableCrate> GetPage(int page)
+    {
+        if (_results == null)
+            return Array.Empty<ISearchableCrate>();
+
+        return _results
+            .GetPage(page, ISearchPanel.PanelSize)
+            .Select(entry => entry.Source)
+            .ToList();
+    }
+
     public IEnumerable<SpawnableCrate> Render(int page)
     {
         if (_results == null)

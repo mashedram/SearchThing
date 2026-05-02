@@ -1,4 +1,5 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
+using SearchThing.Extensions.Panel;
 
 namespace SearchThing.Search;
 

@@ -47,6 +47,7 @@ public interface ISearchPanel
     /// <returns>Return false to prevent the panel from being selected</returns>
     bool OnSelected(SpawnablePanelExtension extension);
     ISearchableCrate? GetCrateAt(int index);
+    IReadOnlyList<ISearchableCrate> GetPage(int page);
     /// <summary>
     /// Return an IEnumerable to render the page with
     /// Only the first 12 entries will be considered

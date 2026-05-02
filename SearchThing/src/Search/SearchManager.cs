@@ -12,6 +12,7 @@ public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchableCrate
     public SearchTag PalletName => Crate.PalletName;
     public SearchTag Author => Crate.Author;
     public SearchTag[] Tags => Crate.Tags;
+    public string Description => Crate.Description;
     public CrateType CrateType => Crate.CrateType;
     public int Salt => Crate.Salt;
     public Barcode Barcode => Crate.Barcode;

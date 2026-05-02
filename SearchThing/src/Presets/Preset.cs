@@ -36,6 +36,9 @@ public class Preset : BasicSearchPanel
 
     public override Color? IsForceHighlighted(SpawnablePanelExtension extension, ISearchableCrate? selectedCrate)
     {
+        if (extension.IsPanelSelected(this))
+            return Color.white;
+        
         var isForceHighlighted = IsInitialized && selectedCrate != null && AssignedCrates.Contains(selectedCrate);
         return isForceHighlighted ? Color.yellow : null;
     }

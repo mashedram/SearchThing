@@ -1,6 +1,7 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
 using SearchThing.Extensions.Sort;
 using SearchThing.Search;
+using UnityEngine;
 
 namespace SearchThing.Extensions.Panel.Abstract;
 
@@ -52,7 +53,8 @@ public abstract class BasicSearchPanel : ISearchPanel
         new ScoreSearchOrder(),
         new AlphabeticalSearchOrder(),
         new DateNewAddedSearchOrder(),
-        new DateOldAddedSearchOrder()
+        new DateOldAddedSearchOrder(),
+        new RandomSearchOrder()
     };
     
     public void RequestSearch(SpawnablePanelExtension extension)
@@ -94,16 +96,21 @@ public abstract class BasicSearchPanel : ISearchPanel
         // No special logic needed
     }
 
-    public virtual bool IsForceHighlighted(SpawnablePanelExtension extension, SpawnableCrate? selectedCrate)
+    public virtual Color? IsForceHighlighted(SpawnablePanelExtension extension, ISearchableCrate? selectedCrate)
     {
         // No special logic needed
-        return false;
+        return null;
     }
     
     public virtual bool OnSelected(SpawnablePanelExtension extension)
     {
         // No special logic needed
         return true;
+    }
+
+    public ISearchableCrate? GetCrateAt(int index)
+    {
+        return _results?.GetEntryAt(Page, ISearchPanel.PanelSize, index)?.Source;
     }
 
     public IEnumerable<SpawnableCrate> Render(int page)

@@ -1,4 +1,5 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
+﻿using FuzzySharp.PreProcess;
+using Il2CppSLZ.Marrow.Warehouse;
 using SearchThing.Extensions;
 using SearchThing.Extensions.Panel;
 using SearchThing.Extensions.Panel.Abstract;
@@ -6,25 +7,10 @@ using SearchThing.Extensions.Sort;
 using SearchThing.Presets.Data;
 using SearchThing.Search;
 using SearchThing.Util;
+using UnityEngine;
+using Random = System.Random;
 
 namespace SearchThing.Presets;
-
-internal class BarcodeComparison : IEqualityComparer<Barcode>
-{
-    public bool Equals(Barcode? x, Barcode? y)
-    {
-        if (ReferenceEquals(x, y)) return true;
-        if (x is null) return false;
-        if (y is null) return false;
-        if (x.GetType() != y.GetType()) return false;
-        return x._shortCode == y._shortCode;
-    }
-    
-    public int GetHashCode(Barcode obj)
-    {
-        return obj._id.GetHashCode();
-    }
-}
 
 public class Preset : BasicSearchPanel
 {
@@ -35,7 +21,7 @@ public class Preset : BasicSearchPanel
     public override bool TagEditable => true;
     public bool IsInitialized { get; private set; }
     public override bool ResearchOnPageChange => true;
-    public HashSet<Barcode> AssignedBarcodes { get; } = new(new BarcodeComparison());
+    public HashSet<ISearchableCrate> AssignedCrates { get; } = new();
 
     public Preset()
     {
@@ -48,9 +34,10 @@ public class Preset : BasicSearchPanel
         IsInitialized = true;
     }
 
-    public override bool IsForceHighlighted(SpawnablePanelExtension extension, SpawnableCrate? selectedCrate)
+    public override Color? IsForceHighlighted(SpawnablePanelExtension extension, ISearchableCrate? selectedCrate)
     {
-        return IsInitialized && PresetManager.IsAssignmentMode && selectedCrate != null && AssignedBarcodes.Contains(selectedCrate._barcode);
+        var isForceHighlighted = IsInitialized && selectedCrate != null && AssignedCrates.Contains(selectedCrate);
+        return isForceHighlighted ? Color.yellow : null;
     }
     
     private bool IsTagValid(string tag)
@@ -82,14 +69,17 @@ public class Preset : BasicSearchPanel
             IsInitialized = true;
         }
 
-        var barcode = extension.GetSelectedSpawnable();
-        if (barcode == null)
+        var crate = extension.GetSelectedSpawnable();
+        if (crate == null)
             return false;
 
-        if (!AssignedBarcodes.Add(barcode._barcode))
+        if (!AssignedCrates.Add(crate))
         {
-            AssignedBarcodes.Remove(barcode._barcode);
+            AssignedCrates.Remove(crate);
         }
+        
+        // Exiting assignment mode immediately feels nicer
+        PresetManager.IsAssignmentMode = false;
         
         if (isSelected)
         {
@@ -98,15 +88,39 @@ public class Preset : BasicSearchPanel
         else
         {
             extension.RenderTags();
+            extension.RenderFavoriteButton();
         }
         
         return false;
     }
     
+    public void RemoveCrate(ISearchableCrate crate)
+    {
+        AssignedCrates.Remove(crate);
+    }
+    
     protected override void Search(string query, ISearchOrder order, Action<SearchResults> callback)
     {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            var emptyResults = AssignedCrates
+                .OrderByDescending(order.Score)
+                .ThenByDescending(entry => entry.Salt) // Tie-breaker: more recent entries first
+                .ToSearchResults();
+            
+            callback(emptyResults);
+            return;
+        }
+        
+        var lowerQuery = query.ToLowerInvariant();
+        var preprocessedQuery = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(lowerQuery);
+        
         // Presets cannot search for now
-        var results = AssignedBarcodes
+        var results = AssignedCrates
+            .Select(entry => ScoredCrate.ScoreCrate(entry, preprocessedQuery))
+            .Where(entry => entry.Score >= 80)
+            .OrderByDescending(order.Score)
+            .ThenByDescending(entry => entry.Salt) // Tie-breaker: more recent entries first
             .ToSearchResults();
         
         callback(results);
@@ -117,7 +131,7 @@ public class Preset : BasicSearchPanel
         return new PresetData
         {
             Name = _tag,
-            Barcodes = AssignedBarcodes.Select(b => b._id).ToList()
+            Barcodes = AssignedCrates.Select(b => b.Barcode._id).ToList()
         };
     }
     
@@ -129,10 +143,10 @@ public class Preset : BasicSearchPanel
         if (!IsInitialized)
             return;
         
-        AssignedBarcodes.Clear();
+        AssignedCrates.Clear();
         foreach (var barcodeId in data.Barcodes)
         {
-            AssignedBarcodes.Add(new Barcode(barcodeId));
+            AssignedCrates.Add(new SearchableCrate(new Barcode(barcodeId)));
         }
         
     }

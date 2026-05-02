@@ -1,4 +1,12 @@
 >>**Version 0.3.0**
+>1. Added custom presets.
+>   1. Hover over an item you want and press the plus button in the top right to go into assignment mode
+>   2. Scroll through your presets and press on the ones you wish to assign the item to
+>   3. Exit edit mode
+>   4. You can rename your presets by click on the preset and then the edit mode in the top right
+>   5. Type in the name of your preset, then click anywhere else
+
+>>**Version 0.3.0**
 >1. Made some more tweaks to the searching algorithm
 >2. Added the sorting options: Score, Alphabetical, Newest first and oldest first
 >3. No longer sometimes also puts items spawned by someone else in your spawn history

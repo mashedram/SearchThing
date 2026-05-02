@@ -6,7 +6,7 @@ using SearchThing.Util;
 
 namespace SearchThing.History;
 
-public struct HistoryEntry : ISearchableCrate
+public class HistoryEntry : ISearchableCrate
 {
     public SearchTag Name { get; }
     public SearchTag PalletName { get; }
@@ -15,6 +15,8 @@ public struct HistoryEntry : ISearchableCrate
     public CrateType CrateType { get; }
     // No score
     public int Score => 0;
+    // Random Salt
+    public int Salt => Random.Shared.Next();
     public DateTime DateAdded { get; }
     public Barcode Barcode { get; }
     
@@ -31,13 +33,14 @@ public struct HistoryEntry : ISearchableCrate
     }
 }
 
-public record struct ScoredHistoryEntry(HistoryEntry Entry, int Score) : ISearchableCrate
+public record ScoredHistoryEntry(HistoryEntry Entry, int Score) : ISearchableCrate
 {
     public SearchTag Name => Entry.Name;
     public SearchTag PalletName => Entry.PalletName;
     public SearchTag Author => Entry.Author;
     public SearchTag[] Tags => Entry.Tags;
     public CrateType CrateType => Entry.CrateType;
+    public int Salt => Entry.Salt;
     public DateTime DateAdded => Entry.DateAdded;
     public Barcode Barcode => Entry.Barcode;
 }
@@ -90,9 +93,8 @@ public static class HistoryManager
         if (string.IsNullOrWhiteSpace(query))
             return GetEntries()
                 .Where(filter ?? (_ => true))
-                .OrderByDescending(entry => order.Score(entry))
+                .OrderByDescending(order.Score)
                 .ThenByDescending(entry => entry.DateAdded) // Tie-breaker: more recent entries first
-                .Select(c => c.Barcode)
                 .ToSearchResults();
         
         var lowerQuery = query.ToLowerInvariant();
@@ -102,9 +104,8 @@ public static class HistoryManager
             .Where(filter ?? (_ => true))
             .Select(entry => new ScoredHistoryEntry(entry, SearchManager.ScoreCrate(preprocessedQuery, entry)))
             .Where(entry => entry.Score >= 80)
-            .OrderByDescending(entry => order.Score(entry))
+            .OrderByDescending(order.Score)
             .ThenByDescending(entry => entry.DateAdded) // Tie-breaker: more recent entries first
-            .Select(c => c.Barcode)
             .ToSearchResults();
     }
 }

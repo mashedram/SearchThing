@@ -25,4 +25,9 @@ public class SpawnablePageProvider
         
         return PresetManager.GetPages()[index - 1];
     }
+    
+    public bool IsPresetPage(int index)
+    {
+        return index > 0;
+    }
 }

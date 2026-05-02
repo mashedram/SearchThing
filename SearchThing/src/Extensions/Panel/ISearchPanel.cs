@@ -1,5 +1,7 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
 using SearchThing.Extensions.Sort;
+using SearchThing.Search;
+using UnityEngine;
 
 namespace SearchThing.Extensions.Panel;
 
@@ -26,7 +28,7 @@ public interface ISearchPanel
     /// Get's called for every crate that is rendered, return true to force the crate to be highlighted in the menu
     /// </summary>
     /// <returns></returns>
-    bool IsForceHighlighted(SpawnablePanelExtension extension, SpawnableCrate? selectedCrate);
+    Color? IsForceHighlighted(SpawnablePanelExtension extension, ISearchableCrate? selectedCrate);
     /// <summary>
     /// Called when the panel should perform a search
     /// </summary>
@@ -44,6 +46,7 @@ public interface ISearchPanel
     /// </summary>
     /// <returns>Return false to prevent the panel from being selected</returns>
     bool OnSelected(SpawnablePanelExtension extension);
+    ISearchableCrate? GetCrateAt(int index);
     /// <summary>
     /// Return an IEnumerable to render the page with
     /// Only the first 12 entries will be considered

@@ -207,7 +207,7 @@ public static class ToolUiPatches
         if (!extension.IsSearchActive())
             return;
 
-        extension.RefreshPresetAssignment();
+        extension.RenderFavoriteButton();
     }
 
     private record SpawngunOverwriteInfo(SpawnGun SpawnGun, SpawnableCrate Crate);

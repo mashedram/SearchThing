@@ -4,7 +4,7 @@ namespace SearchThing.Search;
 
 public class SearchResultEntry
 {
-    public Barcode Barcode;
+    public ISearchableCrate Source;
 
     private SpawnableCrate? _crate;
     public SpawnableCrate? Crate
@@ -14,16 +14,16 @@ public class SearchResultEntry
             if (_crate != null)
                 return _crate;
 
-            if (!AssetWarehouse.Instance.TryGetCrate(Barcode, out _crate))
+            if (!AssetWarehouse.Instance.TryGetCrate(Source.Barcode, out _crate))
                 return null;
             
             return _crate;
         }
     }
     
-    public SearchResultEntry(Barcode barcode)
+    public SearchResultEntry(ISearchableCrate source)
     {
-        Barcode = barcode;
+        Source = source;
     }
 }
 
@@ -52,6 +52,20 @@ public class SearchResults
             return Array.Empty<SearchResultEntry>();
 
         return GetPageIterator(start, end);
+    }
+    
+    public SearchResultEntry? GetEntryAt(int index)
+    {
+        if (index < 0 || index >= Entries.Count)
+            return null;
+
+        return Entries[index];
+    }
+    
+    public SearchResultEntry? GetEntryAt(int page, int pageSize, int index)
+    {
+        var globalIndex = page * pageSize + index;
+        return GetEntryAt(globalIndex);
     }
     
     public int GetPageCount(int pageSize)

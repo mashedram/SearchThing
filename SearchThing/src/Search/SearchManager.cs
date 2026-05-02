@@ -6,55 +6,21 @@ using SearchThing.Util;
 
 namespace SearchThing.Search;
 
-public struct SearchableCrate : ISearchableCrate
-{
-    public SearchTag Name { get; }
-    public SearchTag PalletName { get; }
-    public SearchTag Author { get; }
-    public SearchTag[] Tags { get; }
-    
-    public readonly int RandomId; // Used for tie-breaking to ensure consistent ordering
-    public CrateType CrateType { get; }
-    // Default to zero for global searchables
-    public int Score => 0;
-    public DateTime DateAdded { get; }
-    public Barcode Barcode { get; }
-    
-    public SearchableCrate(SpawnableCrate spawnableCrate)
-    {
-        Name = new SearchTag(spawnableCrate.name);
-        PalletName = new SearchTag(spawnableCrate._pallet.name);
-        Author = new SearchTag(spawnableCrate._pallet._author);
-        Tags = spawnableCrate._tags.ToArray().Select(t => new SearchTag(t)).ToArray();
-
-        RandomId = spawnableCrate.name.GetSalt();
-        
-        if (!spawnableCrate._pallet.IsInMarrowGame() && AssetWarehouse.Instance.TryGetPalletManifest(spawnableCrate._pallet._barcode, out var palletManifest))
-        {
-            DateAdded = long.TryParse(palletManifest.UpdatedDate, out var unixTimestampMs) 
-                ? DateTime.UnixEpoch.AddMilliseconds(unixTimestampMs) 
-                : DateTime.MinValue;
-        }
-        else
-        {
-            DateAdded = DateTime.MinValue; // Fallback to now if we can't find the pallet, shouldn't really happen
-        }
-
-        CrateType = spawnableCrate.GetCrateType();
-        
-        Barcode = spawnableCrate.Barcode;
-    }
-}
-
-public record struct ScoredCrate(SearchableCrate Crate, int Score) : ISearchableCrate
+public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchableCrate
 {
     public SearchTag Name => Crate.Name;
     public SearchTag PalletName => Crate.PalletName;
     public SearchTag Author => Crate.Author;
     public SearchTag[] Tags => Crate.Tags;
     public CrateType CrateType => Crate.CrateType;
+    public int Salt => Crate.Salt;
     public Barcode Barcode => Crate.Barcode;
     public DateTime DateAdded => Crate.DateAdded;
+
+    public static ScoredCrate ScoreCrate(ISearchableCrate crate, string preprocessedQuery)
+    {
+        return new ScoredCrate(crate, SearchManager.ScoreCrate(preprocessedQuery, crate));
+    }
 }
 
 public static class SearchManager
@@ -104,13 +70,12 @@ public static class SearchManager
                             .AsParallel()
                             .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2)) 
                             .Where(filter)
-                            .OrderByDescending(c => searchOrder.Score(c))
-                            .ThenByDescending(c => c.RandomId) // Tie-breaker
-                            .Select(c => c.Barcode)
+                            .OrderByDescending(searchOrder.Score)
+                            .ThenByDescending(c => c.Salt) // Tie-breaker
                             .ToSearchResults();
                     
                     
-                    MelonCoroutines.Start(InvokeOnMainThread(emptyResult, onComplete));
+                    onComplete.RunOnMainThread(emptyResult);
                     return;
                 }
 
@@ -123,24 +88,18 @@ public static class SearchManager
                         new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate))
                     )
                     .Where(c => c.Score > RequiredMatchRate)
-                    .OrderByDescending(c => searchOrder.Score(c))
-                    .ThenByDescending(c => c.Crate.RandomId) // Tie-breaker
-                    .Select(c => c.Crate.Barcode)
+                    .OrderByDescending(searchOrder.Score)
+                    .ThenByDescending(c => c.Crate.Salt) // Tie-breaker
+                    .Select(c => c.Crate)
                     .ToSearchResults();
 
-                MelonCoroutines.Start(InvokeOnMainThread(result, onComplete));
+                onComplete.RunOnMainThread(result);
             }
             finally
             {
                 CrateLock.ExitReadLock();
             }
         });
-    }
-    
-    private static System.Collections.IEnumerator InvokeOnMainThread(SearchResults result, Action<SearchResults> onComplete)
-    {
-        yield return null; // Wait one frame to ensure we're on main thread
-        onComplete(result);
     }
     
     public static int ScoreCrate(string preprocessedQuery, ISearchableCrate crate)

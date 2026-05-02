@@ -27,9 +27,9 @@ public static class SearchHelper
         return CrateType.Prop;
     }
     
-    public static SearchResults ToSearchResults(this IEnumerable<Barcode> scoredCrates)
+    public static SearchResults ToSearchResults(this IEnumerable<ISearchableCrate> scoredCrates)
     {
-        var entries = scoredCrates.Select(barcode => new SearchResultEntry(barcode)).ToList();
+        var entries = scoredCrates.Select(searchableCrate => new SearchResultEntry(searchableCrate)).ToList();
 
         return new SearchResults(entries);
     }

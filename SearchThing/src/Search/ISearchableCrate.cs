@@ -11,6 +11,7 @@ public interface ISearchableCrate
     SearchTag[] Tags { get; }
     
     CrateType CrateType { get; }
+    int Salt { get; }
     int Score { get; }
     DateTime DateAdded { get; }
     Barcode Barcode { get; }

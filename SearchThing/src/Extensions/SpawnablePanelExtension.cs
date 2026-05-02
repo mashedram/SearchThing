@@ -8,6 +8,8 @@ using SearchThing.Extensions.Pages;
 using SearchThing.Extensions.Panel;
 using SearchThing.Extensions.Panel.Filter;
 using SearchThing.Extensions.Panel.History;
+using SearchThing.Presets;
+using SearchThing.Search;
 using SearchThing.Util;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,16 +30,14 @@ public class SpawnablePanelExtension
     private readonly Keyboard.Keyboard _keyboard;
 
     private static readonly Sprite TabIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.SearchIcon.png");
-    // TODO: Change to a good icon
     private static readonly Sprite PresetAddIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.AddIcon.png");
-    // TODO: Change to a good icon
+    private static readonly Sprite PresetRemoveIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.RemoveIcon.png");
     private static readonly Sprite EditIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.EditIcon.png");
     
     // Editing
     private SpawnInfoFocus _currentFocus = SpawnInfoFocus.SelectedItem;
     private string _editValue = "";
-    private bool _isEditing = false;
-    private bool _isEditValid = false;
+    private bool _isEditing;
     // Favorite button
     private Image _fadedButtonImage = null!;
     private Image _favoriteButtonImage = null!; 
@@ -47,10 +47,10 @@ public class SpawnablePanelExtension
     private GameObject _sortButtonObject = null!;
     
     // The page currently selected in the tag page, but not used for rendering in case a rerender gets called when the page changes but selected tag doesn't
-    private int _renderedPageIndex = 0;
+    private int _renderedPageIndex;
     // We need the selected tag in a prefix context, so we need to store it
-    private int _selectedTagIndex = 0;
-    private int _selectedPageIndex = 0;
+    private int _selectedTagIndex;
+    private int _selectedPageIndex;
     private readonly SpawnablePageProvider _pages = new SpawnablePageProvider();
     
     private void AddTab()
@@ -249,25 +249,15 @@ public class SpawnablePanelExtension
         panel.RequestSearch(this);
     }
     
-    public SpawnableCrate? GetSelectedSpawnable()
+    public ISearchableCrate? GetSelectedSpawnable()
     {
-        var contents = _panelView.SpawnablesQuickMap;
-        var selectedTag = _panelView._selectedItemTag;
+        var selectedPanel = GetSelectedPanel();
+        var itemIndex = _panelView._selectedItemIndex;
         
-        if (selectedTag == null)
+        if (itemIndex is < 0 or >= ISearchPanel.PanelSize)
             return null;
         
-        if (!contents.TryGetValue(selectedTag, out var list))
-            return null;
-
-        var page = _panelView._currentPage;
-        var selectedIndex = _panelView._selectedItemIndex;
-        var index = page * ISearchPanel.PanelSize + selectedIndex;
-        
-        if (index < 0 || index >= list.Count)
-            return null;
-
-        return list[index];
+        return selectedPanel.GetCrateAt(itemIndex);
     }
 
     public void EnsureList(string name)
@@ -299,10 +289,7 @@ public class SpawnablePanelExtension
 
     public void UpdateTagVisuals()
     {
-        // We select tags ourself, so no need to set them
-        // _panelView._selectedTagIndex = _selectedTagIndex;
-        // // In case we are in a prefix, we need to manually request the panel
-        // _panelView._selectedTag = GetSelectedPanel(_selectedTagIndex).Tag;
+        // We select tags ourself, so no need to set them on the marrow side
         _panelView._numberOfTagPages = _pages.PageCount;
         
         // Update values on the marrow side before we edit them manually if needed
@@ -321,7 +308,9 @@ public class SpawnablePanelExtension
 
             var panel = GetRenderPanel(i);
             var isSelected = i == _selectedTagIndex && _selectedPageIndex == _renderedPageIndex;
-            reference.highlight.enabled = isSelected || panel.IsForceHighlighted(this, selectedCrate);
+            var forceHighlight = panel.IsForceHighlighted(this, selectedCrate);
+            reference.highlight.enabled = isSelected || forceHighlight != null;
+            reference.highlight.color = forceHighlight ?? new Color(1, 1, 1, 0.5f);
             
             reference.tmp.text = (_isEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected) 
                 ? _editValue 
@@ -378,6 +367,11 @@ public class SpawnablePanelExtension
         {
             return (EditIcon, _isEditing);
         }
+
+        // If we are in a preset assignment mode, we want to show the remove icon if the selected item is already assigned to the preset, and the add icon if it isn't
+        // TODO : Make this not hardcoded
+        if (_selectedPageIndex > 0)
+            return (PresetRemoveIcon, PresetManager.IsAssignmentMode);
         
         return (PresetAddIcon, PresetManager.IsAssignmentMode);
     }
@@ -487,6 +481,9 @@ public class SpawnablePanelExtension
         _currentFocus = SpawnInfoFocus.SelectedItem;
         
         SetIsEditing(false);
+        
+        // Update tags to ensure any forced highlights are updated
+        UpdateTagVisuals();
     }
     
     public void SelectCategory(int idx)
@@ -530,13 +527,26 @@ public class SpawnablePanelExtension
     {
         if (_currentFocus == SpawnInfoFocus.SelectedItem)
         {
-            PresetManager.IsAssignmentMode = !PresetManager.IsAssignmentMode;
+            var selectedPanel = GetSelectedPanel();
+            if (selectedPanel is Preset preset)
+            {
+                PresetManager.IsAssignmentMode = false;
+                var selectedCrate = GetSelectedSpawnable();
+                if (selectedCrate != null)
+                    preset.RemoveCrate(selectedCrate);
+                
+                RequestRefresh();
+            }
+            else
+            {
+                PresetManager.IsAssignmentMode = !PresetManager.IsAssignmentMode;
         
-            // Set the rendertarget to page 1 so we are at the presets if we aren't yet
-            if (_renderedPageIndex < 1)
-                _renderedPageIndex = 1;
-        
-            RenderAll();
+                // Set the rendertarget to page 1 so we are at the presets if we aren't yet
+                if (_renderedPageIndex < 1)
+                    _renderedPageIndex = 1;
+                
+                RenderAll();
+            }
         }
         else if (GetSelectedPanel().TagEditable)
         {
@@ -544,11 +554,6 @@ public class SpawnablePanelExtension
             
             RenderFavoriteButton();
         }
-    }
-    
-    public void RefreshPresetAssignment()
-    {
-        _favoriteButtonImage.sprite = PresetManager.IsAssignmentMode ? PresetAddIcon : _originalFavoriteSprite;
     }
 
     public void Show()
@@ -565,7 +570,20 @@ public class SpawnablePanelExtension
     {
         CloseKeyboard();
         RenderFavoriteButton();
+        
+        // Assign the original sprite back in case we were in a special mode when hiding
+        _fadedButtonImage.sprite = _originalFavoriteSprite;
         _favoriteButtonImage.sprite = _originalFavoriteSprite;
+        
+        // Clear tag colors
+        var tagButtons = _panelView.treeButtons;
+        foreach (var reference in tagButtons)
+        {
+            if (reference == null)
+                continue;
+
+            reference.highlight.color = Color.white;
+        }
     }
 
     public void ShowKeyboard()

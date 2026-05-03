@@ -3,5 +3,6 @@
 public enum CrateType
 {
     Prop,
-    Avatar
+    Avatar,
+    Level
 }

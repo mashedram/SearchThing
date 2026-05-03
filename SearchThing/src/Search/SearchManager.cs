@@ -38,14 +38,10 @@ public static class SearchManager
         {
             foreach (var palletCrate in pallet._crates)
             {
-                var spawnableCrate = palletCrate.TryCast<SpawnableCrate>();
-                if (spawnableCrate == null)
+                if (palletCrate._redacted)
                     continue;
 
-                if (spawnableCrate._redacted)
-                    continue;
-
-                SearchableCrates.Add(new SearchableCrate(spawnableCrate));
+                SearchableCrates.Add(new SearchableCrate(palletCrate));
             }
         }
         finally

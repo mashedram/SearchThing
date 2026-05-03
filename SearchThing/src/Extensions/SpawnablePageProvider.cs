@@ -11,7 +11,8 @@ public class SpawnablePageProvider
         new PropTagSearchPanel(), 
         new AvatarTagSearchPanel(), 
         new PropHistorySearchPanel(),
-        new AvatarHistorySearchPanel()
+        new AvatarHistorySearchPanel(),
+        new LevelTagSearchPanel()
     );
     
     public int PageCount => 1 + PresetManager.GetPages().Count;

@@ -11,8 +11,8 @@ public struct SearchTag
     
     public SearchTag(string original)
     {
-        Original = GetSearchString(original);
-        Preprocessed = Preprocess(Original);
+        Original = original;
+        Preprocessed = Preprocess(GetSearchString(original));
     }
     
     public int PartialRatio(string other)

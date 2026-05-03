@@ -12,6 +12,7 @@ public class ItemButton
     // Icons
     private static readonly Sprite AvatarIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.AvatarIcon.png");
     private static readonly Sprite CrateIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.CrateIcon.png");
+    private static readonly Sprite LevelIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.LevelIcon.png");
     
     // Default value cache
     private static Sprite? _defaultIcon = null!;
@@ -44,6 +45,7 @@ public class ItemButton
         {
             CrateType.Avatar => AvatarIcon,
             CrateType.Prop => CrateIcon,
+            CrateType.Level => LevelIcon,
             _ => _defaultIcon!
         };
     }

@@ -9,9 +9,11 @@ using SearchThing.History;
 
 namespace SearchThing.Patches;
 
-[HarmonyPatch((typeof(SpawnGun)))]
+[HarmonyPatch(typeof(SpawnGun))]
 public class SpawnGunPatches
 {
+    public static SpawnGun? HeldSpawnGun { get; private set; }
+    
     private static bool IsHeldByLocalPlayer(Gun spawnGun)
     {
         if (!NetworkSceneManager.IsLevelNetworked)
@@ -26,6 +28,32 @@ public class SpawnGunPatches
 
         var rm = host.GetHand()?.manager;
         return rm != null && rm.IsLocalPlayer();
+    }
+
+    [HarmonyPatch(nameof(SpawnGun.OnTriggerGripAttached))]
+    [HarmonyPostfix]
+    public static void OnTriggerGripAttached_Prefix(SpawnGun __instance, Hand hand)
+    {
+        if (__instance == null)
+            return;
+
+        if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
+            return;
+        
+        HeldSpawnGun = __instance;
+    }
+
+    [HarmonyPatch(nameof(SpawnGun.OnTriggerGripDetached))]
+    [HarmonyPostfix]
+    public static void OnTriggerGripDetached_Prefix(SpawnGun __instance, Hand hand)
+    {
+        if (__instance == null)
+            return;
+
+        if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
+            return;
+        
+        HeldSpawnGun = null;
     }
     
     // Run this as soon after we fire to capture what is fired before any other mods might change that

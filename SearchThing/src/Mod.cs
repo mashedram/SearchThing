@@ -1,6 +1,7 @@
 ﻿using BoneLib;
 using SearchThing;
 using MelonLoader;
+using SearchThing.Lookup.Cache;
 using SearchThing.Presets;
 
 [assembly: MelonInfo(typeof(Mod), "SearchThing", "0.4.0", "Mash")]
@@ -20,6 +21,12 @@ public class Mod : MelonMod
     
     private static void OnWarehouseReady()
     {
+        DatabaseManager.OnMelonInitialize();
         PresetManager.LoadPresets();
+    }
+
+    public override void OnDeinitializeMelon()
+    {
+        DatabaseManager.OnMelonDeinitialize();
     }
 }

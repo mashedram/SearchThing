@@ -5,6 +5,7 @@ public class KnownCrate
     public string Barcode { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
+    public string[] Tags { get; set; }
     public KnownPallet Pallet { get; set; } 
 }
 

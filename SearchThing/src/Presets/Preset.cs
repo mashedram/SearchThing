@@ -107,7 +107,7 @@ public class Preset : BasicSearchPanel
         if (string.IsNullOrWhiteSpace(query))
         {
             var emptyResults = AssignedCrates
-                .OrderByDescending(order.Score)
+                .OrderByDescending(order.Order)
                 .ThenByDescending(entry => entry.Salt) // Tie-breaker: more recent entries first
                 .ToSearchResults();
             
@@ -122,7 +122,7 @@ public class Preset : BasicSearchPanel
         var results = AssignedCrates
             .Select(entry => ScoredCrate.ScoreCrate(entry, preprocessedQuery))
             .Where(entry => entry.Score >= 80)
-            .OrderByDescending(order.Score)
+            .OrderByDescending(order.Order)
             .ThenByDescending(entry => entry.Salt) // Tie-breaker: more recent entries first
             .ToSearchResults();
         

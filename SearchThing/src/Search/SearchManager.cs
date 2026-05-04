@@ -31,6 +31,9 @@ public static class SearchManager
     private static readonly ReaderWriterLockSlim CrateLock = new();
     private static readonly List<SearchableCrate> SearchableCrates = new();
     
+    private static readonly object _searchLock = new();
+    private static CancellationTokenSource? _lastSearchCts = new();
+    
     public static void AddPallet(Pallet pallet)
     {
         // Due to the fact that searching exists on another thread, we need to wait for it to exit to avoid conflicts
@@ -52,8 +55,15 @@ public static class SearchManager
     {
         var lowerQuery = query.ToLowerInvariant();
         var preprocessedQuery = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(lowerQuery);
-        
-        ThreadPool.QueueUserWorkItem(_ =>
+
+        lock (_searchLock)
+        {
+            _lastSearchCts?.Cancel();
+            _lastSearchCts?.Dispose();
+            _lastSearchCts = new CancellationTokenSource();
+        }
+
+        Task.Run(() =>
         {
             CrateLock.EnterReadLock();
             try
@@ -63,13 +73,14 @@ public static class SearchManager
                     var emptyResult =
                         SearchableCrates
                             .AsParallel()
-                            .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2)) 
+                            .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
+                            .WithCancellation(_lastSearchCts.Token)
                             .Where(filter)
-                            .OrderByDescending(searchOrder.Score)
+                            .OrderByDescending(searchOrder.Order)
                             .ThenByDescending(c => c.Salt) // Tie-breaker
                             .ToSearchResults();
-                    
-                    
+
+
                     onComplete.RunOnMainThread(emptyResult);
                     return;
                 }
@@ -78,32 +89,44 @@ public static class SearchManager
                     .AsParallel()
                     // Avoid starving the game thread of cores
                     .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
+                    .WithCancellation(_lastSearchCts.Token)
                     .Where(filter)
                     .Select(crate =>
-                        new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate))
-                    )
-                    .Where(c => c.Score > RequiredMatchRate)
-                    .OrderByDescending(searchOrder.Score)
+                            new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate))
+                        )
+                    .Where(c => c.Score >= RequiredMatchRate)
+                    .OrderByDescending(searchOrder.Order)
                     .ThenByDescending(c => c.Crate.Salt) // Tie-breaker
                     .Select(c => c.Crate)
                     .ToSearchResults();
 
                 onComplete.RunOnMainThread(result);
             }
+            catch (OperationCanceledException)
+            {
+                // Search was canceled
+            }
+            catch (Exception ex)
+            {
+                MelonLogger.Error("Search failed: {0}", ex);
+                // TODO : Pass an error page to the search page
+            }
             finally
             {
                 CrateLock.ExitReadLock();
             }
-        });
+        }, _lastSearchCts.Token);
     }
     
     public static int ScoreCrate(string preprocessedQuery, ISearchableCrate crate)
     {
-        var nameScore = crate.Name.PartialRatio(preprocessedQuery); // Weight name higher
-        var palletScore = crate.PalletName.PartialRatio(preprocessedQuery);
-        var authorScore = crate.Author.PartialRatio(preprocessedQuery);
-        var tagScore = crate.Tags.Any(t => t.PartialRatio(preprocessedQuery) > 80) ? 90 : 0;
-    
-        return new [] { nameScore, palletScore, authorScore, tagScore }.Max();
+        var nameScore = crate.Name.TokenSetRatio(preprocessedQuery); // Weight name higher
+        var palletScore = crate.PalletName.TokenSetRatio(preprocessedQuery);
+        var authorScore = crate.Author.TokenSetRatio(preprocessedQuery);
+        
+        var bestTag = crate.Tags.Select(tag => tag.PartialRatio(preprocessedQuery)).DefaultIfEmpty(0).Max();
+
+        var weighted = (nameScore * 4 + bestTag * 3 + palletScore * 1 + authorScore * 1) / 9.0;
+        return (int)Math.Round(Math.Min(weighted, 100));
     }
 }

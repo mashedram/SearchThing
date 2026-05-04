@@ -1,5 +1,4 @@
-﻿using FuzzySharp;
-using FuzzySharp.PreProcess;
+﻿using FuzzySharp.PreProcess;
 using Il2CppSLZ.Marrow.Warehouse;
 using SearchThing.Search;
 using SearchThing.Util;
@@ -99,7 +98,7 @@ public static class HistoryManager
         if (string.IsNullOrWhiteSpace(query))
             return GetEntries()
                 .Where(filter ?? (_ => true))
-                .OrderByDescending(order.Score)
+                .OrderByDescending(order.Order)
                 .ThenByDescending(entry => entry.DateAdded) // Tie-breaker: more recent entries first
                 .ToSearchResults();
         
@@ -110,7 +109,7 @@ public static class HistoryManager
             .Where(filter ?? (_ => true))
             .Select(entry => new ScoredHistoryEntry(entry, SearchManager.ScoreCrate(preprocessedQuery, entry)))
             .Where(entry => entry.Score >= 80)
-            .OrderByDescending(order.Score)
+            .OrderByDescending(order.Order)
             .ThenByDescending(entry => entry.DateAdded) // Tie-breaker: more recent entries first
             .ToSearchResults();
     }

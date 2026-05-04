@@ -12,7 +12,7 @@ public struct SearchTag
     public SearchTag(string original)
     {
         Original = original;
-        Preprocessed = Preprocess(GetSearchString(original));
+        Preprocessed = Preprocess(original);
     }
     
     public int PartialRatio(string other)
@@ -20,30 +20,28 @@ public struct SearchTag
         return Fuzz.PartialRatio(Preprocessed, other, PreprocessMode.None);
     }
     
-    public int TokenSetRatio(string other)
+    public bool Contains(string preprocessedQuery)
     {
-        return Fuzz.TokenSetRatio(Preprocessed, other, PreprocessMode.None);
+        return Preprocessed.Contains(preprocessedQuery);
     }
     
     // Preperation
     
     private static readonly Regex UnityRichTextRegex = new(@"</?[a-zA-Z]*=[^>]*>|</?[a-zA-Z]+>", RegexOptions.Compiled);
-    private static readonly Func<string, string> Preprocessor = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full);
+    private static readonly Regex NonAlphanumericRegex = new(@"[^ a-zA-Z0-9]", RegexOptions.Compiled);
     
-    private static string StripDecoration(string value)
+    public static string Preprocess(string value)
     {
-        // Regex to remove unity rich text
-        return UnityRichTextRegex.Replace(value, "");
-    }
-    
-    public static string GetSearchString(string value)
-    {
+        // To lower case
         var lower = value.ToLowerInvariant();
-        return StripDecoration(lower);
-    }
-    
-    private static string Preprocess(string value)
-    {
-        return Preprocessor(value);
+        // Remove non-alphanumeric characters
+        var nonAlphanumericStripped = NonAlphanumericRegex.Replace(lower, "");
+        // Remove Unity rich text tags
+        var nonUnityRichTextStripped = UnityRichTextRegex.Replace(nonAlphanumericStripped, "");
+        // Remove spaces
+        var spaceRemoved = nonUnityRichTextStripped.Replace(" ", "");
+        // Trim leading and trailing whitespace
+        var trimmed = spaceRemoved.Trim();
+        return trimmed;
     }
 }

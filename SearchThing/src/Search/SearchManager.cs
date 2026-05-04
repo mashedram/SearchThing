@@ -1,4 +1,6 @@
-﻿using FuzzySharp;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+using FuzzySharp;
 using FuzzySharp.PreProcess;
 using Il2CppSLZ.Marrow.Warehouse;
 using MelonLoader;
@@ -25,108 +27,152 @@ public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchableCrate
     }
 }
 
+public record SearchTask(
+    string Query,
+    ISearchableCrateList SearchableCrateCrates,
+    Func<ISearchableCrate, bool> Filter,
+    ISearchOrder SearchOrder,
+    Action<SearchResults> OnComplete,
+    CancellationToken CancellationToken
+);
+
 public static class SearchManager
 {
     private const int RequiredMatchRate = 75;
-    private static readonly ReaderWriterLockSlim CrateLock = new();
-    private static readonly List<SearchableCrate> SearchableCrates = new();
-    
-    private static readonly object _searchLock = new();
+
+    private static readonly object SearchLock = new();
     private static CancellationTokenSource? _lastSearchCts = new();
-    
-    public static void AddPallet(Pallet pallet)
+
+    private static Thread? _searchThread;
+    private static readonly BlockingCollection<SearchTask> SearchQueue = new();
+    private static readonly CancellationTokenSource SearchThreadCts = new();
+
+
+    public static void InitializeSearchThread()
     {
-        // Due to the fact that searching exists on another thread, we need to wait for it to exit to avoid conflicts
-        CrateLock.EnterWriteLock();
-        try
+        _searchThread = new Thread(SearchThreadWorker)
         {
-            foreach (var palletCrate in pallet._crates)
-            {
-                SearchableCrates.Add(new SearchableCrate(palletCrate));
-            }
-        }
-        finally
-        {
-            CrateLock.ExitWriteLock();
-        }
+            IsBackground = true,
+            Name = "SearchWorker"
+        };
+        _searchThread.Start();
     }
     
-    public static void SearchAsync(string query, Func<SearchableCrate, bool> filter, ISearchOrder searchOrder, Action<SearchResults> onComplete)
+    public static void ShutdownSearchThread()
     {
-        var lowerQuery = query.ToLowerInvariant();
-        var preprocessedQuery = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(lowerQuery);
+        SearchThreadCts.Cancel();
+        SearchQueue.CompleteAdding();
+        _searchThread?.Join(TimeSpan.FromMilliseconds(500));
+    }
+    
+    private static void SearchThreadWorker()
+    {
+        try
+        {
+            foreach (var task in SearchQueue.GetConsumingEnumerable(SearchThreadCts.Token))
+            {
+                ExecuteSearch(task);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Thread is being shut down
+        }
+    }
 
-        lock (_searchLock)
+    private static void ExecuteSearch(SearchTask task)
+    {
+#if DEBUG
+        var stopwatch = Stopwatch.StartNew();
+#endif
+            
+        var searchableCrates = task.SearchableCrateCrates.GetCrates();
+
+        try
+        {
+
+            if (string.IsNullOrWhiteSpace(task.Query) || !AssetWarehouse.ready)
+            {
+                var emptyResult =
+                    searchableCrates
+                        .AsParallel()
+                        .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
+                        .WithCancellation(task.CancellationToken)
+                        .Where(task.Filter)
+                        .OrderByDescending(task.SearchOrder.Order)
+                        .ThenByDescending(c => c.Salt) // Tie-breaker
+                        .ToSearchResults();
+
+                task.OnComplete.RunOnMainThread(emptyResult);
+                return;
+            }
+
+            var preprocessedQuery = SearchTag.Preprocess(task.Query);
+
+            var result = searchableCrates
+                .AsParallel()
+                // Avoid starving the game thread of cores
+                .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
+                .WithCancellation(task.CancellationToken)
+                .Where(task.Filter)
+                .Select(crate =>
+                    new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate))
+                )
+                .Where(c => c.Score >= RequiredMatchRate)
+                .OrderByDescending(task.SearchOrder.Order)
+                .ThenByDescending(c => c.Crate.Salt) // Tie-breaker
+                .Select(c => c.Crate)
+                .ToSearchResults();
+
+            task.OnComplete.RunOnMainThread(result);
+        }
+        catch (OperationCanceledException)
+        {
+            // Search was canceled
+        }
+        catch (Exception ex)
+        {
+            MelonLogger.Error("Search failed: {0}", ex);
+            // TODO : Pass an error page to the search page
+        }
+#if DEBUG
+        finally
+        {
+            stopwatch.Stop();
+            var elapsedMilliseconds = stopwatch.ElapsedTicks * (1_000 / (double)Stopwatch.Frequency);
+            MelonLogger.Msg($"Search completed in {elapsedMilliseconds:F0} milliseconds");
+        }
+#endif
+    }
+
+    public static void SearchAsync(string query, ISearchableCrateList crateList, Func<ISearchableCrate, bool> filter, ISearchOrder searchOrder, Action<SearchResults> onComplete)
+    {
+        lock (SearchLock)
         {
             _lastSearchCts?.Cancel();
             _lastSearchCts?.Dispose();
             _lastSearchCts = new CancellationTokenSource();
         }
 
-        Task.Run(() =>
-        {
-            CrateLock.EnterReadLock();
-            try
-            {
-                if (string.IsNullOrWhiteSpace(query) || !AssetWarehouse.ready)
-                {
-                    var emptyResult =
-                        SearchableCrates
-                            .AsParallel()
-                            .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
-                            .WithCancellation(_lastSearchCts.Token)
-                            .Where(filter)
-                            .OrderByDescending(searchOrder.Order)
-                            .ThenByDescending(c => c.Salt) // Tie-breaker
-                            .ToSearchResults();
+        var searchTask = new SearchTask(
+            query,
+            crateList,
+            filter,
+            searchOrder,
+            onComplete,
+            _lastSearchCts.Token
+        );
 
-
-                    onComplete.RunOnMainThread(emptyResult);
-                    return;
-                }
-
-                var result = SearchableCrates
-                    .AsParallel()
-                    // Avoid starving the game thread of cores
-                    .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
-                    .WithCancellation(_lastSearchCts.Token)
-                    .Where(filter)
-                    .Select(crate =>
-                            new ScoredCrate(crate, ScoreCrate(preprocessedQuery, crate))
-                        )
-                    .Where(c => c.Score >= RequiredMatchRate)
-                    .OrderByDescending(searchOrder.Order)
-                    .ThenByDescending(c => c.Crate.Salt) // Tie-breaker
-                    .Select(c => c.Crate)
-                    .ToSearchResults();
-
-                onComplete.RunOnMainThread(result);
-            }
-            catch (OperationCanceledException)
-            {
-                // Search was canceled
-            }
-            catch (Exception ex)
-            {
-                MelonLogger.Error("Search failed: {0}", ex);
-                // TODO : Pass an error page to the search page
-            }
-            finally
-            {
-                CrateLock.ExitReadLock();
-            }
-        }, _lastSearchCts.Token);
+        SearchQueue.Add(searchTask);
     }
     
     public static int ScoreCrate(string preprocessedQuery, ISearchableCrate crate)
     {
-        var nameScore = crate.Name.TokenSetRatio(preprocessedQuery); // Weight name higher
-        var palletScore = crate.PalletName.TokenSetRatio(preprocessedQuery);
-        var authorScore = crate.Author.TokenSetRatio(preprocessedQuery);
-        
-        var bestTag = crate.Tags.Select(tag => tag.PartialRatio(preprocessedQuery)).DefaultIfEmpty(0).Max();
-
-        var weighted = (nameScore * 4 + bestTag * 3 + palletScore * 1 + authorScore * 1) / 9.0;
-        return (int)Math.Round(Math.Min(weighted, 100));
+        var nameScore = crate.Name.PartialRatio(preprocessedQuery);
+        var palletScore = crate.PalletName.PartialRatio(preprocessedQuery);
+        var authorScore = crate.Author.PartialRatio(preprocessedQuery);
+        var tagScore = crate.Tags.Any(t => t.PartialRatio(preprocessedQuery) > 80) ? 90 : 0;
+    
+        return new [] { nameScore, palletScore, authorScore, tagScore }.Max();
     }
 }

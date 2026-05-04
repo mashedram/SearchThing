@@ -6,7 +6,7 @@ namespace SearchThing.Extensions.Panel.Filter;
 public class AvatarTagSearchPanel : FilterSearchSearchPanel
 {
     public override string Tag => "Avatar";
-    protected override bool Filter(SearchableCrate searchableCrate)
+    protected override bool Filter(ISearchableCrate searchableCrate)
     {
         return searchableCrate is { CrateType: CrateType.Avatar, Redacted: false };
     }

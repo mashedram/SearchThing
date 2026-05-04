@@ -504,6 +504,10 @@ public class SpawnablePanelExtension
     
     public void RenderAll()
     {
+        // Skip rendering if we left the search page before render gets called
+        if (!IsSearchActive())
+            return;
+        
         // Render tags page
         RenderTags();
         // Render page
@@ -537,7 +541,6 @@ public class SpawnablePanelExtension
     {
         var reference = new LevelCrateReference(levelCrate._barcode);
         SceneStreamer.LoadAsync(reference).Forget();
-        
     }
 
     private void AssignCrate()

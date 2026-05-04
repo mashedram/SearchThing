@@ -20,7 +20,7 @@
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
         <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
-        <DefineConstants>$(DefineConstants);MELONLOADER</DefineConstants>
+        <DefineConstants>$(DefineConstants);MELONLOADER;UNLOCKED</DefineConstants>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

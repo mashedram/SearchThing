@@ -12,9 +12,9 @@ public class SpawnablePageProvider
         new AvatarTagSearchPanel(), 
         new PropHistorySearchPanel(),
         new AvatarHistorySearchPanel(),
-        new LevelTagSearchPanel(),
+        new LevelTagSearchPanel()
 #if UNLOCKED
-        new RedactedSearchPanel()
+        ,new RedactedSearchPanel()
 #endif
     );
     

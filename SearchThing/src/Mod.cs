@@ -2,6 +2,8 @@
 using SearchThing;
 using MelonLoader;
 using SearchThing.Presets;
+using SearchThing.Search;
+using UnityEngine;
 
 [assembly: MelonInfo(typeof(Mod), "SearchThing", "0.4.1", "Mash")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
@@ -20,6 +22,12 @@ public class Mod : MelonMod
     
     private static void OnWarehouseReady()
     {
+        SearchManager.InitializeSearchThread();
         PresetManager.LoadPresets();
+    }
+
+    public override void OnDeinitializeMelon()
+    {
+        SearchManager.ShutdownSearchThread();
     }
 }

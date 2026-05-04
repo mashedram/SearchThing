@@ -6,7 +6,7 @@ namespace SearchThing.Extensions.Panel.Filter;
 public class PropTagSearchPanel : FilterSearchSearchPanel
 {
     public override string Tag => "Props";
-    protected override bool Filter(SearchableCrate searchableCrate)
+    protected override bool Filter(ISearchableCrate searchableCrate)
     {
         return searchableCrate is { CrateType: CrateType.Prop, Redacted: false };
     }

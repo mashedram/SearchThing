@@ -20,6 +20,11 @@ public struct SearchTag
         return Fuzz.PartialRatio(Preprocessed, other, PreprocessMode.None);
     }
     
+    public int TokenSetRatio(string other)
+    {
+        return Fuzz.TokenSetRatio(Preprocessed, other, PreprocessMode.None);
+    }
+    
     // Preperation
     
     private static readonly Regex UnityRichTextRegex = new(@"</?[a-zA-Z]*=[^>]*>|</?[a-zA-Z]+>", RegexOptions.Compiled);

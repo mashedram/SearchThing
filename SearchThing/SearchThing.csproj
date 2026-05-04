@@ -4,6 +4,8 @@
         <TargetFramework>net6.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;Release - Unlocked</Configurations>
+        <Platforms>AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,6 +26,10 @@
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
         <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
         <DefineConstants>$(DefineConstants);MELONLOADER</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release - Unlocked' ">
+      <DefineConstants>TRACE;MELONLOADER;UNLOCKED</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

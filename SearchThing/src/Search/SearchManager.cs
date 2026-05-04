@@ -13,6 +13,7 @@ public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchableCrate
     public SearchTag Author => Crate.Author;
     public SearchTag[] Tags => Crate.Tags;
     public string Description => Crate.Description;
+    public bool Redacted => Crate.Redacted;
     public CrateType CrateType => Crate.CrateType;
     public int Salt => Crate.Salt;
     public Barcode Barcode => Crate.Barcode;
@@ -38,9 +39,6 @@ public static class SearchManager
         {
             foreach (var palletCrate in pallet._crates)
             {
-                if (palletCrate._redacted)
-                    continue;
-
                 SearchableCrates.Add(new SearchableCrate(palletCrate));
             }
         }

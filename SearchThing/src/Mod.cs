@@ -3,7 +3,7 @@ using SearchThing;
 using MelonLoader;
 using SearchThing.Presets;
 
-[assembly: MelonInfo(typeof(Mod), "SearchThing", "0.4.0", "Mash")]
+[assembly: MelonInfo(typeof(Mod), "SearchThing", "0.4.1", "Mash")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 namespace SearchThing;
 

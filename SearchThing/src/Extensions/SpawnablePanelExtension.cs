@@ -1,5 +1,6 @@
 ﻿using Il2CppCysharp.Threading.Tasks;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using Il2CppSLZ.Bonelab;
 using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.UI;
@@ -519,11 +520,7 @@ public class SpawnablePanelExtension
 
     private void AssignSpawnableCrate(SpawnableCrate spawnableCrate)
     {
-        var spawngun = SpawnGunPatches.HeldSpawnGun;
-        if (spawngun != null)
-        {
-            spawngun.OnSpawnableSelected(spawnableCrate);
-        }
+        SpawnGunPatches.SelectCrate(spawnableCrate);
     }
     
     private void AssignAvatarCrate(Scannable avatarCrate)
@@ -606,6 +603,7 @@ public class SpawnablePanelExtension
         
         // Clear the query so the user doesn't get an empty screen
         _searchQuery = "";
+        _keyboard.SetText(_searchQuery, false);
         
         // Update everything to reflect the new selected panel
         RequestRefresh();

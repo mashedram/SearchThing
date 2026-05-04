@@ -3,11 +3,11 @@ using SearchThing.Search;
 
 namespace SearchThing.Extensions.Panel.Filter;
 
-public class LevelTagSearchPanel : FilterSearchSearchPanel
+public class RedactedSearchPanel : FilterSearchSearchPanel
 {
-    public override string Tag => "Levels";
+    public override string Tag => "Redacted";
     protected override bool Filter(SearchableCrate searchableCrate)
     {
-        return searchableCrate is { CrateType: CrateType.Level, Redacted: false };
+        return searchableCrate is { Redacted: true };
     }
 }

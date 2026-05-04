@@ -13,6 +13,15 @@ namespace SearchThing.Patches;
 public class SpawnGunPatches
 {
     public static SpawnGun? HeldSpawnGun { get; private set; }
+    private static SpawnableCrate? _selectedCrate;
+
+    public static void SelectCrate(SpawnableCrate crate)
+    {
+        _selectedCrate = crate;
+        
+        if (HeldSpawnGun != null)
+            HeldSpawnGun.OnSpawnableSelected(_selectedCrate);
+    }
     
     private static bool IsHeldByLocalPlayer(Gun spawnGun)
     {
@@ -41,6 +50,10 @@ public class SpawnGunPatches
             return;
         
         HeldSpawnGun = __instance;
+        
+        // Ensure that whatever spawnable we grab with is selected in the spawn gun
+        if (_selectedCrate != null)
+            __instance.OnSpawnableSelected(_selectedCrate);
     }
 
     [HarmonyPatch(nameof(SpawnGun.OnTriggerGripDetached))]
@@ -84,10 +97,13 @@ public class SpawnGunPatches
         
         if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
             return true;
+        
+        // Assign the selected crate without updating to prevent a loop
+        _selectedCrate = crate;
 
         // Ignore non-avatar crates
         if (crate.TryCast<AvatarCrate>() == null)
-            return true;
+            return true;    
 
         // Do not allow setting the spawnable to an avatar
         return false;

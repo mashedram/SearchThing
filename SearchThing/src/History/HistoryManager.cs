@@ -14,6 +14,7 @@ public class HistoryEntry : ISearchableCrate
     public SearchTag[] Tags { get; }
     public CrateType CrateType { get; }
     public string Description { get; }
+    public bool Redacted { get; }
     // No score
     public int Score => 0;
     // Random Salt
@@ -28,6 +29,7 @@ public class HistoryEntry : ISearchableCrate
         PalletName = new SearchTag(crate._pallet.name);
         Author = new SearchTag(crate._pallet._author);
         Tags = crate._tags.ToArray().Select(t => new SearchTag(t)).ToArray();
+        Redacted = crate._redacted;
         
         CrateType = crate.GetCrateType();
         Barcode = crate.Barcode;
@@ -42,6 +44,7 @@ public record ScoredHistoryEntry(HistoryEntry Entry, int Score) : ISearchableCra
     public SearchTag Author => Entry.Author;
     public SearchTag[] Tags => Entry.Tags;
     public string Description => Entry.Description;
+    public bool Redacted => Entry.Redacted;
     public CrateType CrateType => Entry.CrateType;
     public int Salt => Entry.Salt;
     public DateTime DateAdded => Entry.DateAdded;

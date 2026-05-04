@@ -10,7 +10,9 @@ public interface ISearchableCrate
     SearchTag Author { get; }
     SearchTag[] Tags { get; }
     
+    // Formal data
     string Description { get; }
+    bool Redacted { get; }
     
     CrateType CrateType { get; }
     int Salt { get; }

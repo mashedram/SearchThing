@@ -1,3 +1,7 @@
+>>**Version 0.4.1**
+>1. Fixed a bug related to fusion and item selection.
+>2. Added level search
+ 
 >>**Version 0.4.0**
 >1. Added custom presets.
 >   1. Hover over an item you want and press the plus button in the top right to go into assignment mode

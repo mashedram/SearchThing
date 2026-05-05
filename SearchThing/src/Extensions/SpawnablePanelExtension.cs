@@ -1,4 +1,7 @@
-﻿using Il2CppInterop.Runtime.InteropTypes.Arrays;
+﻿using Il2CppCysharp.Threading.Tasks;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using Il2CppSLZ.Bonelab;
+using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.UI;
 using Il2CppTMPro;
@@ -7,6 +10,7 @@ using MelonLoader;
 using SearchThing.Extensions.Components;
 using SearchThing.Extensions.Pages;
 using SearchThing.Extensions.Panel;
+using SearchThing.Patches;
 using SearchThing.Presets;
 using SearchThing.Search;
 using SearchThing.Util;
@@ -190,6 +194,9 @@ public class SpawnablePanelExtension
         _keyboard = new Keyboard.Keyboard(_panelView.gameObject, buttonStyleReference);
         _keyboard.OnTextChanged += OnSearchQueryChanged;
         _keyboard.Hide();
+        
+        // Prefetch to avoid the delay on first load
+        RequestRefresh();
     }
     
     public bool IsPanelSelected(ISearchPanel page)
@@ -325,56 +332,7 @@ public class SpawnablePanelExtension
         list.Clear();
         return list;
     }
-
-    // public void UpdateTagVisuals()
-    // {
-    //     // We select tags ourself, so no need to set them on the marrow side
-    //     _panelView._numberOfTagPages = _pages.PageCount;
-    //     
-    //     // Update values on the marrow side before we edit them manually if needed
-    //     // We only populate the first page and only wish to render that one
-    //     _panelView.UpdateTagPageItems(0, ISearchPage.PanelsPerPage);
-    //     _panelView.UpdateTagPageText(_renderedPageIndex, _pages.PageCount);
-    //     
-    //     var selectedCrate = GetSelectedSpawnable();
-    //     // We need to manually set the outline, because we skip the method that does so internally
-    //     var tagButtons = _panelView.treeButtons;
-    //     for (var i = 0; i < tagButtons.Count; i++)
-    //     {
-    //         var reference = tagButtons[i];
-    //         if (reference == null)
-    //             continue;
-    //
-    //         var panel = GetRenderPanel(i);
-    //         var isSelected = i == _selectedTagIndex && _selectedPageIndex == _renderedPageIndex;
-    //         var forceHighlight = panel.IsForceHighlighted(this, selectedCrate);
-    //         reference.highlight.enabled = isSelected || forceHighlight != null;
-    //         reference.highlight.color = forceHighlight ?? new Color(1, 1, 1, 0.5f);
-    //         
-    //         reference.tmp.text = (_isEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected) 
-    //             ? _editValue 
-    //             : panel.Tag;
-    //     }
-    // }
-    //
-    // public void EnableTags(params string[] tags)
-    // {
-    //     var activeTags = _panelView._activeTags;
-    //     activeTags.Clear();
-    //     foreach (var tag in tags)
-    //     {
-    //         EnsureList(tag);
-    //         activeTags.Add(tag);
-    //     }
-    //     
-    //     UpdateTagVisuals();
-    // }
-
-    // public void RenderTags()
-    // {
-    //     var page = GetRenderPage();
-    //     EnableTags(page.Panels.Select(p => p.Tag).ToArray());
-    // }
+    
     public void RenderTags()
     {
         var selectedCrate = GetSelectedSpawnable();
@@ -549,6 +507,10 @@ public class SpawnablePanelExtension
     
     public void RenderAll()
     {
+        // Skip rendering if we left the search page before render gets called
+        if (!IsSearchActive())
+            return;
+        
         // Render tags page
         RenderTags();
         // Render page
@@ -565,11 +527,7 @@ public class SpawnablePanelExtension
 
     private void AssignSpawnableCrate(SpawnableCrate spawnableCrate)
     {
-        var spawngun = _panelView.spawnGun;
-        if (spawngun != null)
-        {
-            spawngun.OnSpawnableSelected(spawnableCrate);
-        }
+        SpawnGunPatches.SelectCrate(spawnableCrate);
     }
     
     private void AssignAvatarCrate(Scannable avatarCrate)
@@ -580,6 +538,12 @@ public class SpawnablePanelExtension
         {
             cordDevice.SwapAvatar(reference).Forget();
         }
+    }
+    
+    private void LoadLevelCrate(Scannable levelCrate)
+    {
+        var reference = new LevelCrateReference(levelCrate._barcode);
+        SceneStreamer.LoadAsync(reference).Forget();
     }
 
     private void AssignCrate()
@@ -600,6 +564,12 @@ public class SpawnablePanelExtension
         var spawnableCrate = crate.TryCast<SpawnableCrate>();
         if (spawnableCrate != null) {
             AssignSpawnableCrate(spawnableCrate);
+        }
+        
+        var levelCrate = crate.TryCast<LevelCrate>();
+        if (levelCrate != null)
+        {
+            LoadLevelCrate(levelCrate);
         }
     }
 
@@ -639,6 +609,7 @@ public class SpawnablePanelExtension
         
         // Clear the query so the user doesn't get an empty screen
         _searchQuery = "";
+        _keyboard.SetText(_searchQuery, false);
         
         // Update everything to reflect the new selected panel
         RequestRefresh();

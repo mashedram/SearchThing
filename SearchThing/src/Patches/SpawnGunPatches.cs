@@ -9,9 +9,20 @@ using SearchThing.History;
 
 namespace SearchThing.Patches;
 
-[HarmonyPatch((typeof(SpawnGun)))]
+[HarmonyPatch(typeof(SpawnGun))]
 public class SpawnGunPatches
 {
+    public static SpawnGun? HeldSpawnGun { get; private set; }
+    private static SpawnableCrate? _selectedCrate;
+
+    public static void SelectCrate(SpawnableCrate crate)
+    {
+        _selectedCrate = crate;
+        
+        if (HeldSpawnGun != null)
+            HeldSpawnGun.OnSpawnableSelected(_selectedCrate);
+    }
+    
     private static bool IsHeldByLocalPlayer(Gun spawnGun)
     {
         if (!NetworkSceneManager.IsLevelNetworked)
@@ -26,6 +37,36 @@ public class SpawnGunPatches
 
         var rm = host.GetHand()?.manager;
         return rm != null && rm.IsLocalPlayer();
+    }
+
+    [HarmonyPatch(nameof(SpawnGun.OnTriggerGripAttached))]
+    [HarmonyPostfix]
+    public static void OnTriggerGripAttached_Prefix(SpawnGun __instance, Hand hand)
+    {
+        if (__instance == null)
+            return;
+
+        if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
+            return;
+        
+        HeldSpawnGun = __instance;
+        
+        // Ensure that whatever spawnable we grab with is selected in the spawn gun
+        if (_selectedCrate != null)
+            __instance.OnSpawnableSelected(_selectedCrate);
+    }
+
+    [HarmonyPatch(nameof(SpawnGun.OnTriggerGripDetached))]
+    [HarmonyPostfix]
+    public static void OnTriggerGripDetached_Prefix(SpawnGun __instance, Hand hand)
+    {
+        if (__instance == null)
+            return;
+
+        if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
+            return;
+        
+        HeldSpawnGun = null;
     }
     
     // Run this as soon after we fire to capture what is fired before any other mods might change that
@@ -56,10 +97,13 @@ public class SpawnGunPatches
         
         if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
             return true;
+        
+        // Assign the selected crate without updating to prevent a loop
+        _selectedCrate = crate;
 
         // Ignore non-avatar crates
         if (crate.TryCast<AvatarCrate>() == null)
-            return true;
+            return true;    
 
         // Do not allow setting the spawnable to an avatar
         return false;

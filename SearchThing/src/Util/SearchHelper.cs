@@ -25,6 +25,9 @@ public static class SearchHelper
         if (crate.IsCrate<AvatarCrate>())
             return CrateType.Avatar;
         
+        if (crate.IsCrate<LevelCrate>())
+            return CrateType.Level;
+        
         return CrateType.Prop;
     }
     

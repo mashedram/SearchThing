@@ -7,7 +7,7 @@ public class PropHistorySearchPanel : HistorySearchPanel
 {
 
     public override string Tag => "Prop History";
-    protected override bool Filter(HistoryEntry entry)
+    protected override bool Filter(ISearchableCrate entry)
     {
         return entry.CrateType == CrateType.Prop;
     }

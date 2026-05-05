@@ -6,7 +6,7 @@ public class AlphabeticalSearchOrder : ISelectableSearchOrder
 {
     public string Name => "ABC";
 
-    public int Score(ISearchableCrate searchableCrate)
+    public int Order(ISearchableCrate searchableCrate)
     {
         return -string.Compare(searchableCrate.Name.Original, string.Empty, StringComparison.Ordinal);
     }

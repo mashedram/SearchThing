@@ -210,28 +210,4 @@ public static class ToolUiPatches
 
         extension.RenderFavoriteButton();
     }
-
-    // private record SpawngunOverwriteInfo(SpawnGun SpawnGun, SpawnableCrate Crate);
-    // // Funny thing, not doing this will cause the spawn gun to actually load the avatar
-    // // In SP, this will just turn you into the avatar
-    // // In Fusion, the avatar will spawn in, as just the mesh
-    // [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
-    // [HarmonyPostfix]
-    // private static void SelectItem_Prefix(SpawnablesPanelView __instance, int idx, ref SpawngunOverwriteInfo? __state)
-    // {
-    //     __state = null;
-    //     var selectedCrate = __instance.SpawnablesQuickMap[__instance._selectedTag][idx];
-    //     var selectedAvatarCrate = selectedCrate.TryCast<AvatarCrate>();
-    //     
-    //     // If the selected crate is not an avatar, continue as normal
-    //     if (selectedAvatarCrate == null)
-    //         return;
-    //
-    //     var reference = new AvatarCrateReference(selectedAvatarCrate._barcode);
-    //     var cordDevice = BodylogAccessor.GetCordDevice();
-    //     if (cordDevice != null)
-    //     {
-    //         cordDevice.SwapAvatar(reference).Forget();
-    //     }
-    // }
 }

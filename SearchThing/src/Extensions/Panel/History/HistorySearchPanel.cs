@@ -1,4 +1,5 @@
 ﻿using SearchThing.Extensions.Panel.Abstract;
+using SearchThing.Extensions.Sort;
 using SearchThing.History;
 using SearchThing.Search;
 
@@ -15,4 +16,12 @@ public abstract class HistorySearchPanel : BasicSearchPanel
     {
         HistoryManager.SearchAsync(query, searchOrder, Filter, callback);
     }
+    
+    public override ISelectableSearchOrder[] SupportedOrders { get; } = {
+        new DateNewAddedSearchOrder(),
+        new DateOldAddedSearchOrder(),
+        new ScoreSearchOrder(),
+        new AlphabeticalSearchOrder(),
+        new RandomSearchOrder()
+    };
 }

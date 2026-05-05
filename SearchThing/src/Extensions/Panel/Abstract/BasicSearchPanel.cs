@@ -49,7 +49,7 @@ public abstract class BasicSearchPanel : ISearchPanel
         }
     }
     
-    public ISelectableSearchOrder[] SupportedOrders { get; } = {
+    public virtual ISelectableSearchOrder[] SupportedOrders { get; } = {
         new ScoreSearchOrder(),
         new AlphabeticalSearchOrder(),
         new DateNewAddedSearchOrder(),

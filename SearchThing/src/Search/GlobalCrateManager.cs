@@ -10,7 +10,11 @@ public static class GlobalCrateManager
     
     public static void AddPallet(Pallet pallet)
     {
-        SearchableCrateCrates.AddCrates(pallet._crates._items.Select(crate => new SearchableCrate(crate)));
+        SearchableCrateCrates.AddCrates(
+            pallet._crates._items
+                .Where(c => c != null)
+                .Select(crate => new SearchableCrate(crate))
+        );
     }
     
     public static ISearchableCrate? GetCrate(Barcode barcode)

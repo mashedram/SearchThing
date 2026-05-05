@@ -194,6 +194,9 @@ public class SpawnablePanelExtension
         _keyboard = new Keyboard.Keyboard(_panelView.gameObject, buttonStyleReference);
         _keyboard.OnTextChanged += OnSearchQueryChanged;
         _keyboard.Hide();
+        
+        // Prefetch to avoid the delay on first load
+        RequestRefresh();
     }
     
     public bool IsPanelSelected(ISearchPanel page)

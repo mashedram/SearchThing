@@ -22,17 +22,14 @@ public class SpawnGunPatches
         if (HeldSpawnGun != null)
             HeldSpawnGun.OnSpawnableSelected(_selectedCrate);
     }
-    
-    private static bool IsHeldByLocalPlayer(Gun spawnGun)
+        
+    private static bool IsHeldByLocalPlayer(SpawnGun spawnGun)
     {
         if (!NetworkSceneManager.IsLevelNetworked)
             return true;
         
         var host = spawnGun.host;
         if (host == null)
-            return false;
-        
-        if (!host.IsAttached)
             return false;
 
         var rm = host.GetHand()?.manager;

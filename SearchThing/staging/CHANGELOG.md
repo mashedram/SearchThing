@@ -1,3 +1,12 @@
+>>**Version 0.4.3**
+>1. Fixed a bug that prevented the search panel from being used in a fusion lobby (Reported by Lakatrazz)
+
+>>**Version 0.4.2**
+>1. Fixed the startup delay when opening the search menu for the first time
+>2. Added different icons for different items
+>3. Selecting an item in the spawn menu will now guarantee the item to be selected in the spawn gun
+>4. Renamed "Score" sorting to "Relevance" (Suggested by Alfi)
+
 >>**Version 0.4.1**
 >1. Fixed a bug related to fusion and item selection.
 >2. Added level search

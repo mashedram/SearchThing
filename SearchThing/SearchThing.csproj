@@ -398,6 +398,10 @@
       <Folder Include="staging\Mods\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="dependencies\LiteDB\LiteDB.csproj" />
+    </ItemGroup>
+
     <PropertyGroup>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>

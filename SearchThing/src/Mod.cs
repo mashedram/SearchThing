@@ -1,7 +1,9 @@
 ﻿using BoneLib;
 using SearchThing;
 using MelonLoader;
+using SearchThing.Lookup.Cache;
 using SearchThing.Presets;
+using SearchThing.Search;
 
 [assembly: MelonInfo(typeof(Mod), "SearchThing", "0.4.1", "Mash")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]

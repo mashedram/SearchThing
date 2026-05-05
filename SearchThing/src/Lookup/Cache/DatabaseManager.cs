@@ -1,5 +1,7 @@
+using Il2CppSLZ.Marrow.Warehouse;
 using LiteDB;
 using MelonLoader.Utils;
+using SearchThing.Search;
 
 namespace SearchThing.Lookup.Cache;
 
@@ -10,7 +12,6 @@ public static class DatabaseManager
     
     // Collections
     private static ILiteCollection<KnownCrate>? _crates;
-    private static ILiteCollection<KnownPallet>? _pallets;
 
     public static void OnMelonInitialize()
     {
@@ -18,24 +19,30 @@ public static class DatabaseManager
         
         // Create collections
         _crates  = _database.GetCollection<KnownCrate>("KnownCrates");
-        _pallets = _database.GetCollection<KnownPallet>("KnownPallets");
         
         // Set up references
         var mapper = BsonMapper.Global;
-
-        mapper.Entity<KnownCrate>()
-            .DbRef(x => x.Pallet, "KnownPallets");
-        
-        mapper.Entity<KnownPallet>()
-            .DbRef(x => x.Crates, "KnownCrates");
         
         // Ensure indexes
         _crates.EnsureIndex(x => x.Barcode);
-        _pallets.EnsureIndex(x => x.Barcode);
     }
 
     public static void OnMelonDeinitialize()
     {
         _database?.Dispose();
+    }
+    
+    // Cache appending methods
+
+    
+    public static void AddCrate(ISearchableCrate crate)
+    {
+        if (_crates == null) 
+            return;
+        
+        if (_crates.Exists(x => x.Barcode == crate.Barcode._id))
+            return; // Already exists, skip
+        
+        // var knownCrate = new KnownCrate(crate);
     }
 }

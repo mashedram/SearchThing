@@ -1,7 +1,5 @@
-﻿using FuzzySharp.PreProcess;
-using Il2CppSLZ.Marrow.Warehouse;
+﻿using Il2CppSLZ.Marrow.Warehouse;
 using SearchThing.Search;
-using SearchThing.Util;
 
 namespace SearchThing.History;
 

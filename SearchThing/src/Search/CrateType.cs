@@ -6,3 +6,19 @@ public enum CrateType
     Avatar,
     Level
 }
+
+public enum CrateSubType
+{
+    None,
+    // Spawnable subtypes
+    Gun,
+    Melee,
+    Throwable,
+    Vehicle,
+    // Avatar subtypes
+    Large,
+    Medium,
+    Small,
+    // Level subtypes
+    // TODO
+}

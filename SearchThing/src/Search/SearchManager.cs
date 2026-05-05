@@ -17,6 +17,7 @@ public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchableCrate
     public string Description => Crate.Description;
     public bool Redacted => Crate.Redacted;
     public CrateType CrateType => Crate.CrateType;
+    public CrateSubType CrateSubType => Crate.CrateSubType;
     public int Salt => Crate.Salt;
     public Barcode Barcode => Crate.Barcode;
     public DateTime DateAdded => Crate.DateAdded;

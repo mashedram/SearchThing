@@ -10,12 +10,17 @@
 
     <ItemGroup>
         <EmbeddedResource Include="resources\AddIcon.png" />
-        <EmbeddedResource Include="resources\AvatarIcon.png" />
-        <EmbeddedResource Include="resources\CrateIcon.png" />
-        <EmbeddedResource Include="resources\LevelIcon.png" />
         <EmbeddedResource Include="resources\EditIcon.png" />
         <EmbeddedResource Include="resources\RemoveIcon.png" />
         <EmbeddedResource Include="resources\SearchIcon.png"/>
+
+        <EmbeddedResource Include="resources\AvatarIcon.png" />
+        <EmbeddedResource Include="resources\LevelIcon.png" />
+        <EmbeddedResource Include="resources\CrateIcon.png" />
+        <EmbeddedResource Include="resources\GunIcon.png" />
+        <EmbeddedResource Include="resources\MeleeIcon.png" />
+        <EmbeddedResource Include="resources\ThrowableIcon.png" />
+        <EmbeddedResource Include="resources\VehicleIcon.png" />
     </ItemGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

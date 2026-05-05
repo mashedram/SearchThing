@@ -30,7 +30,55 @@ public static class SearchHelper
         
         return CrateType.Prop;
     }
+
+    private static List<string> GetTags(this Crate crate)
+    {
+        return crate._tags._items
+            .Where(tag => !string.IsNullOrEmpty(tag))
+            .Select(tag => tag.ToLower())
+            .ToList();
+    }
+
+    private static List<string> GetMetaDataList(this Crate crate)
+    {
+        var tags = crate.GetTags();
+        // Add additional data to tag list
+        if (!string.IsNullOrEmpty(crate.Title))
+            tags.AddRange(crate.Title.ToLower().Split(" ").Select(p => p.Trim()));
+        
+        return tags;
+    }
     
+    private static CrateSubType GetPropSubType(this Crate crate)
+    {
+        var meta = crate.GetMetaDataList();
+        
+        if (meta.Contains("gun"))
+            return CrateSubType.Gun;
+
+        if (meta.Contains("grenade"))
+            return CrateSubType.Throwable;
+        
+        if (meta.Contains("melee"))
+            return CrateSubType.Melee;
+
+        if (meta.Contains("vehicle"))
+            return CrateSubType.Vehicle;
+            
+        return CrateSubType.None;
+    }
+
+    public static CrateSubType GetCrateSubType(this Crate crate, CrateType crateType)
+    {
+        switch (crateType)
+        {
+            case CrateType.Prop:
+                return crate.GetPropSubType();
+            default:
+                return CrateSubType.None;
+        }
+    }
+
     public static SearchResults ToSearchResults(this IEnumerable<ISearchableCrate> scoredCrates)
     {
         var entries = scoredCrates.Select(searchableCrate => new SearchResultEntry(searchableCrate)).ToList();

@@ -15,6 +15,7 @@ public interface ISearchableCrate
     bool Redacted { get; }
     
     CrateType CrateType { get; }
+    CrateSubType CrateSubType { get; }
     int Salt { get; }
     int Score { get; }
     DateTime DateAdded { get; }

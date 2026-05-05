@@ -13,6 +13,7 @@ public class SearchableCrate : ISearchableCrate, IEquatable<SearchableCrate>
     public bool Redacted { get; }
     public int Salt { get; } // Used for tie-breaking to ensure consistent ordering
     public CrateType CrateType { get; }
+    public CrateSubType CrateSubType { get; }
     // Default to zero for global searchables
     public virtual int Score => 0;
     public DateTime DateAdded { get; }
@@ -45,6 +46,7 @@ public class SearchableCrate : ISearchableCrate, IEquatable<SearchableCrate>
         }
 
         CrateType = spawnableCrate.GetCrateType();
+        CrateSubType = spawnableCrate.GetCrateSubType(CrateType);
         
         Barcode = spawnableCrate.Barcode;
     }

@@ -9,11 +9,6 @@ namespace SearchThing.Extensions.Components;
 
 public class ItemButton
 {
-    // Icons
-    private static readonly Sprite AvatarIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.AvatarIcon.png");
-    private static readonly Sprite CrateIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.CrateIcon.png");
-    private static readonly Sprite LevelIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.LevelIcon.png");
-    
     // Default value cache
     private static Sprite? _defaultIcon = null!;
     private static Color? _defaultIconColor = null!;
@@ -38,17 +33,6 @@ public class ItemButton
         _highlight = button.highlight;
         _icon = button.special;
     }
-
-    private Sprite GetIconForType(CrateType type)
-    {
-        return type switch
-        {
-            CrateType.Avatar => AvatarIcon,
-            CrateType.Prop => CrateIcon,
-            CrateType.Level => LevelIcon,
-            _ => _defaultIcon!
-        };
-    }
     
     public void SetCrate(ISearchableCrate crate, bool isSelected = false)
     {
@@ -56,7 +40,7 @@ public class ItemButton
         
         _text.text = crate.Name.Original;
         _icon.enabled = true;
-        _icon.sprite = GetIconForType(crate.CrateType);
+        _icon.sprite = CrateIconProvider.GetIcon(crate);
         _icon.color = Color.white;
         _highlight.enabled = isSelected;
     }

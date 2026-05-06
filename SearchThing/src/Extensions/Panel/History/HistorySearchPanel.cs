@@ -5,14 +5,14 @@ using SearchThing.Search;
 
 namespace SearchThing.Extensions.Panel.History;
 
-public abstract class HistorySearchPanel : BasicSearchPanel
+public abstract class HistorySearchPanel : BasicSearchPanel<HistoryCrateEntry>
 {
     public override bool ResearchOnPageChange => true;
     
     public override abstract string Tag { get; }
     protected abstract bool Filter(ISearchableCrate entry);
     
-    protected override void Search(string query, ISearchOrder searchOrder, Action<SearchResults> callback)
+    protected override void Search(string query, ISearchOrder searchOrder, Action<SearchResults<HistoryCrateEntry>> callback)
     {
         HistoryManager.SearchAsync(query, searchOrder, Filter, callback);
     }

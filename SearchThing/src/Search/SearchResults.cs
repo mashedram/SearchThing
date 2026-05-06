@@ -3,59 +3,35 @@ using SearchThing.Extensions.Panel;
 
 namespace SearchThing.Search;
 
-public class SearchResultEntry
+public class SearchResults<TCrate>
+    where TCrate : class, ISearchableCrate
 {
-    public ISearchableCrate Source;
-
-    private SpawnableCrate? _crate;
-    public SpawnableCrate? Crate
-    {
-        get
-        {
-            if (_crate != null)
-                return _crate;
-
-            if (!AssetWarehouse.Instance.TryGetCrate(Source.Barcode, out _crate))
-                return null;
-            
-            return _crate;
-        }
-    }
+    public static SearchResults<ISearchableCrate> Empty { get; } = new(new List<ISearchableCrate>());
+    private IReadOnlyList<TCrate> Entries { get; }
     
-    public SearchResultEntry(ISearchableCrate source)
-    {
-        Source = source;
-    }
-}
-
-public class SearchResults
-{
-    public static SearchResults Empty { get; } = new(new List<SearchResultEntry>());
-    private IReadOnlyList<SearchResultEntry> Entries { get; }
-    
-    public SearchResults(List<SearchResultEntry> entries)
+    public SearchResults(List<TCrate> entries)
     {
         Entries = entries;
     }
     
-    private IEnumerable<SearchResultEntry> GetPageIterator(int start, int end)
+    private IEnumerable<TCrate> GetPageIterator(int start, int end)
     {
         for (var i = start; i < end; i++)
             yield return Entries[i];
     }
 
-    public IEnumerable<SearchResultEntry> GetPage(int page, int pageSize)
+    public IEnumerable<TCrate> GetPage(int page, int pageSize)
     {
         var start = page * pageSize;
         var end = Math.Min(start + pageSize, Entries.Count);
 
         if (start >= Entries.Count)
-            return Array.Empty<SearchResultEntry>();
+            return Array.Empty<TCrate>();
 
         return GetPageIterator(start, end);
     }
     
-    public SearchResultEntry? GetEntryAt(int index)
+    public TCrate? GetEntryAt(int index)
     {
         if (index < 0 || index >= Entries.Count)
             return null;
@@ -63,7 +39,7 @@ public class SearchResults
         return Entries[index];
     }
     
-    public SearchResultEntry? GetEntryAt(int page, int pageSize, int index)
+    public TCrate? GetEntryAt(int page, int pageSize, int index)
     {
         var globalIndex = page * pageSize + index;
         return GetEntryAt(globalIndex);

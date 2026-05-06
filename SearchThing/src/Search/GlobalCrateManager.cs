@@ -6,7 +6,7 @@ public static class GlobalCrateManager
 {
     private static readonly SearchableCrateLookup SearchableCrateCrates = new();
     
-    public static ISearchableCrateList GetCrates() => SearchableCrateCrates;
+    public static ISearchableCrateList<ISearchableCrate> GetCrates() => SearchableCrateCrates;
     
     public static void AddPallet(Pallet pallet)
     {

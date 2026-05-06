@@ -1,5 +1,6 @@
 ﻿using Il2CppSLZ.UI;
 using Il2CppTMPro;
+using SearchThing.Extensions.Panel.Data;
 using SearchThing.Search;
 using SearchThing.Util;
 using UnityEngine;
@@ -34,13 +35,13 @@ public class ItemButton
         _icon = button.special;
     }
     
-    public void SetCrate(ISearchableCrate crate, bool isSelected = false)
+    public void SetCrate(ItemRenderData crate, bool isSelected = false)
     {
         _button.SetActive(true);
         
-        _text.text = crate.Name.Original;
-        _icon.enabled = true;
-        _icon.sprite = CrateIconProvider.GetIcon(crate);
+        _text.text = crate.Name;
+        _icon.enabled = crate.Icon != null;
+        _icon.sprite = crate.Icon;
         _icon.color = Color.white;
         _highlight.enabled = isSelected;
     }

@@ -1,4 +1,5 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
+using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
 using SearchThing.Search;
 using UnityEngine;
@@ -47,11 +48,5 @@ public interface ISearchPanel
     /// <returns>Return false to prevent the panel from being selected</returns>
     bool OnSelected(SpawnablePanelExtension extension);
     ISearchableCrate? GetCrateAt(int index);
-    IReadOnlyList<ISearchableCrate> GetPage(int page);
-    /// <summary>
-    /// Return an IEnumerable to render the page with
-    /// Only the first 12 entries will be considered
-    /// </summary>
-    /// <returns></returns>
-    IEnumerable<SpawnableCrate> Render(int page);
+    IReadOnlyList<ItemRenderData> GetPage(int page);
 }

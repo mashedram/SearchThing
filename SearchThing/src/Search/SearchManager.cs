@@ -28,14 +28,40 @@ public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchableCrate
     }
 }
 
-public record SearchTask(
+interface ISearchTask
+{
+    string Query { get; }
+    ISearchableCrateList<ISearchableCrate> PureSourceList { get; }
+    Func<ISearchableCrate, bool> Filter { get; }
+    ISearchOrder SearchOrder { get; }
+    CancellationToken CancellationToken { get; }
+
+    /// <summary>
+    /// Calls the OnComplete callback with the generic search results
+    /// </summary>
+    /// <remarks>Runs on the Search Thread</remarks>
+    /// <param name="results">The results to process</param>
+    void RunAndStore(IEnumerable<ISearchableCrate> results);
+}
+
+public record SearchTask<TCrate>(
     string Query,
-    ISearchableCrateList SearchableCrateCrates,
+    ISearchableCrateList<TCrate> SourceList,
     Func<ISearchableCrate, bool> Filter,
     ISearchOrder SearchOrder,
-    Action<SearchResults> OnComplete,
+    Action<SearchResults<TCrate>> OnComplete,
     CancellationToken CancellationToken
-);
+) : ISearchTask where TCrate : class, ISearchableCrate
+{
+    public ISearchableCrateList<ISearchableCrate> PureSourceList => SourceList;
+    
+    public void RunAndStore(IEnumerable<ISearchableCrate> results)
+    {
+        var typedResults = ((IEnumerable<TCrate>)results).ToList();
+        var searchResults = new SearchResults<TCrate>(typedResults);
+        ThreadUtils.RunOnMainThread(() => OnComplete(searchResults));
+    }
+}
 
 public static class SearchManager
 {
@@ -45,7 +71,7 @@ public static class SearchManager
     private static CancellationTokenSource? _lastSearchCts = new();
 
     private static Thread? _searchThread;
-    private static readonly BlockingCollection<SearchTask> SearchQueue = new();
+    private static readonly BlockingCollection<ISearchTask> SearchQueue = new();
     private static readonly CancellationTokenSource SearchThreadCts = new();
 
 
@@ -81,13 +107,13 @@ public static class SearchManager
         }
     }
 
-    private static void ExecuteSearch(SearchTask task)
+    private static void ExecuteSearch(ISearchTask task)
     {
 #if DEBUG
         var stopwatch = Stopwatch.StartNew();
 #endif
             
-        var searchableCrates = task.SearchableCrateCrates.GetCrates();
+        var searchableCrates = task.PureSourceList.GetCrates();
 
         try
         {
@@ -101,10 +127,9 @@ public static class SearchManager
                         .WithCancellation(task.CancellationToken)
                         .Where(task.Filter)
                         .OrderByDescending(task.SearchOrder.Order)
-                        .ThenByDescending(c => c.Salt) // Tie-breaker
-                        .ToSearchResults();
+                        .ThenByDescending(c => c.Salt); // Tie-breaker
 
-                task.OnComplete.RunOnMainThread(emptyResult);
+                task.RunAndStore(emptyResult);
                 return;
             }
 
@@ -122,10 +147,9 @@ public static class SearchManager
                 .Where(c => c.Score >= RequiredMatchRate)
                 .OrderByDescending(task.SearchOrder.Order)
                 .ThenByDescending(c => c.Crate.Salt) // Tie-breaker
-                .Select(c => c.Crate)
-                .ToSearchResults();
+                .Select(c => c.Crate);
 
-            task.OnComplete.RunOnMainThread(result);
+            task.RunAndStore(result);
         }
         catch (OperationCanceledException)
         {
@@ -146,7 +170,8 @@ public static class SearchManager
 #endif
     }
 
-    public static void SearchAsync(string query, ISearchableCrateList crateList, Func<ISearchableCrate, bool> filter, ISearchOrder searchOrder, Action<SearchResults> onComplete)
+    public static void SearchAsync<TCrate>(string query, ISearchableCrateList<TCrate> crateList, Func<ISearchableCrate, bool> filter, ISearchOrder searchOrder, Action<SearchResults<TCrate>> onComplete)
+        where TCrate : class, ISearchableCrate
     {
         lock (SearchLock)
         {
@@ -155,7 +180,7 @@ public static class SearchManager
             _lastSearchCts = new CancellationTokenSource();
         }
 
-        var searchTask = new SearchTask(
+        var searchTask = new SearchTask<TCrate>(
             query,
             crateList,
             filter,

@@ -4,17 +4,17 @@
 /// Represents a list of searchable crates. This is used to store the crates that are currently being searched through.
 /// </summary>
 /// <remarks>This class MUST be thread safe</remarks>
-public interface ISearchableCrateList
+public interface ISearchableCrateList<out TCrate> where TCrate : class, ISearchableCrate
 {
-    IEnumerable<ISearchableCrate> GetCrates();
+    IEnumerable<TCrate> GetCrates();
 }
 
-public class SearchableCrateList : ISearchableCrateList
+public class SearchableCrateList<TCrate> : ISearchableCrateList<TCrate> where TCrate : class, ISearchableCrate
 {
     private readonly ReaderWriterLockSlim _lock = new();
-    private readonly List<ISearchableCrate> _crates = new();
+    private readonly List<TCrate> _crates = new();
     
-    public void AddCrate(ISearchableCrate crate)
+    public void AddCrate(TCrate crate)
     {
         _lock.EnterWriteLock();
         try
@@ -27,7 +27,7 @@ public class SearchableCrateList : ISearchableCrateList
         }
     }
     
-    public void AddCrates(IEnumerable<ISearchableCrate> crates)
+    public void AddCrates(IEnumerable<TCrate> crates)
     {
         _lock.EnterWriteLock();
         try
@@ -40,7 +40,7 @@ public class SearchableCrateList : ISearchableCrateList
         }
     }
     
-    public IEnumerable<ISearchableCrate> GetCrates()
+    public IEnumerable<TCrate> GetCrates()
     {
         _lock.EnterReadLock();
         try

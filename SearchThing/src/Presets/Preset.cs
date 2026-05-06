@@ -12,7 +12,7 @@ using Random = System.Random;
 
 namespace SearchThing.Presets;
 
-public class Preset : BasicSearchPanel
+public class Preset : BasicSearchPanel<ISearchableCrate>
 {
     private const string DefaultTag = "EMPTY";
     
@@ -102,31 +102,9 @@ public class Preset : BasicSearchPanel
         AssignedCrates.Remove(crate);
     }
     
-    protected override void Search(string query, ISearchOrder order, Action<SearchResults> callback)
+    protected override void Search(string query, ISearchOrder order, Action<SearchResults<ISearchableCrate>> callback)
     {
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            var emptyResults = AssignedCrates
-                .OrderByDescending(order.Order)
-                .ThenByDescending(entry => entry.Salt) // Tie-breaker: more recent entries first
-                .ToSearchResults();
-            
-            callback(emptyResults);
-            return;
-        }
-        
-        var lowerQuery = query.ToLowerInvariant();
-        var preprocessedQuery = StringPreprocessorFactory.GetPreprocessor(PreprocessMode.Full)(lowerQuery);
-        
-        // Presets cannot search for now
-        var results = AssignedCrates
-            .Select(entry => ScoredCrate.ScoreCrate(entry, preprocessedQuery))
-            .Where(entry => entry.Score >= 80)
-            .OrderByDescending(order.Order)
-            .ThenByDescending(entry => entry.Salt) // Tie-breaker: more recent entries first
-            .ToSearchResults();
-        
-        callback(results);
+        SearchManager.SearchAsync(query, AssignedCrates.ToSearchable(), _ => true, order, callback);
     }
     
     public PresetData ToData()

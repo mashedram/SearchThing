@@ -1,19 +1,22 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
+using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
 using SearchThing.Search;
+using SearchThing.Util;
 using UnityEngine;
 
 namespace SearchThing.Extensions.Panel.Abstract;
 
-public abstract class BasicSearchPanel : ISearchPanel
+public abstract class BasicSearchPanel<TCrate> : ISearchPanel
+    where TCrate : class, ISearchableCrate
 {
     private bool _isDirty = true;
-    private SearchResults? _results;
+    private SearchResults<TCrate>? _results;
     
     public virtual bool ResearchOnPageChange => false;
     public abstract string Tag { get; }
     public virtual bool TagEditable => false;
-    protected abstract void Search(string query, ISearchOrder order, Action<SearchResults> callback);
+    protected abstract void Search(string query, ISearchOrder order, Action<SearchResults<TCrate>> callback);
 
     public Guid Id { get; } = Guid.NewGuid();
 
@@ -107,31 +110,33 @@ public abstract class BasicSearchPanel : ISearchPanel
         // No special logic needed
         return true;
     }
+    
+    public virtual ItemRenderData GetRenderDataForCrate(TCrate crate)
+    {
+        return new ItemRenderData()
+        {
+            Name = crate.Name.Original,
+            PalletName = crate.PalletName.Original,
+            Author = crate.Author.Original,
+            Tags = crate.Tags.Select(t => t.Original).ToArray(),
+            Description = crate.Description,
+            Icon = CrateIconProvider.GetIcon(crate)
+        };
+    }
 
     public ISearchableCrate? GetCrateAt(int index)
     {
-        return _results?.GetEntryAt(Page, ISearchPanel.PanelSize, index)?.Source;
+        return _results?.GetEntryAt(Page, ISearchPanel.PanelSize, index);
     }
 
-    public IReadOnlyList<ISearchableCrate> GetPage(int page)
+    public IReadOnlyList<ItemRenderData> GetPage(int page)
     {
         if (_results == null)
-            return Array.Empty<ISearchableCrate>();
+            return Array.Empty<ItemRenderData>();
 
         return _results
             .GetPage(page, ISearchPanel.PanelSize)
-            .Select(entry => entry.Source)
+            .Select(GetRenderDataForCrate)
             .ToList();
-    }
-
-    public IEnumerable<SpawnableCrate> Render(int page)
-    {
-        if (_results == null)
-            return Array.Empty<SpawnableCrate>();
-        
-        return _results.GetPage(page, ISearchPanel.PanelSize)
-            .Select(entry => entry.Crate)
-            .Where(crate => crate != null)
-            .Select(crate => crate!);
     }
 }

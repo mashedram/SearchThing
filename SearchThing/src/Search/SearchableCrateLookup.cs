@@ -1,6 +1,6 @@
 ﻿namespace SearchThing.Search;
 
-public class SearchableCrateLookup : ISearchableCrateList
+public class SearchableCrateLookup : ISearchableCrateList<ISearchableCrate>
 {
     private readonly ReaderWriterLockSlim _lock = new();
     private readonly Dictionary<string, ISearchableCrate> _lookup = new();

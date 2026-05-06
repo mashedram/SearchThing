@@ -78,13 +78,6 @@ public static class SearchHelper
                 return CrateSubType.None;
         }
     }
-
-    public static SearchResults ToSearchResults(this IEnumerable<ISearchableCrate> scoredCrates)
-    {
-        var entries = scoredCrates.Select(searchableCrate => new SearchResultEntry(searchableCrate)).ToList();
-
-        return new SearchResults(entries);
-    }
     
     public static bool TryGetCrate(this ISearchableCrate crate, [MaybeNullWhen(false)] out Crate outCrate)
     {

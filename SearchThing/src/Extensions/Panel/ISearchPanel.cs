@@ -12,12 +12,37 @@ public interface ISearchPanel
     
     Guid Id { get; }
     string Tag { get; }
+    bool IsVisible { get; }
+    bool CanAssign { get; }
     bool TagEditable { get; }
     string Query { get; set; }
     int SelectedOrderIndex { get; set; }
     ISelectableSearchOrder[] SupportedOrders { get; }
     int Page { get; set; }
     int PageCount { get; }
+    
+    bool HasPanelFunction { get; }
+    Color? GetPanelFunctionHighlight(SpawnablePanelExtension extension);
+    Sprite? PanelFunctionIcon { get; }
+    /// <summary>
+    /// Whether each item on the panel has a function
+    /// </summary>
+    bool HasItemFunction { get; }
+    Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, ISearchableCrate? crate);
+    Sprite? ItemFunctionIcon { get; }
+    
+    /// <summary>
+    /// Get's called when the panel function is used
+    /// </summary>
+    /// <param name="extension"></param>
+    void OnPanelFunction(SpawnablePanelExtension extension);
+    /// <summary>
+    /// Get's called when the item function is used on a crate, idx is the index of the crate in the current page (0-11)
+    /// </summary>
+    /// <param name="extension"></param>
+    /// <param name="idx"></param>
+    void OnItemFunction(SpawnablePanelExtension extension, ISearchableCrate crate);
+    
     /// <summary>
     /// Get's called when the tag edit is complete, this is where you should save the new tag
     /// </summary>

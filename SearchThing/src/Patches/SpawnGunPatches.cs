@@ -12,7 +12,7 @@ namespace SearchThing.Patches;
 [HarmonyPatch(typeof(SpawnGun))]
 public class SpawnGunPatches
 {
-    public static SpawnGun? HeldSpawnGun { get; private set; }
+    private static SpawnGun? HeldSpawnGun { get; set; }
     private static SpawnableCrate? _selectedCrate;
 
     public static void SelectCrate(SpawnableCrate crate)
@@ -21,6 +21,11 @@ public class SpawnGunPatches
         
         if (HeldSpawnGun != null)
             HeldSpawnGun.OnSpawnableSelected(_selectedCrate);
+    }
+    
+    public static void ClearSelectedCrate()
+    {
+        _selectedCrate = null;
     }
         
     private static bool IsHeldByLocalPlayer(SpawnGun spawnGun)

@@ -15,6 +15,8 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
     
     public virtual bool ResearchOnPageChange => false;
     public abstract string Tag { get; }
+    public virtual bool IsVisible => true;
+    public virtual bool CanAssign => true;
     public virtual bool TagEditable => false;
     protected abstract void Search(string query, ISearchOrder order, Action<SearchResults<TCrate>> callback);
 
@@ -93,6 +95,38 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         Page = newPage;
         extension.RenderAll();
     }
+    
+    public void MakeDirty()
+    {
+        _isDirty = true;
+    }
+
+    public virtual bool HasPanelFunction => false;
+    public virtual Sprite? PanelFunctionIcon => null;
+    public virtual bool HasItemFunction => false;
+    public virtual Sprite? ItemFunctionIcon => null;
+
+    public virtual Color? GetPanelFunctionHighlight(SpawnablePanelExtension extension)
+    {
+        // No Op
+        return null;
+    }
+
+    public virtual Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, ISearchableCrate? crate)
+    {
+        // No Op
+        return null;
+    }
+
+    public virtual void OnPanelFunction(SpawnablePanelExtension extension)
+    {
+        // No Op
+    }
+    
+    public virtual void OnItemFunction(SpawnablePanelExtension extension, ISearchableCrate crate)
+    {
+        // No Op
+    }
 
     public virtual void OnTagEdited(SpawnablePanelExtension extension, string newTag)
     {
@@ -113,7 +147,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
     
     public virtual ItemRenderData GetRenderDataForCrate(TCrate crate)
     {
-        return new ItemRenderData()
+        return new ItemRenderData
         {
             Name = crate.Name.Original,
             PalletName = crate.PalletName.Original,

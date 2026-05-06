@@ -4,7 +4,8 @@ public enum CrateType
 {
     Prop,
     Avatar,
-    Level
+    Level,
+    Invalid
 }
 
 public enum CrateSubType

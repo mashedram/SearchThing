@@ -13,6 +13,7 @@
         <EmbeddedResource Include="resources\EditIcon.png" />
         <EmbeddedResource Include="resources\RemoveIcon.png" />
         <EmbeddedResource Include="resources\SearchIcon.png"/>
+        <EmbeddedResource Include="resources\BlockIcon.png" />
 
         <EmbeddedResource Include="resources\AvatarIcon.png" />
         <EmbeddedResource Include="resources\LevelIcon.png" />
@@ -79,14 +80,6 @@
         </Reference>
         <Reference Include="MelonLoader">
             <HintPath>$(BONELAB_DIR)\MelonLoader\net6\MelonLoader.dll</HintPath>
-        </Reference>
-        <Reference Include="Spiderman">
-            <HintPath>$(BONELAB_DIR)\Mods\Spiderman.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="MoreItemsInDevTools">
-            <HintPath>$(BONELAB_DIR)\Mods\MoreItemsInDevTools.dll</HintPath>
-            <Private>false</Private>
         </Reference>
         <Reference Include="Unity.Addressables">
             <HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Unity.Addressables.dll</HintPath>

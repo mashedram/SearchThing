@@ -32,6 +32,8 @@ public static class SpawnablesPanelManager
         else
             _extension.Hide();
     }
+    
+    public static SpawnablePanelExtension? Get() => _extension;
 
     public static bool TryGet(SpawnablesPanelView instance, [MaybeNullWhen(false)] out SpawnablePanelExtension extension)
     {

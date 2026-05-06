@@ -5,7 +5,6 @@ using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.UI;
 using Il2CppTMPro;
-using LabFusion.Extensions;
 using MelonLoader;
 using SearchThing.Extensions.Components;
 using SearchThing.Extensions.Pages;
@@ -43,18 +42,16 @@ public class SpawnablePanelExtension
     private GameObject _tagPagePreviousButton;
 
     private static readonly Sprite TabIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.SearchIcon.png");
-    private static readonly Sprite PresetAddIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.AddIcon.png");
-    private static readonly Sprite PresetRemoveIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.RemoveIcon.png");
-    private static readonly Sprite EditIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.EditIcon.png");
     
     // Editing
     private SpawnInfoFocus _currentFocus = SpawnInfoFocus.SelectedItem;
     private string _editValue = "";
-    private bool _isEditing;
+    public bool IsEditing { get; private set; }
     // Favorite button
     private Image _fadedButtonImage = null!;
     private Image _favoriteButtonImage = null!; 
     private Sprite _originalFavoriteSprite = null!;
+    private Color _originalFavoriteColor = Color.white;
     // There is no easily stealable default behavior for the sorting button, so we need to get references to it
     private TextMeshPro _sortButtonText = null!;
     private GameObject _sortButtonObject = null!;
@@ -66,7 +63,7 @@ public class SpawnablePanelExtension
     private int _selectedTagIndex;
     private int _selectedPageIndex;
     private readonly SpawnablePageProvider _pages = new SpawnablePageProvider();
-    
+
     private void AddTab()
     {
         var sourceButton = _panelView.transform.Find(SourceTabButtonPath);
@@ -148,6 +145,7 @@ public class SpawnablePanelExtension
         }
 
         _originalFavoriteSprite = _favoriteButtonImage.sprite;
+        _originalFavoriteColor = _favoriteButtonImage.color;
     }
     
     private void FetchTagButtons()
@@ -244,7 +242,7 @@ public class SpawnablePanelExtension
 
     private void OnSearchQueryChanged(string query)
     {
-        if (_isEditing)
+        if (IsEditing)
         {
             _editValue = query;
             RenderTags();
@@ -260,13 +258,20 @@ public class SpawnablePanelExtension
     public void SetIsEditing(bool isEditing)
     {
         // Skip if we are already in the correct mode
-        if (isEditing == _isEditing)
+        if (isEditing == IsEditing)
             return;
         
-        _isEditing = isEditing;
+        IsEditing = isEditing;
         var panel = GetSelectedPanel();
+        
+        if (!panel.TagEditable)
+        {
+            IsEditing = false;
+            return;
+        }
+        
         // Enter editing
-        if (_isEditing)
+        if (IsEditing)
         {
             // Ensure we aren't assigning
             PresetManager.IsAssignmentMode = false;
@@ -286,7 +291,8 @@ public class SpawnablePanelExtension
             RenderTags();
         }
         
-        RenderFavoriteButton();
+        // Do an empty search to fill the void, prevents small hitch on load
+        RequestRefresh();
     }
 
     public void RequestRefresh()
@@ -305,33 +311,6 @@ public class SpawnablePanelExtension
         
         return selectedPanel.GetCrateAt(_selectedItemIndex);
     }
-
-    public void EnsureList(string name)
-    {
-        var contents = _panelView.SpawnablesQuickMap;
-        if (!contents.ContainsKey(name))
-        {
-            contents[name] = new Il2CppSystem.Collections.Generic.List<SpawnableCrate>();
-        }
-    }
-
-    public Il2CppSystem.Collections.Generic.List<SpawnableCrate> GetList(string name)
-    {
-        var contents = _panelView.SpawnablesQuickMap;
-        if (contents.TryGetValue(name, out var list))
-            return list;
-
-        list = new Il2CppSystem.Collections.Generic.List<SpawnableCrate>();
-        contents[name] = list;
-        return list;
-    }
-
-    public Il2CppSystem.Collections.Generic.List<SpawnableCrate> GetAndClearList(string name)
-    {
-        var list = GetList(name);
-        list.Clear();
-        return list;
-    }
     
     public void RenderTags()
     {
@@ -342,14 +321,14 @@ public class SpawnablePanelExtension
             var button = _tagButtons[i];
             var panel = GetRenderPanel(i);
             
-            if (panel == null)
+            if (panel is not { IsVisible: true })
             {
                 button.Hide();
                 continue;
             }
             
             var isSelected = i == _selectedTagIndex && _selectedPageIndex == _renderedTagPageIndex;
-            var tag = (_isEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected) 
+            var tag = IsEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected 
                 ? _editValue 
                 : panel.Tag;
             var forceHighlight = panel.IsForceHighlighted(this, selectedCrate);
@@ -357,7 +336,7 @@ public class SpawnablePanelExtension
             button.SetTag(tag, isSelected || forceHighlight != null, forceHighlight);
         }
         
-        var pageCount = GetRenderPage().Panels.Count;
+        var pageCount = _pages.PageCount;
         _panelView.treePageText .text = $"{_renderedTagPageIndex + 1}/{pageCount}";
         _tagPageNextButton.SetActive(_renderedTagPageIndex < pageCount - 1);
         _tagPagePreviousButton.SetActive(_renderedTagPageIndex > 0);
@@ -387,19 +366,26 @@ public class SpawnablePanelExtension
         RenderFavoriteButton();
     }
 
-    public (Sprite, bool) GetFavoriteSprite()
+    public (Sprite?, Color?) GetFavoriteSprite()
     {
-        if (_currentFocus == SpawnInfoFocus.SelectedPage)
-        {
-            return (EditIcon, _isEditing);
-        }
-
-        // If we are in a preset assignment mode, we want to show the remove icon if the selected item is already assigned to the preset, and the add icon if it isn't
-        // TODO : Make this not hardcoded
-        if (_selectedPageIndex > 0)
-            return (PresetRemoveIcon, PresetManager.IsAssignmentMode);
+        var selectedPanel = GetSelectedPanel();
         
-        return (PresetAddIcon, PresetManager.IsAssignmentMode);
+        if (_currentFocus == SpawnInfoFocus.SelectedItem && selectedPanel.HasItemFunction)
+        {
+            var selectedCrate = GetSelectedSpawnable();
+            var highlight = selectedPanel.GetItemFunctionHighlight(this, selectedCrate);
+            var icon = selectedPanel.ItemFunctionIcon ?? _originalFavoriteSprite;
+            return (icon, highlight);
+        }
+        
+        if (selectedPanel.HasPanelFunction)
+        {
+            var highlight = selectedPanel.GetPanelFunctionHighlight(this);
+            var icon = selectedPanel.PanelFunctionIcon ?? _originalFavoriteSprite;
+            return (icon, highlight);
+        }
+        
+        return (null, null);
     }
 
     public void RenderFavoriteButton()
@@ -421,14 +407,20 @@ public class SpawnablePanelExtension
         var favoriteSprite = GetFavoriteSprite();
 
         var overrideSprite = favoriteSprite.Item1;
-        var isToggledOn = favoriteSprite.Item2;
+        var isVisible = overrideSprite != null;
+        
+        var highlightColor = favoriteSprite.Item2;
+        var isHighlightOn = highlightColor != null;
         
         // Assign values
-        _fadedButtonImage.enabled = !isToggledOn;
-        _favoriteButtonImage.enabled = isToggledOn;
+        _fadedButtonImage.enabled = !isHighlightOn && isVisible;
+        _favoriteButtonImage.enabled = isHighlightOn && isVisible;
         // This also ensures sprite isn't null
         _fadedButtonImage.sprite = overrideSprite;
         _favoriteButtonImage.sprite = overrideSprite;
+        // And assign the highlight color if we have one
+        if (isHighlightOn)
+            _favoriteButtonImage.color = highlightColor!.Value;
     }
 
     public void RenderFocus()
@@ -458,7 +450,7 @@ public class SpawnablePanelExtension
         else
         {
             var selectedPanel = GetSelectedPanel();
-            _panelView.selectedTitle.text = _isEditing ? _editValue : selectedPanel.Tag;
+            _panelView.selectedTitle.text = IsEditing ? _editValue : selectedPanel.Tag;
             _panelView.selectedDescription.text = "N/A";
             _panelView.selectedAuthor.text = "N/A";
             _panelView.selectedPallet.text = "N/A";
@@ -585,8 +577,10 @@ public class SpawnablePanelExtension
         RenderItemButtons();
         RenderTags();
         RenderFocus();
-        
-        AssignCrate();
+
+        var panel = GetSelectedPanel();
+        if (panel.CanAssign)
+            AssignCrate();
     }
     
     public void SelectCategory(int idx)
@@ -634,34 +628,24 @@ public class SpawnablePanelExtension
     
     public void OnFavoriteButton()
     {
+        var panel = GetSelectedPanel();
         if (_currentFocus == SpawnInfoFocus.SelectedItem)
         {
-            var selectedPanel = GetSelectedPanel();
-            if (selectedPanel is Preset preset)
-            {
-                PresetManager.IsAssignmentMode = false;
-                var selectedCrate = GetSelectedSpawnable();
-                if (selectedCrate != null)
-                    preset.RemoveCrate(selectedCrate);
-                
-                RequestRefresh();
-            }
-            else
-            {
-                PresetManager.IsAssignmentMode = !PresetManager.IsAssignmentMode;
-        
-                // Set the rendertarget to page 1 so we are at the presets if we aren't yet
-                if (_renderedTagPageIndex < 1)
-                    _renderedTagPageIndex = 1;
-                
-                RenderAll();
-            }
-        }
-        else if (GetSelectedPanel().TagEditable)
-        {
-            SetIsEditing(!_isEditing);
+            if (!panel.HasItemFunction)
+                return;
             
-            RenderFavoriteButton();
+            var selectedCrate = GetSelectedSpawnable();
+            if (selectedCrate == null)
+                return;
+            
+            panel.OnItemFunction(this, selectedCrate);
+        }
+        else
+        {
+            if (!panel.HasPanelFunction)
+                return;
+            
+            panel.OnPanelFunction(this);
         }
     }
 
@@ -678,11 +662,11 @@ public class SpawnablePanelExtension
     public void Hide()
     {
         CloseKeyboard();
-        RenderFavoriteButton();
         
         // Assign the original sprite back in case we were in a special mode when hiding
         _fadedButtonImage.sprite = _originalFavoriteSprite;
         _favoriteButtonImage.sprite = _originalFavoriteSprite;
+        _favoriteButtonImage.color = _originalFavoriteColor;
         
         // Clear button images
         foreach (var itemButton in _itemButtons)
@@ -719,6 +703,6 @@ public class SpawnablePanelExtension
         if (_panelView.gameObject == null)
             return false;
         
-        return _panelView.gameObject.EqualsIL2CPP(panelView.gameObject);
+        return _panelView.gameObject.GetInstanceID() == panelView.gameObject.GetInstanceID();
     }
 }

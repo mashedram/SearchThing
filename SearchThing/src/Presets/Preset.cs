@@ -15,6 +15,9 @@ namespace SearchThing.Presets;
 public class Preset : BasicSearchPanel<ISearchableCrate>
 {
     private const string DefaultTag = "EMPTY";
+ 
+    private static readonly Sprite PresetRemoveIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.RemoveIcon.png");
+    private static readonly Sprite EditIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.EditIcon.png");
     
     private string _tag = DefaultTag;
     public override string Tag => IsInitialized ? _tag : (PresetManager.IsAssignmentMode ? "Add Presset" : "Empty Preset");
@@ -32,6 +35,36 @@ public class Preset : BasicSearchPanel<ISearchableCrate>
     {
         _tag = tag;
         IsInitialized = true;
+    }
+
+    public override bool HasPanelFunction => true;
+    public override Sprite PanelFunctionIcon => EditIcon;
+    public override bool HasItemFunction => true;
+    public override Sprite ItemFunctionIcon => PresetRemoveIcon;
+
+    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, ISearchableCrate? crate)
+    {
+        return Color.red;
+    }
+
+    public override void OnItemFunction(SpawnablePanelExtension extension, ISearchableCrate crate)
+    {
+        PresetManager.IsAssignmentMode = false;
+        RemoveCrate(crate);
+                
+        extension.RequestRefresh();
+    }
+
+    public override Color? GetPanelFunctionHighlight(SpawnablePanelExtension extension)
+    {
+        return extension.IsEditing ? Color.green : Color.white;
+    }
+
+    public override void OnPanelFunction(SpawnablePanelExtension extension)
+    {
+        extension.SetIsEditing(!extension.IsEditing);
+            
+        extension.RenderFavoriteButton();
     }
 
     public override Color? IsForceHighlighted(SpawnablePanelExtension extension, ISearchableCrate? selectedCrate)

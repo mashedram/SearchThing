@@ -1,36 +1,52 @@
-﻿using BoneLib;
-using SearchThing.Extensions;
-using HarmonyLib;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
+﻿using HarmonyLib;
 using Il2CppSLZ.Bonelab;
-using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.UI;
-using Il2CppTMPro;
-using LabFusion.Marrow.Proxies;
-using MelonLoader;
-using SearchThing.History;
-using SearchThing.Presets;
-using SearchThing.Util;
-using UnityEngine.Events;
-using UnityEngine.UI;
+using UnityEngine;
 
 namespace SearchThing.Patches;
 
 [HarmonyPatch(typeof(SpawnablesPanelView))]
 public static class ToolUiPatches
 {
+    // For some reason, the panel refuses to render default behaviour without a set spawn gun
+    private static SpawnGun? _DummySpawnGun;
     
+    private static SpawnGun GetDummySpawnGun()
+    {
+        if (_DummySpawnGun != null)
+            return _DummySpawnGun;
+
+        var go = new GameObject("DummySpawnGun");
+        go.SetActive(false);
+        _DummySpawnGun = go.AddComponent<SpawnGun>();
+        return _DummySpawnGun;
+    }
+
+    [HarmonyPatch(nameof(SpawnablesPanelView.Activate))]
+    [HarmonyPrefix]
+    public static void SpawnablesPanelView_Activate_Prefix(SpawnablesPanelView __instance)
+    {
+        if (__instance == null)
+            return;
+
+        if (__instance.spawnGun != null)
+            return;
+        
+        // It doesn't need to be real or persistent or attached or anything. The panel just NEEDS it to exist.
+        __instance.spawnGun = GetDummySpawnGun();
+        __instance._spawnGun_k__BackingField = GetDummySpawnGun();
+    }
+
     [HarmonyPatch(nameof(SpawnablesPanelView.Activate))]
     [HarmonyPostfix]
     public static void SpawnablesPanelView_Activate_Postfix(SpawnablesPanelView __instance)
     {
         if (__instance == null) 
             return;
-
+        
         SpawnablesPanelManager.Load(__instance);
     }
 
-    // TODO: Make this a prefix to render content before the switch and then fake and prevent the switch
     // Should limit flickering
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectTab))]
     [HarmonyPostfix]

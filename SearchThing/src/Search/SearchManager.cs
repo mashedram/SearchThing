@@ -57,7 +57,7 @@ public record SearchTask<TCrate>(
     
     public void RunAndStore(IEnumerable<ISearchableCrate> results)
     {
-        var typedResults = ((IEnumerable<TCrate>)results).ToList();
+        var typedResults = results.OfType<TCrate>().ToList();
         var searchResults = new SearchResults<TCrate>(typedResults);
         ThreadUtils.RunOnMainThread(() => OnComplete(searchResults));
     }

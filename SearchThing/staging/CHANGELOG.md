@@ -1,3 +1,7 @@
+>>**Version 0.5.0**
+>1. Added a spawn log when in a Fusion server.
+>2. Added a menu where you can edit your Fusion Block list from an in game panel.
+
 >>**Version 0.4.3**
 >1. Fixed a bug that prevented the search panel from being used in a fusion lobby (Reported by Lakatrazz)
 

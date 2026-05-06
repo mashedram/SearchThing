@@ -1,37 +1,38 @@
 ﻿using SearchThing.Extensions.Pages;
 using SearchThing.Extensions.Panel.Filter;
 using SearchThing.Extensions.Panel.History;
+using SearchThing.Fusion;
 using SearchThing.Presets;
 
 namespace SearchThing.Extensions;
 
 public class SpawnablePageProvider
 {
-    private readonly ISearchPage _basePage = new BasicSearchPage(
-        new PropTagSearchPanel(), 
-        new AvatarTagSearchPanel(), 
-        new PropHistorySearchPanel(),
-        new AvatarHistorySearchPanel(),
-        new LevelTagSearchPanel()
+    private readonly ISearchPage[] _basePages =
+    {
+        new BasicSearchPage(
+            new PropTagSearchPanel(),
+            new AvatarTagSearchPanel(),
+            new PropHistorySearchPanel(),
+            new AvatarHistorySearchPanel(),
+            new LevelTagSearchPanel()
 #if UNLOCKED
-        ,new RedactedSearchPanel()
+            ,new RedactedSearchPanel()
 #endif
-    );
+        ),
+        new FusionPage()
+    };
     
-    public int PageCount => 1 + PresetManager.GetPages().Count;
+    public IEnumerable<ISearchPage> GetAllPages() => _basePages.Concat(PresetManager.GetPages());
+    public ISearchPage[] GetVisiblePages() => GetAllPages().Where(p => p.IsVisible).ToArray();
+    public int PageCount => GetAllPages().Count(c => c.IsVisible);
     
-    public ISearchPage GetBasePage() => _basePage;
+    public ISearchPage GetBasePage() => _basePages[0];
     
     public ISearchPage GetPage(int index)
     {
-        if (index == 0)
-            return _basePage;
-        
-        return PresetManager.GetPages()[index - 1];
-    }
-    
-    public bool IsPresetPage(int index)
-    {
-        return index > 0;
+        var visiblePages = GetVisiblePages();
+        var clampedIndex = Math.Clamp(index, 0, visiblePages.Length - 1);
+        return visiblePages[clampedIndex];
     }
 }

@@ -8,7 +8,7 @@ using UnityEngine;
 namespace SearchThing.Extensions.Panel.Abstract;
 
 public abstract class BasicSearchPanel<TCrate> : ISearchPanel
-    where TCrate : class, ISearchableCrate
+    where TCrate : class, IFullCrateData, ISearchableCrate
 {
     private bool _isDirty = true;
     private SearchResults<TCrate>? _results;
@@ -112,7 +112,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         return null;
     }
 
-    public virtual Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, ISearchableCrate? crate)
+    public virtual Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate)
     {
         // No Op
         return null;
@@ -123,7 +123,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         // No Op
     }
     
-    public virtual void OnItemFunction(SpawnablePanelExtension extension, ISearchableCrate crate)
+    public virtual void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData crate)
     {
         // No Op
     }
@@ -133,7 +133,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         // No special logic needed
     }
 
-    public virtual Color? IsForceHighlighted(SpawnablePanelExtension extension, ISearchableCrate? selectedCrate)
+    public virtual Color? IsForceHighlighted(SpawnablePanelExtension extension, IFullCrateData? selectedCrate)
     {
         // No special logic needed
         return null;
@@ -149,16 +149,16 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
     {
         return new ItemRenderData
         {
-            Name = crate.Name.Original,
-            PalletName = crate.PalletName.Original,
-            Author = crate.Author.Original,
-            Tags = crate.Tags.Select(t => t.Original).ToArray(),
+            Name = crate.Name,
+            PalletName = crate.PalletName,
+            Author = crate.Author,
+            Tags = crate.Tags.ToArray(),
             Description = crate.Description,
             Icon = CrateIconProvider.GetIcon(crate)
         };
     }
 
-    public ISearchableCrate? GetCrateAt(int index)
+    public IFullCrateData? GetCrateAt(int index)
     {
         return _results?.GetEntryAt(Page, ISearchPanel.PanelSize, index);
     }

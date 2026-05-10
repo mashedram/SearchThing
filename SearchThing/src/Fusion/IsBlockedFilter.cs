@@ -8,15 +8,18 @@ public class IsBlockedFilter : ISelectableSearchOrder
 {
     public string Name => "Blocked First";
 
-    public int Order(ISearchableCrate searchableCrate)
+    public int Order(ISearchOrderable orderable)
     {
-        var isBlocked = FusionBlacklistHelper.IsBlacklisted(searchableCrate.Barcode._id);
+        if (orderable.Source is not IBarcodeHolder barcodeHolder)
+            return 0;
+        
+        var isBlocked = FusionBlacklistHelper.IsBlacklisted(barcodeHolder.Barcode._id);
 
         if (isBlocked)
         {
-            return 10000 + searchableCrate.Score;
+            return 10000 + orderable.Score;
         }
         
-        return searchableCrate.Score;
+        return orderable.Score;
     }
 }

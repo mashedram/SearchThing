@@ -1,10 +1,11 @@
 ﻿using System.Text.RegularExpressions;
 using FuzzySharp;
 using FuzzySharp.PreProcess;
+using SearchThing.Search;
 
 namespace SearchThing.Util;
 
-public struct SearchTag
+public struct SearchTag : IFuzzySearchable
 {
     public string Original { get; }
     public string Preprocessed { get; }

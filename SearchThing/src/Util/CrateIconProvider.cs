@@ -25,9 +25,9 @@ public static class CrateIconProvider
         return AvatarIcon;
     }
     
-    private static Sprite GetPropIcon(ISearchableCrate searchableCrate)
+    private static Sprite GetPropIcon(IFullCrateData searchableFullCrateData)
     {
-        return searchableCrate.CrateSubType switch
+        return searchableFullCrateData.CrateSubType switch
         {
             CrateSubType.Gun => GunIcon,
             CrateSubType.Melee => MeleeIcon,
@@ -42,12 +42,12 @@ public static class CrateIconProvider
         return LevelIcon;
     }
     
-    public static Sprite GetIcon(ISearchableCrate searchableCrate)
+    public static Sprite GetIcon(IFullCrateData searchableFullCrateData)
     {
-        return searchableCrate.CrateType switch
+        return searchableFullCrateData.CrateType switch
         {
             CrateType.Avatar => GetAvatarIcon(),
-            CrateType.Prop => GetPropIcon(searchableCrate),
+            CrateType.Prop => GetPropIcon(searchableFullCrateData),
             CrateType.Level => GetLevelIcon(),
             _ => CrateIcon
         };

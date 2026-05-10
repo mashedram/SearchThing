@@ -12,7 +12,23 @@ using Random = System.Random;
 
 namespace SearchThing.Presets;
 
-public class Preset : BasicSearchPanel<ISearchableCrate>
+internal class SpawnableCrateComparer : IEqualityComparer<IFullCrate>
+{
+    public bool Equals(IFullCrate? x, IFullCrate? y)
+    {
+        if (x == null || y == null)
+            return false;
+        
+        return x.Name == y.Name;
+    }
+
+    public int GetHashCode(IFullCrate obj)
+    {
+        return obj.Name.GetHashCode();
+    }
+}
+
+public class Preset : BasicSearchPanel<IFullCrate>
 {
     private const string DefaultTag = "EMPTY";
  
@@ -24,7 +40,7 @@ public class Preset : BasicSearchPanel<ISearchableCrate>
     public override bool TagEditable => true;
     public bool IsInitialized { get; private set; }
     public override bool ResearchOnPageChange => true;
-    public HashSet<ISearchableCrate> AssignedCrates { get; } = new();
+    public HashSet<IFullCrate> AssignedCrates { get; } = new(new SpawnableCrateComparer());
 
     public Preset()
     {
@@ -42,15 +58,18 @@ public class Preset : BasicSearchPanel<ISearchableCrate>
     public override bool HasItemFunction => true;
     public override Sprite ItemFunctionIcon => PresetRemoveIcon;
 
-    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, ISearchableCrate? crate)
+    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate)
     {
         return Color.red;
     }
 
-    public override void OnItemFunction(SpawnablePanelExtension extension, ISearchableCrate crate)
+    public override void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData crate)
     {
         PresetManager.IsAssignmentMode = false;
-        RemoveCrate(crate);
+        
+        if (crate is not IFullCrate spawnableCrate)
+            return;
+        RemoveCrate(spawnableCrate);
                 
         extension.RequestRefresh();
     }
@@ -67,7 +86,7 @@ public class Preset : BasicSearchPanel<ISearchableCrate>
         extension.RenderFavoriteButton();
     }
 
-    public override Color? IsForceHighlighted(SpawnablePanelExtension extension, ISearchableCrate? selectedCrate)
+    public override Color? IsForceHighlighted(SpawnablePanelExtension extension, IFullCrateData? selectedCrate)
     {
         if (extension.IsPanelSelected(this))
             return Color.white;
@@ -97,6 +116,10 @@ public class Preset : BasicSearchPanel<ISearchableCrate>
             return true;
 
         var isSelected = extension.IsPanelSelected(this);
+
+        var crate = extension.GetSelectedSpawnable();
+        if (crate is not IFullCrate spawnableCrate)
+            return false;
         
         // TODO: When initializing prompt for a tag
         if (!IsInitialized)
@@ -105,13 +128,9 @@ public class Preset : BasicSearchPanel<ISearchableCrate>
             IsInitialized = true;
         }
 
-        var crate = extension.GetSelectedSpawnable();
-        if (crate == null)
-            return false;
-
-        if (!AssignedCrates.Add(crate))
+        if (!AssignedCrates.Add(spawnableCrate))
         {
-            AssignedCrates.Remove(crate);
+            AssignedCrates.Remove(spawnableCrate);
         }
         
         // Exiting assignment mode immediately feels nicer
@@ -130,38 +149,13 @@ public class Preset : BasicSearchPanel<ISearchableCrate>
         return false;
     }
     
-    public void RemoveCrate(ISearchableCrate crate)
+    public void RemoveCrate(IFullCrate crate)
     {
         AssignedCrates.Remove(crate);
     }
     
-    protected override void Search(string query, ISearchOrder order, Action<SearchResults<ISearchableCrate>> callback)
+    protected override void Search(string query, ISearchOrder order, Action<SearchResults<IFullCrate>> callback)
     {
         SearchManager.SearchAsync(query, AssignedCrates.ToSearchable(), _ => true, order, callback);
-    }
-    
-    public PresetData ToData()
-    {
-        return new PresetData
-        {
-            Name = _tag,
-            Barcodes = AssignedCrates.Select(b => b.Barcode._id).ToList()
-        };
-    }
-    
-    public void FromData(PresetData data)
-    {
-        _tag = data.Name;
-        IsInitialized = _tag != DefaultTag;
-        
-        if (!IsInitialized)
-            return;
-        
-        AssignedCrates.Clear();
-        foreach (var barcodeId in data.Barcodes)
-        {
-            AssignedCrates.Add(new SearchableCrate(new Barcode(barcodeId)));
-        }
-        
     }
 }

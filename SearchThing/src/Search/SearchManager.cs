@@ -8,19 +8,11 @@ using SearchThing.Util;
 
 namespace SearchThing.Search;
 
-public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchableCrate
+public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchOrderable
 {
-    public SearchTag Name => Crate.Name;
-    public SearchTag PalletName => Crate.PalletName;
-    public SearchTag Author => Crate.Author;
-    public SearchTag[] Tags => Crate.Tags;
-    public string Description => Crate.Description;
-    public bool Redacted => Crate.Redacted;
-    public CrateType CrateType => Crate.CrateType;
-    public CrateSubType CrateSubType => Crate.CrateSubType;
+    public ISearchableCrate Source => Crate;
+    public IEnumerable<IFuzzySearchable> SearchFields { get; } = Crate.SearchFields;
     public int Salt => Crate.Salt;
-    public Barcode Barcode => Crate.Barcode;
-    public DateTime DateAdded => Crate.DateAdded;
 
     public static ScoredCrate ScoreCrate(ISearchableCrate crate, string preprocessedQuery)
     {
@@ -32,10 +24,16 @@ interface ISearchTask
 {
     string Query { get; }
     ISearchableCrateList<ISearchableCrate> PureSourceList { get; }
-    Func<ISearchableCrate, bool> Filter { get; }
     ISearchOrder SearchOrder { get; }
     CancellationToken CancellationToken { get; }
 
+    /// <summary>
+    /// Checks if the crate matches the task's filter criteria. This is used to pre-filter crates before scoring, to avoid unnecessary scoring of irrelevant crates.
+    /// </summary>
+    /// <param name="crate"></param>
+    /// <returns></returns>
+    bool Filter(ISearchableCrate crate);
+    
     /// <summary>
     /// Calls the OnComplete callback with the generic search results
     /// </summary>
@@ -47,13 +45,18 @@ interface ISearchTask
 public record SearchTask<TCrate>(
     string Query,
     ISearchableCrateList<TCrate> SourceList,
-    Func<ISearchableCrate, bool> Filter,
+    Func<TCrate, bool> TypedFilter,
     ISearchOrder SearchOrder,
     Action<SearchResults<TCrate>> OnComplete,
     CancellationToken CancellationToken
 ) : ISearchTask where TCrate : class, ISearchableCrate
 {
     public ISearchableCrateList<ISearchableCrate> PureSourceList => SourceList;
+    
+    public bool Filter(ISearchableCrate crate)
+    {
+        return crate is TCrate typedCrate && TypedFilter(typedCrate);
+    }
     
     public void RunAndStore(IEnumerable<ISearchableCrate> results)
     {
@@ -126,8 +129,10 @@ public static class SearchManager
                         .WithDegreeOfParallelism(Math.Max(1, Environment.ProcessorCount / 2))
                         .WithCancellation(task.CancellationToken)
                         .Where(task.Filter)
+                        .Select(c => new ScoredCrate(c, 0))
                         .OrderByDescending(task.SearchOrder.Order)
-                        .ThenByDescending(c => c.Salt); // Tie-breaker
+                        .ThenByDescending(c => c.Salt)
+                        .Select(c => c.Crate); // Tie-breaker
 
                 task.RunAndStore(emptyResult);
                 return;
@@ -170,7 +175,7 @@ public static class SearchManager
 #endif
     }
 
-    public static void SearchAsync<TCrate>(string query, ISearchableCrateList<TCrate> crateList, Func<ISearchableCrate, bool> filter, ISearchOrder searchOrder, Action<SearchResults<TCrate>> onComplete)
+    public static void SearchAsync<TCrate>(string query, ISearchableCrateList<TCrate> crateList, Func<TCrate, bool> filter, ISearchOrder searchOrder, Action<SearchResults<TCrate>> onComplete)
         where TCrate : class, ISearchableCrate
     {
         lock (SearchLock)
@@ -194,11 +199,8 @@ public static class SearchManager
     
     public static int ScoreCrate(string preprocessedQuery, ISearchableCrate crate)
     {
-        var nameScore = crate.Name.PartialRatio(preprocessedQuery);
-        var palletScore = crate.PalletName.PartialRatio(preprocessedQuery);
-        var authorScore = crate.Author.PartialRatio(preprocessedQuery);
-        var tagScore = crate.Tags.Any(t => t.PartialRatio(preprocessedQuery) > 80) ? 90 : 0;
-    
-        return new [] { nameScore, palletScore, authorScore, tagScore }.Max();
+        return crate.SearchFields.Select(field => field.PartialRatio(preprocessedQuery))
+            .DefaultIfEmpty(0)
+            .Max();
     }
 }

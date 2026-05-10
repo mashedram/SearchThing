@@ -6,7 +6,7 @@ public class RandomSearchOrder : ISelectableSearchOrder
 {
     public string Name => "Random";
 
-    public int Order(ISearchableCrate searchableCrate)
+    public int Order(ISearchOrderable searchableCrate)
     {
         return Random.Shared.Next();
     }

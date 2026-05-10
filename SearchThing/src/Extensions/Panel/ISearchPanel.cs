@@ -28,7 +28,7 @@ public interface ISearchPanel
     /// Whether each item on the panel has a function
     /// </summary>
     bool HasItemFunction { get; }
-    Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, ISearchableCrate? crate);
+    Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate);
     Sprite? ItemFunctionIcon { get; }
     
     /// <summary>
@@ -41,7 +41,7 @@ public interface ISearchPanel
     /// </summary>
     /// <param name="extension"></param>
     /// <param name="idx"></param>
-    void OnItemFunction(SpawnablePanelExtension extension, ISearchableCrate crate);
+    void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData fullCrateData);
     
     /// <summary>
     /// Get's called when the tag edit is complete, this is where you should save the new tag
@@ -54,7 +54,7 @@ public interface ISearchPanel
     /// Get's called for every crate that is rendered, return true to force the crate to be highlighted in the menu
     /// </summary>
     /// <returns></returns>
-    Color? IsForceHighlighted(SpawnablePanelExtension extension, ISearchableCrate? selectedCrate);
+    Color? IsForceHighlighted(SpawnablePanelExtension extension, IFullCrateData? selectedCrate);
     /// <summary>
     /// Called when the panel should perform a search
     /// </summary>
@@ -72,6 +72,6 @@ public interface ISearchPanel
     /// </summary>
     /// <returns>Return false to prevent the panel from being selected</returns>
     bool OnSelected(SpawnablePanelExtension extension);
-    ISearchableCrate? GetCrateAt(int index);
+    IFullCrateData? GetCrateAt(int index);
     IReadOnlyList<ItemRenderData> GetPage(int page);
 }

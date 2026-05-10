@@ -19,20 +19,4 @@ public class PresetPage : ISearchPage
             _presets.Add(new Preset());
         }
     }
-    
-    public PresetPageData ToData()
-    {
-        return new PresetPageData
-        {
-            Presets = _presets.Select(p => p.ToData()).ToList()
-        };
-    }
-    
-    public void FromData(PresetPageData data)
-    {
-        for (var i = 0; i < MaxPresets; i++)
-        {
-            _presets[i].FromData(data.Presets[i]);
-        }
-    }
 }

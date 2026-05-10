@@ -3,32 +3,36 @@ using SearchThing.Util;
 
 namespace SearchThing.Search;
 
-public class SearchableCrate : ISearchableCrate, IEquatable<SearchableCrate>
+public class MarrowCrate : IFullCrate, IBarcodeHolder, IEquatable<MarrowCrate>
 {
-    public SearchTag Name { get; }
-    public SearchTag PalletName { get; }
-    public SearchTag Author { get; }
-    public SearchTag[] Tags { get; }
+    private readonly SearchTag _name;
+    private readonly SearchTag _palletName;
+    private readonly SearchTag _author;
+    private readonly SearchTag[] _tags;
+    
+    public string Name => _name.Original;
+    public string PalletName => _palletName.Original;
+    public string Author => _author.Original;
+    public IEnumerable<string> Tags => _tags.Select(t => t.Original);
+    
     public string Description { get; }
     public bool Redacted { get; }
     public int Salt { get; } // Used for tie-breaking to ensure consistent ordering
     public CrateType CrateType { get; }
     public CrateSubType CrateSubType { get; }
-    // Default to zero for global searchables
-    public virtual int Score => 0;
     public DateTime DateAdded { get; }
     public Barcode Barcode { get; }
     
-    public SearchableCrate(Crate spawnableCrate)
+    public MarrowCrate(Crate spawnableCrate)
     {
         if (spawnableCrate == null)
             throw new ArgumentNullException(nameof(spawnableCrate));
         
-        Name = new SearchTag(spawnableCrate.name);
+        _name = new SearchTag(spawnableCrate.name);
         Description = spawnableCrate._description;
-        PalletName = new SearchTag(spawnableCrate._pallet.name);
-        Author = new SearchTag(spawnableCrate._pallet._author);
-        Tags = spawnableCrate._tags.ToArray().Select(t => new SearchTag(t)).ToArray();
+        _palletName = new SearchTag(spawnableCrate._pallet.name);
+        _author = new SearchTag(spawnableCrate._pallet._author);
+        _tags = spawnableCrate._tags.ToArray().Select(t => new SearchTag(t)).ToArray();
         
         Redacted = spawnableCrate._redacted;
 
@@ -51,11 +55,11 @@ public class SearchableCrate : ISearchableCrate, IEquatable<SearchableCrate>
         Barcode = spawnableCrate.Barcode;
     }
 
-    public SearchableCrate(Barcode barcode) : this(AssetWarehouse.Instance.TryGetCrate(barcode, out var crate) ? crate : throw new ArgumentException($"Crate with barcode {barcode} not found in warehouse", nameof(barcode)))
+    public MarrowCrate(Barcode barcode) : this(AssetWarehouse.Instance.TryGetCrate(barcode, out var crate) ? crate : throw new ArgumentException($"Crate with barcode {barcode} not found in warehouse", nameof(barcode)))
     {
         
     }
-    public bool Equals(SearchableCrate? other)
+    public bool Equals(MarrowCrate? other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
@@ -67,11 +71,19 @@ public class SearchableCrate : ISearchableCrate, IEquatable<SearchableCrate>
         if (obj is null) return false;
         if (ReferenceEquals(this, obj)) return true;
         if (obj.GetType() != GetType()) return false;
-        return Equals((SearchableCrate)obj);
+        return Equals((MarrowCrate)obj);
     }
     
     public override int GetHashCode()
     {
         return Barcode._id.GetHashCode();
     }
+
+    public IEnumerable<IFuzzySearchable> SearchFields => new IFuzzySearchable[]
+    {
+        _name,
+        _palletName,
+        _author,
+        new SearchTagGroup(_tags)
+    };
 }

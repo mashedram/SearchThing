@@ -12,6 +12,6 @@ public static class AssetWarehousePatches
     [HarmonyPostfix]
     public static void AddPallet_Postfix(Pallet pallet)
     {
-        GlobalCrateManager.AddPallet(pallet);
+        MarrowCrateManager.AddPallet(pallet);
     }
 }

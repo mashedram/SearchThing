@@ -9,7 +9,7 @@ namespace SearchThing.Presets;
 public static class PresetManager
 {
     // TODO : Make this configurable
-    private static readonly string FilePath = MelonEnvironment.UserDataDirectory + "/SearchThingPresets.json";
+    private static readonly string PresetDirectoryPath = MelonEnvironment.UserDataDirectory + "/SearchThingPresets.json";
     private const int MaxPresets = 6;
 
     private static bool _assignmentMode;
@@ -42,23 +42,24 @@ public static class PresetManager
 
     public static void LoadPresets()
     {
-        if (!File.Exists(FilePath)) return;
+        if (!Directory.Exists(PresetDirectoryPath)) return;
 
         try
         {
-            var json = File.ReadAllText(FilePath);
-            var data = JsonSerializer.Deserialize<List<PresetPageData>>(json);
-            
-            if (data == null) return;
-
-            for (var i = 0; i < data.Count; i++)
-            {
-                var presetData = data[i];
-                if (i >= PresetPages.Count)
-                    break;
-                
-                PresetPages[i].FromData(presetData);
-            }
+            // TODO : Reimplement saving and loading
+            // var json = File.ReadAllText(PresetDirectoryPath);
+            // var data = JsonSerializer.Deserialize<List<PresetPageData>>(json);
+            //
+            // if (data == null) return;
+            //
+            // for (var i = 0; i < data.Count; i++)
+            // {
+            //     var presetData = data[i];
+            //     if (i >= PresetPages.Count)
+            //         break;
+            //     
+            //     PresetPages[i].FromData(presetData);
+            // }
         }
         catch (Exception exception)
         {
@@ -70,9 +71,9 @@ public static class PresetManager
     {
         try
         {
-            var data = PresetPages.Select(p => p.ToData()).ToList();
-            var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(FilePath, json);
+            // Ensure the directory exists
+            Directory.CreateDirectory(PresetDirectoryPath);
+            
         }
         catch (Exception exception)
         {

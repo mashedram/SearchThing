@@ -9,22 +9,21 @@ using SearchThing.Util;
 
 namespace SearchThing.Fusion;
 
-public record FusionSpawnHistoryEntry(Barcode Barcode, PlayerID? SpawnerId) : IHistorySearchableCrate
+public record FusionSpawnHistoryEntry(Barcode Barcode, PlayerID? SpawnerId) : IHistorySearchableCrate, IFullCrateData, IBarcodeHolder
 {
-    private static readonly SearchTag UnknownCrateTag = new SearchTag("Unknown Crate");
-    public ISearchableCrate? Crate { get; } = GlobalCrateManager.GetCrate(Barcode); 
+    public MarrowCrate? Crate { get; } = MarrowCrateManager.GetCrate(Barcode); 
     
-    public SearchTag Name => Crate?.Name ?? UnknownCrateTag;
-    public SearchTag PalletName => Crate?.PalletName ?? UnknownCrateTag;
-    public SearchTag Author => Crate?.Author ?? UnknownCrateTag;
-    public SearchTag[] Tags => Crate?.Tags ?? Array.Empty<SearchTag>();
+    public string Name => Crate?.Name ?? "Unknown Crate";
+    public string PalletName => Crate?.PalletName ?? "Unknown Pallet";
+    public string Author => Crate?.Author ?? "Unknown Author";
+    public IEnumerable<string> Tags => Crate?.Tags ?? Array.Empty<string>();
     public string Description => Crate?.Description ?? "No description available.";
     public bool Redacted => Crate?.Redacted ?? false;
     public CrateType CrateType => Crate?.CrateType ?? CrateType.Invalid;
     public CrateSubType CrateSubType => Crate?.CrateSubType ?? CrateSubType.None;
     public int Salt => Crate?.Salt ?? 0;
-    public int Score => Crate?.Score ?? 0;
     public DateTime DateAdded { get; set; }
+    public IEnumerable<IFuzzySearchable> SearchFields => Crate?.SearchFields ?? Array.Empty<IFuzzySearchable>();
 }
 
 public static class FusionSpawnHistory
@@ -40,7 +39,7 @@ public static class FusionSpawnHistory
         BoundEntries.AddCrate(new FusionSpawnHistoryEntry(barcodeObj, spawnerId));
     }
     
-    public static void SearchAsync(string query, ISearchOrder order, Func<ISearchableCrate, bool> filter, Action<SearchResults<FusionSpawnHistoryEntry>> callback)
+    public static void SearchAsync(string query, ISearchOrder order, Func<FusionSpawnHistoryEntry, bool> filter, Action<SearchResults<FusionSpawnHistoryEntry>> callback)
     {
         SearchManager.SearchAsync(query, BoundEntries, filter, order, callback);
     }

@@ -2,5 +2,5 @@
 
 public interface ISearchOrder
 {
-    int Order(ISearchableCrate searchableCrate);
+    int Order(ISearchOrderable orderable);
 }

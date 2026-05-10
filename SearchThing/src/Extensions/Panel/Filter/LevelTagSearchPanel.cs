@@ -6,7 +6,7 @@ namespace SearchThing.Extensions.Panel.Filter;
 public class LevelTagSearchPanel : FilterSearchSearchPanel
 {
     public override string Tag => "Levels";
-    protected override bool Filter(ISearchableCrate searchableCrate)
+    protected override bool Filter(MarrowCrate searchableCrate)
     {
         return searchableCrate is { CrateType: CrateType.Level, Redacted: false };
     }

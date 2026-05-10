@@ -6,7 +6,7 @@ namespace SearchThing.Extensions.Panel.Filter;
 public class RedactedSearchPanel : FilterSearchSearchPanel
 {
     public override string Tag => "Redacted";
-    protected override bool Filter(ISearchableCrate searchableCrate)
+    protected override bool Filter(MarrowCrate searchableCrate)
     {
         return searchableCrate is { Redacted: true };
     }

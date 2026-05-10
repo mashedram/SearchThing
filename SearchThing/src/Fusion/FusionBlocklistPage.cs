@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace SearchThing.Fusion;
 
-public class FusionBlocklistPage : BasicSearchPanel<ISearchableCrate>
+public class FusionBlocklistPage : BasicSearchPanel<MarrowCrate>
 {
     private static readonly Sprite BlockIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.BlockIcon.png");
     
@@ -19,14 +19,20 @@ public class FusionBlocklistPage : BasicSearchPanel<ISearchableCrate>
 
     public override bool HasItemFunction => true;
 
-    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, ISearchableCrate? crate)
+    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate)
     {
-        return crate != null && FusionBlacklistHelper.IsBlacklisted(crate.Barcode._id) ? Color.red : Color.green;
+        if (crate is not IBarcodeHolder holder)
+            return null;
+        
+        return FusionBlacklistHelper.IsBlacklisted(holder.Barcode._id) ? Color.red : Color.green;
     }
 
-    public override void OnItemFunction(SpawnablePanelExtension extension, ISearchableCrate crate)
+    public override void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData crate)
     {
-        FusionBlacklistHelper.ToggleBlacklist(crate.Barcode._id);
+        if (crate is not IBarcodeHolder holder)
+            return;
+        
+        FusionBlacklistHelper.ToggleBlacklist(holder.Barcode._id);
         
         MakeDirty();
         extension.RequestRefresh();
@@ -41,8 +47,8 @@ public class FusionBlocklistPage : BasicSearchPanel<ISearchableCrate>
         new AlphabeticalSearchOrder()
     };
     
-    protected override void Search(string query, ISearchOrder order, Action<SearchResults<ISearchableCrate>> callback)
+    protected override void Search(string query, ISearchOrder order, Action<SearchResults<MarrowCrate>> callback)
     {
-        SearchManager.SearchAsync(query, GlobalCrateManager.GetCrates(), c => c.CrateType == CrateType.Prop, order, callback);
+        SearchManager.SearchAsync(query, MarrowCrateManager.GetCrates(), c => c.CrateType == CrateType.Prop, order, callback);
     }
 }

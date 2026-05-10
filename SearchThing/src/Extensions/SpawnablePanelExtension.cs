@@ -302,7 +302,7 @@ public class SpawnablePanelExtension
         panel.RequestSearch(this);
     }
     
-    public ISearchableCrate? GetSelectedSpawnable()
+    public IFullCrateData? GetSelectedSpawnable()
     {
         var selectedPanel = GetSelectedPanel();
         
@@ -439,11 +439,12 @@ public class SpawnablePanelExtension
             }
             else
             {
-                _panelView.selectedTitle.text = selectedCrate.Name.Original;
+                _panelView.selectedTitle.text = selectedCrate.Name;
                 _panelView.selectedDescription.text = selectedCrate.Description;
-                _panelView.selectedPallet.text = selectedCrate.PalletName.Original;
-                _panelView.selectedAuthor.text = $"{selectedCrate.Author.Original}";
-                _panelView.selectedTags.text = string.Join(", ", selectedCrate.Tags.Select(t => t.Original));
+                _panelView.selectedPallet.text = selectedCrate.PalletName;
+                _panelView.selectedPallet.text = selectedCrate.PalletName;
+                _panelView.selectedAuthor.text = $"{selectedCrate.Author}";
+                _panelView.selectedTags.text = string.Join(", ", selectedCrate.Tags);
             }
         }
         // The page is selected
@@ -541,9 +542,9 @@ public class SpawnablePanelExtension
     private void AssignCrate()
     {
         var selectedCrate = GetSelectedSpawnable();
-        if (selectedCrate == null)
+        if (selectedCrate is not IBarcodeHolder barcodeHolder)
             return;
-        if (!selectedCrate.TryGetCrate(out var crate))
+        if (!barcodeHolder.TryGetCrate(out var crate))
             return;
         
         var selectedAvatarCrate = crate.TryCast<AvatarCrate>();

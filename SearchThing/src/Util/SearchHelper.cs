@@ -79,8 +79,8 @@ public static class SearchHelper
         }
     }
     
-    public static bool TryGetCrate(this ISearchableCrate crate, [MaybeNullWhen(false)] out Crate outCrate)
+    public static bool TryGetCrate(this IBarcodeHolder barcodeHolder, [MaybeNullWhen(false)] out Crate outCrate)
     {
-        return AssetWarehouse.Instance.TryGetCrate(crate.Barcode, out outCrate);
+        return AssetWarehouse.Instance.TryGetCrate(barcodeHolder.Barcode, out outCrate);
     }
 }

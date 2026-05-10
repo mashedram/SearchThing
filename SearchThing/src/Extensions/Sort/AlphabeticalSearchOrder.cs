@@ -6,8 +6,11 @@ public class AlphabeticalSearchOrder : ISelectableSearchOrder
 {
     public string Name => "ABC";
 
-    public int Order(ISearchableCrate searchableCrate)
+    public int Order(ISearchOrderable searchableCrate)
     {
-        return -string.Compare(searchableCrate.Name.Original, string.Empty, StringComparison.Ordinal);
+        if (searchableCrate.Source is not IFormalCrateData data)
+            return 0;
+        
+        return -string.Compare(data.Name, string.Empty, StringComparison.Ordinal);
     }
 }

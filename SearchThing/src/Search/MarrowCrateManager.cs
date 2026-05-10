@@ -2,22 +2,22 @@
 
 namespace SearchThing.Search;
 
-public static class GlobalCrateManager
+public static class MarrowCrateManager
 {
-    private static readonly SearchableCrateLookup SearchableCrateCrates = new();
+    private static readonly SearchableCrateLookup<MarrowCrate> SearchableCrateCrates = new();
     
-    public static ISearchableCrateList<ISearchableCrate> GetCrates() => SearchableCrateCrates;
+    public static ISearchableCrateList<MarrowCrate> GetCrates() => SearchableCrateCrates;
     
     public static void AddPallet(Pallet pallet)
     {
         SearchableCrateCrates.AddCrates(
             pallet._crates._items
                 .Where(c => c != null)
-                .Select(crate => new SearchableCrate(crate))
+                .Select(crate => new MarrowCrate(crate))
         );
     }
     
-    public static ISearchableCrate? GetCrate(Barcode barcode)
+    public static MarrowCrate? GetCrate(Barcode barcode)
     {
         return SearchableCrateCrates.GetCrateByBarcode(barcode._id);
     }

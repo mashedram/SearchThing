@@ -10,7 +10,7 @@ public interface IHistorySearchableCrate : ISearchableCrate
 }
 
 public class BoundCrateList<TCrate> : ISearchableCrateList<TCrate>
-    where TCrate : class, IHistorySearchableCrate
+    where TCrate : class, IHistorySearchableCrate, IBarcodeHolder
 {
     private readonly ReaderWriterLockSlim _lock = new();
     private readonly Dictionary<string, TCrate> _crates = new();

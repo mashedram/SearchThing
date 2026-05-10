@@ -1,12 +1,13 @@
 ﻿namespace SearchThing.Search;
 
-public class SearchableCrateLookup : ISearchableCrateList<ISearchableCrate>
+public class SearchableCrateLookup<T> : ISearchableCrateList<T>
+    where T : class, ISearchableCrate, IBarcodeHolder
 {
     private readonly ReaderWriterLockSlim _lock = new();
-    private readonly Dictionary<string, ISearchableCrate> _lookup = new();
-    private readonly List<ISearchableCrate> _crates = new();
+    private readonly Dictionary<string, T> _lookup = new();
+    private readonly List<T> _crates = new();
     
-    public void AddCrate(ISearchableCrate crate)
+    public void AddCrate(T crate)
     {
         _lock.EnterWriteLock();
         try
@@ -20,7 +21,7 @@ public class SearchableCrateLookup : ISearchableCrateList<ISearchableCrate>
         }
     }
     
-    public void AddCrates(IEnumerable<ISearchableCrate> crates)
+    public void AddCrates(IEnumerable<T> crates)
     {
         _lock.EnterWriteLock();
         try
@@ -37,7 +38,7 @@ public class SearchableCrateLookup : ISearchableCrateList<ISearchableCrate>
         }
     }
     
-    public ISearchableCrate? GetCrateByBarcode(string barcode)
+    public T? GetCrateByBarcode(string barcode)
     {
         _lock.EnterReadLock();
         try
@@ -51,7 +52,7 @@ public class SearchableCrateLookup : ISearchableCrateList<ISearchableCrate>
     }
 
 
-    public IEnumerable<ISearchableCrate> GetCrates()
+    public IEnumerable<T> GetCrates()
     {
         _lock.EnterReadLock();
         try

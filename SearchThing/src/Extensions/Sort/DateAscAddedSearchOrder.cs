@@ -6,8 +6,11 @@ public class DateNewAddedSearchOrder : ISelectableSearchOrder
 {
     public string Name => "DateNew";
 
-    public int Order(ISearchableCrate searchableCrate)
+    public int Order(ISearchOrderable searchableCrate)
     {
-        return (int)(searchableCrate.DateAdded.Ticks >> 32);
+        if (searchableCrate.Source is not IFormalCrateData data)
+            return 0;
+        
+        return (int)(data.DateAdded.Ticks >> 32);
     }
 }

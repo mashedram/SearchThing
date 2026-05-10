@@ -27,14 +27,20 @@ public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
 
     public override bool HasItemFunction => true;
 
-    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, ISearchableCrate? crate)
+    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate)
     {
-        return crate != null && FusionBlacklistHelper.IsBlacklisted(crate.Barcode._id) ? Color.red : Color.green;
+        if (crate is not IBarcodeHolder holder)
+            return null;
+        
+        return FusionBlacklistHelper.IsBlacklisted(holder.Barcode._id) ? Color.red : Color.green;
     }
 
-    public override void OnItemFunction(SpawnablePanelExtension extension, ISearchableCrate crate)
+    public override void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData crate)
     {
-        FusionBlacklistHelper.ToggleBlacklist(crate.Barcode._id);
+        if (crate is not IBarcodeHolder holder)
+            return;
+        
+        FusionBlacklistHelper.ToggleBlacklist(holder.Barcode._id);
         
         extension.RequestRefresh();
     }
@@ -56,11 +62,11 @@ public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
         
         return new ItemRenderData
         {
-            Name = $"{crate.Name.Original} ({ownerName})",
+            Name = $"{crate.Name} ({ownerName})",
             Description = crate.Description,
-            Author = crate.Author.Original,
-            PalletName = crate.PalletName.Original,
-            Tags = crate.Tags.Select(t => t.Original).ToArray(),
+            Author = crate.Author,
+            PalletName = crate.PalletName,
+            Tags = crate.Tags.ToArray(),
             Icon = CrateIconProvider.GetIcon(crate)
         };
     }

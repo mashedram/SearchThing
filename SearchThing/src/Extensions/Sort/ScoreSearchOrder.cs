@@ -6,7 +6,7 @@ public class ScoreSearchOrder : ISelectableSearchOrder
 {
     public string Name => "Relevance";
 
-    public int Order(ISearchableCrate searchableCrate)
+    public int Order(ISearchOrderable searchableCrate)
     {
         return searchableCrate.Score;
     }

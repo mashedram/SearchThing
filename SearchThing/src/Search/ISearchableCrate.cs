@@ -5,19 +5,9 @@ namespace SearchThing.Search;
 
 public interface ISearchableCrate
 {
-    SearchTag Name { get; }
-    SearchTag PalletName { get; }
-    SearchTag Author { get; }
-    SearchTag[] Tags { get; }
-    
-    // Formal data
-    string Description { get; }
-    bool Redacted { get; }
-    
-    CrateType CrateType { get; }
-    CrateSubType CrateSubType { get; }
+    IEnumerable<IFuzzySearchable> SearchFields { get; }
+    /// <summary>
+    /// A salt value. Needed for consistent ordering for same-score items.
+    /// </summary>
     int Salt { get; }
-    int Score { get; }
-    DateTime DateAdded { get; }
-    Barcode Barcode { get; }
 }

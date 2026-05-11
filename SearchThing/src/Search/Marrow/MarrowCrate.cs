@@ -189,10 +189,10 @@ public class MarrowCrate :
         SceneStreamer.LoadAsync(reference).Forget();
     }
 
-    public void OnSelected(SpawnablePanelExtension extension, int idx)
+    public bool OnSelected(SpawnablePanelExtension extension, int idx)
     {
         if (!this.TryGetCrate(out var crate))
-            return;
+            return true;
         
         // On first select, assign it to the spawngun but don't do anything special yet.
         var spawnableCrate = crate.TryCast<SpawnableCrate>();
@@ -200,6 +200,8 @@ public class MarrowCrate :
         {
             SpawnGunPatches.SelectCrate(spawnableCrate);
         }
+
+        return true;
     }
 
     public void OnConfirmed(SpawnablePanelExtension extension, int idx)

@@ -1,7 +1,9 @@
 ﻿using System.Text.Json;
 using MelonLoader;
 using MelonLoader.Utils;
+using SearchThing.Extensions;
 using SearchThing.Extensions.Pages;
+using SearchThing.Extensions.Panel.Filter;
 using SearchThing.Presets.Data;
 
 namespace SearchThing.Presets;
@@ -10,35 +12,38 @@ public static class PresetManager
 {
     // TODO : Make this configurable
     private static readonly string PresetDirectoryPath = MelonEnvironment.UserDataDirectory + "/SearchThingPresets.json";
-    private const int MaxPresets = 6;
 
-    private static bool _assignmentMode;
+    private static Type? _returnPanel;
 
-    public static bool IsAssignmentMode
-    {
-        get => _assignmentMode;
-        set
-        {
-            if (!value)
-                SavePresets();
+    public static bool IsAssignmentMode { get; private set; }
 
-            _assignmentMode = value;
-        }
-    }
-
-    private static readonly List<PresetPage> PresetPages = new();
+    private static readonly List<Preset> Presets = new();
+    public static IEnumerable<Preset> PresetList => Presets;
 
     static PresetManager()
     {
-        for (var i = 0; i < MaxPresets; i++)
-        {
-            PresetPages.Add(new PresetPage());
-        }
+    
     }
-
-    public static IReadOnlyList<ISearchPage> GetPages()
+    
+    public static void ToggleAssigmentMode(SpawnablePanelExtension extension)
     {
-        return PresetPages;
+        if (IsAssignmentMode)
+        {
+            extension.OpenPanel(_returnPanel ?? typeof(PropTagSearchPanel));
+            _returnPanel = null;
+            IsAssignmentMode = false;
+            
+            return;
+        }
+        
+        _returnPanel = extension.GetSelectedPanel().GetType();
+        IsAssignmentMode = true;
+        extension.OpenPanel(typeof(PresetPanel));
+    }
+    
+    public static void AddPreset(Preset preset)
+    {
+        Presets.Add(preset);
     }
 
     public static void LoadPresets()

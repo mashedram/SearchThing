@@ -74,23 +74,24 @@ public class ItemButton
         _highlight.enabled = isSelected;
     }
 
-    public void OnSelected()
+    public bool OnSelected()
     {
         if (ItemInfo is not ICrateBoundItemInfo crateBoundItemInfo)
-            return;
+            return true;
         
         switch (crateBoundItemInfo.Crate)
         {
             case null:
-                return;
+                break;
             // Only call select if not already selected
             case ISelectableCrate selectableCrate when !_isSelected:
-                selectableCrate.OnSelected(_parentPanel, _index);
-                return;
+                return selectableCrate.OnSelected(_parentPanel, _index);
             case IConfirmableCrate confirmableCrate when _isSelected:
                 confirmableCrate.OnConfirmed(_parentPanel, _index);
                 break;
         }
+        
+        return true;
     }
 
     public void Hide()

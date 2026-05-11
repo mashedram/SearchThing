@@ -5,5 +5,5 @@ namespace SearchThing.Search.Interaction;
 public interface ISelectableCrate
 {
     // Called when the user clicks the button for the first time.
-    void OnSelected(SpawnablePanelExtension extension, int idx);
+    bool OnSelected(SpawnablePanelExtension extension, int idx);
 }

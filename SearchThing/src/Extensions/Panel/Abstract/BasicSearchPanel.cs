@@ -15,8 +15,7 @@ namespace SearchThing.Extensions.Panel.Abstract;
 public abstract class BasicSearchPanel<TCrate> : ISearchPanel
     where TCrate : class, IRequiredItemInfo, ISearchEntry
 {
-    private bool _isDirty = true;
-    private SearchResults<TCrate>? _results;
+    private ISearchResults<TCrate>? _results;
 
     public virtual bool ResearchOnPageChange => false;
     public abstract string Name { get; }
@@ -24,7 +23,8 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
     public DateTime DateAdded => DateTime.MinValue;
     public virtual bool CanSelect => true;
     public virtual bool TagEditable => false;
-    protected abstract void Search(string query, ISearchOrder order, Action<SearchResults<TCrate>> callback);
+    public bool IsDirty { get; private set; } = true;
+    protected abstract void Search(string query, ISearchOrder order, Action<ISearchResults<TCrate>> callback);
 
     public Guid Id { get; } = Guid.NewGuid();
 
@@ -38,7 +38,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
             if (value == _query)
                 return;
 
-            _isDirty = true;
+            IsDirty = true;
             _query = value;
         }
     }
@@ -56,7 +56,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
             if (value < 0 || value >= SupportedOrders.Length)
                 return;
 
-            _isDirty = true;
+            IsDirty = true;
             _selectedOrderIndex = value;
         }
     }
@@ -73,18 +73,18 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
     public void RequestSearch(SpawnablePanelExtension extension)
     {
         // Prevent reloading the same query
-        if (!ResearchOnPageChange && !_isDirty)
+        if (!ResearchOnPageChange && !IsDirty)
         {
             // We just have to rerender now, since the query is the same but the page might be different
             extension.RenderAll();
             return;
         }
-        _isDirty = false;
+        IsDirty = false;
 
         var order = SupportedOrders[SelectedOrderIndex];
         Search(_query, order, results =>
         {
-            _results = results;
+            _results = Parse(results);
             Page = 0;
             PageCount = results.GetPageCount(ISearchPanel.PanelSize);
             extension.RenderAll();
@@ -106,21 +106,22 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
 
     public void MakeDirty()
     {
-        _isDirty = true;
+        IsDirty = true;
     }
-
-    public virtual void OnTagEdited(SpawnablePanelExtension extension, string newTag)
-    {
-        // No special logic needed
-    }
-
+    
     public virtual Color? IsForceHighlighted(SpawnablePanelExtension extension)
     {
         // No special logic needed
         return null;
     }
 
-    public virtual bool OnSelected(SpawnablePanelExtension extension)
+    public virtual bool OnItemSelected(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    {
+        // No special logic needed
+        return true;
+    }
+
+    public virtual bool OnPanelSelected(SpawnablePanelExtension extension)
     {
         // No special logic needed
         return true;
@@ -131,9 +132,9 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         return new ItemRender(crate);
     }
 
-    public IRequiredItemInfo? GetCrateAt(int index)
+    public virtual ISearchResults<TCrate> Parse(ISearchResults<TCrate> results)
     {
-        return _results?.GetEntryAt(Page, ISearchPanel.PanelSize, index);
+        return results;
     }
 
     public IReadOnlyList<ItemRender> GetPage(int page)

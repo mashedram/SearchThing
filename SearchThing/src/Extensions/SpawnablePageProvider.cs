@@ -15,23 +15,18 @@ public class SpawnablePageProvider
             new AvatarTagSearchPanel(),
             new PropHistorySearchPanel(),
             new AvatarHistorySearchPanel(),
-            new LevelTagSearchPanel()
-#if UNLOCKED
-            , new RedactedSearchPanel()
-#endif
+            new LevelTagSearchPanel(),
+            new PresetPanel()
         ),
         new FusionPage()
     };
-
-    public IEnumerable<ISearchPage> GetAllPages()
-    {
-        return _basePages.Concat(PresetManager.GetPages());
-    }
+    
     public ISearchPage[] GetVisiblePages()
     {
-        return GetAllPages().Where(p => p.IsVisible).ToArray();
+        return _basePages.Where(p => p.IsVisible).ToArray();
     }
-    public int PageCount => GetAllPages().Count(c => c.IsVisible);
+    
+    public int PageCount => _basePages.Count(c => c.IsVisible);
 
     public ISearchPage GetBasePage()
     {

@@ -43,6 +43,17 @@ public class ItemButtonView
         _sortButton = new SortButton(panelExtension);
     }
     
+    public IRequiredItemInfo? GetItemInfo(int index)
+    {
+        if (index < 0 || index >= _itemButtons.Count)
+            return null;
+        var itemButton = _itemButtons[index];
+        if (!itemButton.IsVisible)           
+            return null;
+        
+        return itemButton.ItemInfo;
+    }
+    
     public void SelectItem(int index)
     {
         if (_panel == null)
@@ -52,9 +63,11 @@ public class ItemButtonView
         var item = _itemButtons[index];
         if (!item.IsVisible)
             return;
+        
+        if (!item.OnSelected())
+            return;
 
         _selectedItemButton = item;
-        item.OnSelected();
     }
 
     public void SetPanel(ISearchPanel panel)

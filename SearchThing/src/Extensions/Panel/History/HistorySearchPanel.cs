@@ -14,7 +14,7 @@ public abstract class HistorySearchPanel : BasicSearchPanel<HistoryItemInfo>
     public override abstract string Name { get; }
     protected abstract bool Filter(HistoryItemInfo entry);
 
-    protected override void Search(string query, ISearchOrder searchOrder, Action<SearchResults<HistoryItemInfo>> callback)
+    protected override void Search(string query, ISearchOrder searchOrder, Action<ISearchResults<HistoryItemInfo>> callback)
     {
         HistoryManager.SearchAsync(query, searchOrder, Filter, callback);
     }

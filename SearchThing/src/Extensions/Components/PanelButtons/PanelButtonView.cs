@@ -46,14 +46,28 @@ public class PanelButtonView
         _treePageText = panelView.treePageText;
     }
 
+    private ISearchPanel? GetPanel(int idx)
+    {
+        if (idx < 0)
+            return null;
+        if (idx >= _currentPage.Panels.Count)
+            return null;
+        
+        var panel = _currentPage.Panels[idx];
+        if (panel.Redacted)
+            return null;
+
+        return panel;
+    }
+
     public void Render()
     {
         for (var i = 0; i < _tagButtons.Count; i++)
         {
             var button = _tagButtons[i];
-            var panel = _currentPage.Panels[i];
+            var panel = GetPanel(i);
 
-            if (panel is not { Redacted: false })
+            if (panel == null)
             {
                 button.Hide();
                 continue;
@@ -83,6 +97,30 @@ public class PanelButtonView
             button.Reset();
         }
     }
+    
+    public bool OpenPanel(Type returnPanel)
+    {
+        var pages = _provider.GetVisiblePages();
+        for (var index = 0; index < pages.Length; index++)
+        {
+            var searchPage = pages[index];
+            var panel = searchPage.Panels.FirstOrDefault(p => p.GetType() == returnPanel && !p.Redacted);
+            if (panel == null)
+                continue;
+            
+            if (panel.Redacted)
+                continue;
+
+            if (!panel.OnPanelSelected(_parent))
+                return false;
+
+            SetPage(index);
+            SelectedPanel = panel;
+            return true;
+        }
+
+        return false;
+    }
 
     public bool SelectPage(int idx)
     {
@@ -96,7 +134,7 @@ public class PanelButtonView
             return false;
         
         // Check if we can select the panel
-        if (!panel.OnSelected(_parent))
+        if (!panel.OnPanelSelected(_parent))
             return false;
 
         SelectedPanel = panel;

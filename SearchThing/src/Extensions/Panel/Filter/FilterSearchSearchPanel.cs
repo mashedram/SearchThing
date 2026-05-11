@@ -28,7 +28,7 @@ public abstract class FilterSearchSearchPanel : BasicSearchPanel<MarrowCrate>
 
     public void OnItemFunction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
-        PresetManager.IsAssignmentMode = !PresetManager.IsAssignmentMode;
+        PresetManager.ToggleAssigmentMode(extension);
 
         extension.RenderAll();
     }
@@ -42,7 +42,7 @@ public abstract class FilterSearchSearchPanel : BasicSearchPanel<MarrowCrate>
         };
     }
 
-    protected override void Search(string query, ISearchOrder order, Action<SearchResults<MarrowCrate>> callback)
+    protected override void Search(string query, ISearchOrder order, Action<ISearchResults<MarrowCrate>> callback)
     {
         SearchManager.SearchAsync(query, MarrowCrateManager.GetCrates(), Filter, order, callback);
     }

@@ -64,7 +64,7 @@ public class FusionBlocklistPage : BasicSearchPanel<MarrowCrate>
         };
     }
 
-    protected override void Search(string query, ISearchOrder order, Action<SearchResults<MarrowCrate>> callback)
+    protected override void Search(string query, ISearchOrder order, Action<ISearchResults<MarrowCrate>> callback)
     {
         SearchManager.SearchAsync(query, MarrowCrateManager.GetCrates(), c => c.CrateType == CrateType.Prop, order, callback);
     }

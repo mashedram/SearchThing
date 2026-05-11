@@ -42,27 +42,6 @@ public class SpawnablePanelExtension
     private readonly ItemInfoBox _infoBox;
 
     private static readonly Sprite TabIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.SearchIcon.png");
-
-    // Editing
-    private string _editValue = "";
-    public bool IsEditing { get; private set; }
-
-    // // Favorite button
-    // private Image _fadedButtonImage = null!;
-    // private Image _favoriteButtonImage = null!;
-    // private Sprite _originalFavoriteSprite = null!;
-    //
-    // private Color _originalFavoriteColor = Color.white;
-
-    // The page currently selected in the tag page, but not used for rendering in case a rerender gets called when the page changes but selected tag doesn't
-    // private int _renderedTagPageIndex;
-    //
-    // // We need the selected tag in a prefix context, so we need to store it
-    // private int _selectedItemIndex;
-    // private int _selectedTagIndex;
-    // private int _selectedPageIndex;
-    // // Confirmation logic
-    // private int _lastSelectedItemIndex;
     // Pages
     private readonly SpawnablePageProvider _pages = new();
 
@@ -145,57 +124,8 @@ public class SpawnablePanelExtension
     
     private void OnSearchQueryChanged(string query)
     {
-        if (IsEditing)
-        {
-            _editValue = query;
-            RenderAll();
-        }
-        else
-        {
-            _searchQuery = query;
-            RequestRefresh();
-        }
-    }
-
-    public void SetIsEditing(bool isEditing)
-    {
-        // Skip if we are already in the correct mode
-        if (isEditing == IsEditing)
-            return;
-
-        IsEditing = isEditing;
-        // var panel = GetSelectedPanel();
-        //
-        // if (!panel.TagEditable)
-        // {
-        //     IsEditing = false;
-        //     return;
-        // }
-        //
-        // // Enter editing
-        // if (IsEditing)
-        // {
-        //     // Ensure we aren't assigning
-        //     PresetManager.IsAssignmentMode = false;
-        //     // Force the tag to know its in edit mode
-        //     _editValue = panel.Name;
-        //     // We don't want to trigger events to prevent circular calls
-        //     _keyboard.SetText(_editValue, false);
-        // }
-        // // Exit editing
-        // else
-        // {
-        //     // Reset back to the search query
-        //     _keyboard.SetText(_searchQuery, false);
-        //     panel.OnTagEdited(this, _editValue);
-        //
-        //     // Render tags to ensure the new tag is shown if it was changed
-        //     // TODO
-        //     // RenderTags();
-        // }
-        //
-        // // Do an empty search to fill the void, prevents small hitch on load
-        // RequestRefresh();
+        _searchQuery = query;
+        RequestRefresh();
     }
     
     public ISearchPanel GetSelectedPanel()
@@ -239,17 +169,51 @@ public class SpawnablePanelExtension
 
     public void OnSelectItem(int idx)
     {
-        SetIsEditing(false);
-        
         var panel = GetSelectedPanel();
-        if (panel.CanSelect)
+        var targetItem = _itemButtonView.GetItemInfo(idx);
+        if (targetItem == null)
+            return;
+        
+        if (panel.OnItemSelected(this, targetItem))
             _itemButtonView.SelectItem(idx);
         
         // Update the infobox
         _infoBox.SetContent(GetSelectedSpawnable());
+
+        // If the panel got updated internally, update the search
+        if (panel.IsDirty)
+        {
+            // Update the keyboard to the internal query
+            // This also refreshes the page
+            _keyboard.SetText(panel.Query);
+        }
+        else
+        {
+            RenderAll();
+        }
+    }
+
+    private void OnPanelViewChanged()
+    {
+        // Update the item buttons to the new panel
+        _itemButtonView.SetPanel(_panelButtonView.SelectedPanel);
+
+        // Clear the query so the user doesn't get an empty screen
+        _searchQuery = "";
+        _keyboard.SetText(_searchQuery, false);
+
+        // Update everything to reflect the new selected panel
+        RequestRefresh();
+    }
+    
+    public void OpenPanel(Type returnPanel)
+    {
+        var result = _panelButtonView.OpenPanel(returnPanel);
+
+        if (!result)
+            return;
         
-        // Update tags to ensure any forced highlights are updated
-        RenderAll();
+        OnPanelViewChanged();
     }
 
     public void SelectCategory(int idx)
@@ -260,18 +224,7 @@ public class SpawnablePanelExtension
         if (!result)
             return;
         
-        // Update the item buttons to the new panel
-        _itemButtonView.SetPanel(_panelButtonView.SelectedPanel);
-
-        // Force out of edit mode if we switch tabs
-        SetIsEditing(false);
-
-        // Clear the query so the user doesn't get an empty screen
-        _searchQuery = "";
-        _keyboard.SetText(_searchQuery, false);
-
-        // Update everything to reflect the new selected panel
-        RequestRefresh();
+        OnPanelViewChanged();
     }
 
     public void ChangeTagPage(int offset)

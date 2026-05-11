@@ -2,11 +2,12 @@
 
 namespace SearchThing.Search.Search;
 
-public class SearchResults<TCrate>
+public class SearchResults<TCrate> : ISearchResults<TCrate>
     where TCrate : class, ISearchEntry
 {
     public static SearchResults<ISearchEntry> Empty { get; } = new(new List<ISearchEntry>());
     private IReadOnlyList<TCrate> Entries { get; }
+    public int Count => Entries.Count;
 
     public SearchResults(List<TCrate> entries)
     {

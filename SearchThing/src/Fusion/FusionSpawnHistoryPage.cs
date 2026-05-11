@@ -72,7 +72,7 @@ public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
         };
     }
 
-    protected override void Search(string query, ISearchOrder order, Action<SearchResults<FusionSpawnHistoryEntry>> callback)
+    protected override void Search(string query, ISearchOrder order, Action<ISearchResults<FusionSpawnHistoryEntry>> callback)
     {
         FusionSpawnHistory.SearchAsync(query, order, c => c.CrateType == CrateType.Prop, callback);
     }

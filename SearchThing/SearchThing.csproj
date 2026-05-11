@@ -9,19 +9,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="resources\AddIcon.png" />
-        <EmbeddedResource Include="resources\EditIcon.png" />
-        <EmbeddedResource Include="resources\RemoveIcon.png" />
+        <EmbeddedResource Include="resources\AddIcon.png"/>
+        <EmbeddedResource Include="resources\EditIcon.png"/>
+        <EmbeddedResource Include="resources\RemoveIcon.png"/>
         <EmbeddedResource Include="resources\SearchIcon.png"/>
-        <EmbeddedResource Include="resources\BlockIcon.png" />
+        <EmbeddedResource Include="resources\BlockIcon.png"/>
 
-        <EmbeddedResource Include="resources\AvatarIcon.png" />
-        <EmbeddedResource Include="resources\LevelIcon.png" />
-        <EmbeddedResource Include="resources\CrateIcon.png" />
-        <EmbeddedResource Include="resources\GunIcon.png" />
-        <EmbeddedResource Include="resources\MeleeIcon.png" />
-        <EmbeddedResource Include="resources\ThrowableIcon.png" />
-        <EmbeddedResource Include="resources\VehicleIcon.png" />
+        <EmbeddedResource Include="resources\AvatarIcon.png"/>
+        <EmbeddedResource Include="resources\LevelIcon.png"/>
+        <EmbeddedResource Include="resources\CrateIcon.png"/>
+        <EmbeddedResource Include="resources\GunIcon.png"/>
+        <EmbeddedResource Include="resources\MeleeIcon.png"/>
+        <EmbeddedResource Include="resources\ThrowableIcon.png"/>
+        <EmbeddedResource Include="resources\VehicleIcon.png"/>
     </ItemGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -35,7 +35,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release - Unlocked' ">
-      <DefineConstants>TRACE;MELONLOADER;UNLOCKED</DefineConstants>
+        <DefineConstants>TRACE;MELONLOADER;UNLOCKED</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
@@ -393,7 +393,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="staging\Mods\" />
+        <Folder Include="staging\Mods\"/>
     </ItemGroup>
 
 </Project>

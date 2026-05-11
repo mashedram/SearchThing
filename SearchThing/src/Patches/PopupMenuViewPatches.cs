@@ -12,11 +12,11 @@ public static class PopupMenuViewPatches
     {
         if (__instance == null)
             return;
-        
+
         // Always show the spawn menu
         __instance.AddSpawnMenu();
     }
-    
+
     [HarmonyPatch(nameof(PopUpMenuView.RemoveSpawnMenu))]
     [HarmonyPrefix]
     public static bool RemoveSpawnMenu_Prefix(PopUpMenuView __instance)

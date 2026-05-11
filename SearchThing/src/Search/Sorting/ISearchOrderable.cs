@@ -1,8 +1,11 @@
-﻿namespace SearchThing.Search;
+﻿using SearchThing.Search.CrateData;
+using SearchThing.Search.Search;
+
+namespace SearchThing.Search.Sorting;
 
 public interface ISearchOrderable
 {
-    ISearchableCrate Source { get; }
+    ISearchEntry Source { get; }
     /// <summary>
     /// The score of this item. Higher is better.
     /// </summary>

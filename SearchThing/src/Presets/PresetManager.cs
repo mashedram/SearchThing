@@ -13,6 +13,7 @@ public static class PresetManager
     private const int MaxPresets = 6;
 
     private static bool _assignmentMode;
+
     public static bool IsAssignmentMode
     {
         get => _assignmentMode;
@@ -20,13 +21,13 @@ public static class PresetManager
         {
             if (!value)
                 SavePresets();
-            
+
             _assignmentMode = value;
         }
     }
 
     private static readonly List<PresetPage> PresetPages = new();
-    
+
     static PresetManager()
     {
         for (var i = 0; i < MaxPresets; i++)
@@ -34,7 +35,7 @@ public static class PresetManager
             PresetPages.Add(new PresetPage());
         }
     }
-    
+
     public static IReadOnlyList<ISearchPage> GetPages()
     {
         return PresetPages;
@@ -66,14 +67,14 @@ public static class PresetManager
             MelonLogger.Error("Failed to load presets from file!", exception);
         }
     }
-    
+
     public static void SavePresets()
     {
         try
         {
             // Ensure the directory exists
             Directory.CreateDirectory(PresetDirectoryPath);
-            
+
         }
         catch (Exception exception)
         {

@@ -1,42 +1,49 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
+using SearchThing.Extensions.Components;
 using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
 using SearchThing.Search;
+using SearchThing.Search.CrateData;
+using SearchThing.Search.Data;
+using SearchThing.Search.Search;
+using SearchThing.Search.Sorting;
 using SearchThing.Util;
 using UnityEngine;
 
 namespace SearchThing.Extensions.Panel.Abstract;
 
 public abstract class BasicSearchPanel<TCrate> : ISearchPanel
-    where TCrate : class, IFullCrateData, ISearchableCrate
+    where TCrate : class, IRequiredItemInfo, ISearchEntry
 {
     private bool _isDirty = true;
     private SearchResults<TCrate>? _results;
-    
+
     public virtual bool ResearchOnPageChange => false;
-    public abstract string Tag { get; }
-    public virtual bool IsVisible => true;
-    public virtual bool CanAssign => true;
+    public abstract string Name { get; }
+    public virtual bool Redacted => false;
+    public DateTime DateAdded => DateTime.MinValue;
+    public virtual bool CanSelect => true;
     public virtual bool TagEditable => false;
     protected abstract void Search(string query, ISearchOrder order, Action<SearchResults<TCrate>> callback);
 
     public Guid Id { get; } = Guid.NewGuid();
 
     private string _query = "";
+
     public string Query
     {
-        get => _query;  
+        get => _query;
         set
         {
             if (value == _query)
                 return;
-            
+
             _isDirty = true;
             _query = value;
         }
     }
-    
-    private int _selectedOrderIndex = 0;
+
+    private int _selectedOrderIndex;
 
     public int SelectedOrderIndex
     {
@@ -45,23 +52,24 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         {
             if (value == _selectedOrderIndex)
                 return;
-            
+
             if (value < 0 || value >= SupportedOrders.Length)
                 return;
-            
+
             _isDirty = true;
             _selectedOrderIndex = value;
         }
     }
-    
-    public virtual ISelectableSearchOrder[] SupportedOrders { get; } = {
+
+    public virtual ISelectableSearchOrder[] SupportedOrders { get; } =
+    {
         new ScoreSearchOrder(),
         new AlphabeticalSearchOrder(),
         new DateNewAddedSearchOrder(),
         new DateOldAddedSearchOrder(),
         new RandomSearchOrder()
     };
-    
+
     public void RequestSearch(SpawnablePanelExtension extension)
     {
         // Prevent reloading the same query
@@ -72,7 +80,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
             return;
         }
         _isDirty = false;
-        
+
         var order = SupportedOrders[SelectedOrderIndex];
         Search(_query, order, results =>
         {
@@ -82,7 +90,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
             extension.RenderAll();
         });
     }
-    
+
     public int Page { get; set; }
     public int PageCount { get; private set; } = 1;
 
@@ -95,37 +103,10 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         Page = newPage;
         extension.RenderAll();
     }
-    
+
     public void MakeDirty()
     {
         _isDirty = true;
-    }
-
-    public virtual bool HasPanelFunction => false;
-    public virtual Sprite? PanelFunctionIcon => null;
-    public virtual bool HasItemFunction => false;
-    public virtual Sprite? ItemFunctionIcon => null;
-
-    public virtual Color? GetPanelFunctionHighlight(SpawnablePanelExtension extension)
-    {
-        // No Op
-        return null;
-    }
-
-    public virtual Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate)
-    {
-        // No Op
-        return null;
-    }
-
-    public virtual void OnPanelFunction(SpawnablePanelExtension extension)
-    {
-        // No Op
-    }
-    
-    public virtual void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData crate)
-    {
-        // No Op
     }
 
     public virtual void OnTagEdited(SpawnablePanelExtension extension, string newTag)
@@ -133,40 +114,32 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         // No special logic needed
     }
 
-    public virtual Color? IsForceHighlighted(SpawnablePanelExtension extension, IFullCrateData? selectedCrate)
+    public virtual Color? IsForceHighlighted(SpawnablePanelExtension extension)
     {
         // No special logic needed
         return null;
     }
-    
+
     public virtual bool OnSelected(SpawnablePanelExtension extension)
     {
         // No special logic needed
         return true;
     }
-    
-    public virtual ItemRenderData GetRenderDataForCrate(TCrate crate)
+
+    public virtual ItemRender GetRenderDataForCrate(TCrate crate)
     {
-        return new ItemRenderData
-        {
-            Name = crate.Name,
-            PalletName = crate.PalletName,
-            Author = crate.Author,
-            Tags = crate.Tags.ToArray(),
-            Description = crate.Description,
-            Icon = CrateIconProvider.GetIcon(crate)
-        };
+        return new ItemRender(crate);
     }
 
-    public IFullCrateData? GetCrateAt(int index)
+    public IRequiredItemInfo? GetCrateAt(int index)
     {
         return _results?.GetEntryAt(Page, ISearchPanel.PanelSize, index);
     }
 
-    public IReadOnlyList<ItemRenderData> GetPage(int page)
+    public IReadOnlyList<ItemRender> GetPage(int page)
     {
         if (_results == null)
-            return Array.Empty<ItemRenderData>();
+            return Array.Empty<ItemRender>();
 
         return _results
             .GetPage(page, ISearchPanel.PanelSize)

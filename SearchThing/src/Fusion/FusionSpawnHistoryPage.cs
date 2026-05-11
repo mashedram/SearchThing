@@ -3,12 +3,18 @@ using LabFusion.Data;
 using LabFusion.Network;
 using LabFusion.Safety;
 using SearchThing.Extensions;
+using SearchThing.Extensions.Components;
+using SearchThing.Extensions.Components.Info;
 using SearchThing.Extensions.Pages;
 using SearchThing.Extensions.Panel;
 using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
 using SearchThing.Search;
+using SearchThing.Search.CrateData;
+using SearchThing.Search.Data;
+using SearchThing.Search.Search;
+using SearchThing.Search.Sorting;
 using SearchThing.Util;
 using UnityEngine;
 
@@ -17,36 +23,34 @@ namespace SearchThing.Fusion;
 public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
 {
     private static readonly Sprite BlockIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.BlockIcon.png");
-    
-    public override string Tag => "Fusion Spawn History";
-    public override bool IsVisible => NetworkInfo.HasServer;
-    public override bool CanAssign => false;
+
+    public override string Name => "Fusion Spawn History";
+    public override bool Redacted => !NetworkInfo.HasServer;
+    public override bool CanSelect => false;
 
     public override bool ResearchOnPageChange => true;
-    public override Sprite ItemFunctionIcon => BlockIcon;
-
-    public override bool HasItemFunction => true;
-
-    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate)
+    
+    public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
-        if (crate is not IBarcodeHolder holder)
+        if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })
             return null;
-        
-        return FusionBlacklistHelper.IsBlacklisted(holder.Barcode._id) ? Color.red : Color.green;
+
+        return FusionBlacklistHelper.IsBlacklisted(barcode._id) ? Color.red : Color.green;
     }
 
-    public override void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData crate)
+    public void OnItemFunction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
-        if (crate is not IBarcodeHolder holder)
+        if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })
             return;
-        
-        FusionBlacklistHelper.ToggleBlacklist(holder.Barcode._id);
-        
+
+        FusionBlacklistHelper.ToggleBlacklist(barcode._id);
+
         extension.RequestRefresh();
     }
-    
+
     // Change search order
-    public override ISelectableSearchOrder[] SupportedOrders { get; } = {
+    public override ISelectableSearchOrder[] SupportedOrders { get; } =
+    {
         new DateNewAddedSearchOrder(),
         new DateOldAddedSearchOrder(),
         new ScoreSearchOrder(),
@@ -54,20 +58,17 @@ public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
         new RandomSearchOrder()
     };
 
-    public override ItemRenderData GetRenderDataForCrate(FusionSpawnHistoryEntry crate)
+    public override ItemRender GetRenderDataForCrate(FusionSpawnHistoryEntry crate)
     {
-        var ownerName = crate.SpawnerId?.IsValid == true && crate.SpawnerId.TryGetDisplayName(out var name) 
-            ? StringHelper.RemoveUnityRichText(name) 
+        var ownerName = crate.SpawnerId?.IsValid == true && crate.SpawnerId.TryGetDisplayName(out var name)
+            ? StringHelper.RemoveUnityRichText(name)
             : "Unknown";
-        
-        return new ItemRenderData
+
+        return new ItemRenderWithAction(crate, OnItemFunction)
         {
             Name = $"{crate.Name} ({ownerName})",
-            Description = crate.Description,
-            Author = crate.Author,
-            PalletName = crate.PalletName,
-            Tags = crate.Tags.ToArray(),
-            Icon = CrateIconProvider.GetIcon(crate)
+            GetActionIconFunc = (_, _) => BlockIcon,
+            GetActionHighlightFunc = GetItemFunctionHighlight
         };
     }
 

@@ -1,45 +1,46 @@
->>**Version 0.5.0**
+> > **Version 0.5.0**
 >1. Added a spawn log when in a Fusion server.
 >2. Added a menu where you can edit your Fusion Block list from an in game panel.
 
->>**Version 0.4.3**
+> > **Version 0.4.3**
 >1. Fixed a bug that prevented the search panel from being used in a fusion lobby (Reported by Lakatrazz)
 
->>**Version 0.4.2**
+> > **Version 0.4.2**
 >1. Fixed the startup delay when opening the search menu for the first time
 >2. Added different icons for different items
 >3. Selecting an item in the spawn menu will now guarantee the item to be selected in the spawn gun
 >4. Renamed "Score" sorting to "Relevance" (Suggested by Alfi)
 
->>**Version 0.4.1**
+> > **Version 0.4.1**
 >1. Fixed a bug related to fusion and item selection.
 >2. Added level search
- 
->>**Version 0.4.0**
+
+> > **Version 0.4.0**
 >1. Added custom presets.
->   1. Hover over an item you want and press the plus button in the top right to go into assignment mode
+    >
+1. Hover over an item you want and press the plus button in the top right to go into assignment mode
 >   2. Scroll through your presets and press on the ones you wish to assign the item to
 >   3. Exit edit mode
 >   4. You can rename your presets by click on the preset and then the edit mode in the top right
 >   5. Type in the name of your preset, then click anywhere else
 >   6. Click an item in the preset and press the minus to remove it from the preset
 
->>**Version 0.3.0**
+> > **Version 0.3.0**
 >1. Made some more tweaks to the searching algorithm
 >2. Added the sorting options: Score, Alphabetical, Newest first and oldest first
 >3. No longer sometimes also puts items spawned by someone else in your spawn history
 >4. Now also tracks avatars worn using other ways than the menu to your history
 
->>**Version 0.2.0**
+> > **Version 0.2.0**
 >1. Fixed a crash that happened when the query was empty, causing a non-unity thread to modify unity. (Reported by Alfi)
 >2. Improved the search algorithm a bit, should now handle spaces better
 >3. Added a spawn history
 
->>**Version 0.1.2**
+> > **Version 0.1.2**
 >1. Fixed a bug that made the scroll buttons disappear if you closed and opened the menu
 
->>**Version 0.1.1**
+> > **Version 0.1.1**
 >1. Imagine uploading the wrong build lmao
 
->>**Version 0.1.0**
+> > **Version 0.1.0**
 >1. Initial Release

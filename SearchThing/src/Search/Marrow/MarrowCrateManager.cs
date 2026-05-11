@@ -1,13 +1,17 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
+using SearchThing.Search.Containers;
 
-namespace SearchThing.Search;
+namespace SearchThing.Search.Marrow;
 
 public static class MarrowCrateManager
 {
     private static readonly SearchableCrateLookup<MarrowCrate> SearchableCrateCrates = new();
-    
-    public static ISearchableCrateList<MarrowCrate> GetCrates() => SearchableCrateCrates;
-    
+
+    public static ISearchableCrateList<MarrowCrate> GetCrates()
+    {
+        return SearchableCrateCrates;
+    }
+
     public static void AddPallet(Pallet pallet)
     {
         SearchableCrateCrates.AddCrates(
@@ -16,7 +20,7 @@ public static class MarrowCrateManager
                 .Select(crate => new MarrowCrate(crate))
         );
     }
-    
+
     public static MarrowCrate? GetCrate(Barcode barcode)
     {
         return SearchableCrateCrates.GetCrateByBarcode(barcode._id);

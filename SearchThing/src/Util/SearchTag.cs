@@ -1,7 +1,8 @@
 ﻿using System.Text.RegularExpressions;
-using FuzzySharp;
-using FuzzySharp.PreProcess;
+using SearchThing.dependencies.FuzzySharp;
+using SearchThing.dependencies.FuzzySharp.PreProcess;
 using SearchThing.Search;
+using SearchThing.Search.CrateData;
 
 namespace SearchThing.Util;
 
@@ -9,25 +10,25 @@ public struct SearchTag : IFuzzySearchable
 {
     public string Original { get; }
     public string Preprocessed { get; }
-    
+
     public SearchTag(string original)
     {
         Original = original;
         Preprocessed = Preprocess(original);
     }
-    
+
     public int PartialRatio(string other)
     {
         return Fuzz.PartialRatio(Preprocessed, other, PreprocessMode.None);
     }
-    
+
     public bool Contains(string preprocessedQuery)
     {
         return Preprocessed.Contains(preprocessedQuery);
     }
-    
+
     // Preperation
-    
+
     public static string Preprocess(string value)
     {
         // To lower case

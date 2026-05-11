@@ -1,19 +1,22 @@
-﻿namespace SearchThing.Search;
+﻿using SearchThing.Search.CrateData;
+using SearchThing.Search.Search;
+
+namespace SearchThing.Search.Containers;
 
 /// <summary>
 /// Represents a list of searchable crates. This is used to store the crates that are currently being searched through.
 /// </summary>
 /// <remarks>This class MUST be thread safe</remarks>
-public interface ISearchableCrateList<out TCrate> where TCrate : class, ISearchableCrate
+public interface ISearchableCrateList<out TCrate> where TCrate : class, ISearchEntry
 {
     IEnumerable<TCrate> GetCrates();
 }
 
-public class SearchableCrateList<TCrate> : ISearchableCrateList<TCrate> where TCrate : class, ISearchableCrate
+public class SearchableCrateList<TCrate> : ISearchableCrateList<TCrate> where TCrate : class, ISearchEntry
 {
     private readonly ReaderWriterLockSlim _lock = new();
     private readonly List<TCrate> _crates = new();
-    
+
     public void AddCrate(TCrate crate)
     {
         _lock.EnterWriteLock();
@@ -26,7 +29,7 @@ public class SearchableCrateList<TCrate> : ISearchableCrateList<TCrate> where TC
             _lock.ExitWriteLock();
         }
     }
-    
+
     public void AddCrates(IEnumerable<TCrate> crates)
     {
         _lock.EnterWriteLock();
@@ -39,7 +42,7 @@ public class SearchableCrateList<TCrate> : ISearchableCrateList<TCrate> where TC
             _lock.ExitWriteLock();
         }
     }
-    
+
     public IEnumerable<TCrate> GetCrates()
     {
         _lock.EnterReadLock();

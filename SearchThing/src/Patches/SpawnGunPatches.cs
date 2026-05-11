@@ -15,24 +15,28 @@ public class SpawnGunPatches
     private static SpawnGun? HeldSpawnGun { get; set; }
     private static SpawnableCrate? _selectedCrate;
 
-    public static void SelectCrate(SpawnableCrate crate)
+    // Returns true if a spawn gun is held and the selected crate is updated, false otherwise
+    public static bool SelectCrate(SpawnableCrate crate)
     {
         _selectedCrate = crate;
-        
-        if (HeldSpawnGun != null)
-            HeldSpawnGun.OnSpawnableSelected(_selectedCrate);
+
+        var hasSpawnGun = HeldSpawnGun != null;
+        if (hasSpawnGun)
+            HeldSpawnGun!.OnSpawnableSelected(_selectedCrate);
+
+        return hasSpawnGun;
     }
-    
+
     public static void ClearSelectedCrate()
     {
         _selectedCrate = null;
     }
-        
+
     private static bool IsHeldByLocalPlayer(SpawnGun spawnGun)
     {
         if (!NetworkSceneManager.IsLevelNetworked)
             return true;
-        
+
         var host = spawnGun.host;
         if (host == null)
             return false;
@@ -50,9 +54,9 @@ public class SpawnGunPatches
 
         if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
             return;
-        
+
         HeldSpawnGun = __instance;
-        
+
         // Ensure that whatever spawnable we grab with is selected in the spawn gun
         if (_selectedCrate != null)
             __instance.OnSpawnableSelected(_selectedCrate);
@@ -67,10 +71,10 @@ public class SpawnGunPatches
 
         if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
             return;
-        
+
         HeldSpawnGun = null;
     }
-    
+
     // Run this as soon after we fire to capture what is fired before any other mods might change that
     [HarmonyPatch(nameof(SpawnGun.OnFire))]
     [HarmonyPrefix]
@@ -82,11 +86,11 @@ public class SpawnGunPatches
 
         if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
             return;
-        
+
         var crate = __instance._selectedCrate;
         if (crate == null)
             return;
-        
+
         HistoryManager.AddEntry(crate);
     }
 
@@ -96,16 +100,16 @@ public class SpawnGunPatches
     {
         if (__instance == null)
             return true;
-        
+
         if (Mod.IsFusionLoaded && !IsHeldByLocalPlayer(__instance))
             return true;
-        
+
         // Assign the selected crate without updating to prevent a loop
         _selectedCrate = crate;
 
         // Ignore non-avatar crates
         if (crate.TryCast<AvatarCrate>() == null)
-            return true;    
+            return true;
 
         // Do not allow setting the spawnable to an avatar
         return false;

@@ -2,6 +2,8 @@
 using System.Text.RegularExpressions;
 using Il2CppSLZ.Marrow.Warehouse;
 using SearchThing.Search;
+using SearchThing.Search.CrateData;
+using SearchThing.Search.Data;
 
 namespace SearchThing.Util;
 
@@ -19,15 +21,15 @@ public static class SearchHelper
     {
         return crate.TryCast<T>() != null;
     }
-    
+
     public static CrateType GetCrateType(this Crate crate)
     {
         if (crate.IsCrate<AvatarCrate>())
             return CrateType.Avatar;
-        
+
         if (crate.IsCrate<LevelCrate>())
             return CrateType.Level;
-        
+
         return CrateType.Prop;
     }
 
@@ -45,26 +47,26 @@ public static class SearchHelper
         // Add additional data to tag list
         if (!string.IsNullOrEmpty(crate.Title))
             tags.AddRange(crate.Title.ToLower().Split(" ").Select(p => p.Trim()));
-        
+
         return tags;
     }
-    
+
     private static CrateSubType GetPropSubType(this Crate crate)
     {
         var meta = crate.GetMetaDataList();
-        
+
         if (meta.Contains("gun"))
             return CrateSubType.Gun;
 
         if (meta.Contains("grenade"))
             return CrateSubType.Throwable;
-        
+
         if (meta.Contains("melee"))
             return CrateSubType.Melee;
 
         if (meta.Contains("vehicle"))
             return CrateSubType.Vehicle;
-            
+
         return CrateSubType.None;
     }
 
@@ -78,9 +80,9 @@ public static class SearchHelper
                 return CrateSubType.None;
         }
     }
-    
-    public static bool TryGetCrate(this IBarcodeHolder barcodeHolder, [MaybeNullWhen(false)] out Crate outCrate)
+
+    public static bool TryGetCrate(this ICrateBoundItemInfo barcodeProvider, [MaybeNullWhen(false)] out Crate outCrate)
     {
-        return AssetWarehouse.Instance.TryGetCrate(barcodeHolder.Barcode, out outCrate);
+        return AssetWarehouse.Instance.TryGetCrate(barcodeProvider.Barcode, out outCrate);
     }
 }

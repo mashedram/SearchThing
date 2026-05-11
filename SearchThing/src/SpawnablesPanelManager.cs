@@ -7,33 +7,36 @@ namespace SearchThing;
 public static class SpawnablesPanelManager
 {
     private static SpawnablePanelExtension? _extension;
-    
+
     public static void Load(SpawnablesPanelView panelView)
     {
         if (_extension != null && _extension.Is(panelView))
         {
             if (!_extension.IsSearchActive())
                 return;
-            
+
             _extension.RequestRefresh();
             return;
         }
-        
+
         _extension = new SpawnablePanelExtension(panelView);
     }
-    
+
     public static void OnTabSelected(SpawnablesPanelView panelView, int index)
     {
         if (_extension == null || !_extension.Is(panelView))
             return;
-        
+
         if (index == SpawnablePanelExtension.SearchTabIndex)
             _extension.Show();
         else
             _extension.Hide();
     }
-    
-    public static SpawnablePanelExtension? Get() => _extension;
+
+    public static SpawnablePanelExtension? Get()
+    {
+        return _extension;
+    }
 
     public static bool TryGet(SpawnablesPanelView instance, [MaybeNullWhen(false)] out SpawnablePanelExtension extension)
     {

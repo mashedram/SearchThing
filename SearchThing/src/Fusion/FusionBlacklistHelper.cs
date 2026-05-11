@@ -9,17 +9,17 @@ public static class FusionBlacklistHelper
     private static List<string>? GetBlacklist()
     {
         var traverse = new Traverse(typeof(ModBlacklist)).Field("_blacklistedModIds");
-        if (traverse.FieldExists()) 
+        if (traverse.FieldExists())
             return traverse.GetValue<List<string>>();
-        
+
         MelonLogger.Error("Failed to get blacklist: _blacklistedModIds field not found");
         return new List<string>();
     }
-    
+
     private static void SaveBlacklist(List<string> blacklist)
     {
         var path = PersistentData.GetPath("mod_blacklist.txt");
-        
+
         using var sw = File.CreateText(path);
 
         sw.WriteLine("# This file is for preventing the use of specific mods while in a server.");
@@ -41,7 +41,7 @@ public static class FusionBlacklistHelper
         sw.WriteLine("# SLZ.TestChambers.Level.TestChamber02");
         sw.WriteLine("# SLZ.TestChambers.Level.TestChamber07");
         sw.WriteLine("# -------------------------------------");
-        
+
         foreach (var id in blacklist)
         {
             sw.WriteLine(id);
@@ -56,7 +56,7 @@ public static class FusionBlacklistHelper
             MelonLogger.Error("Cannot toggle blacklist: failed to retrieve blacklist");
             return;
         }
-        
+
         if (blacklist.Contains(barcode))
         {
             blacklist.Remove(barcode);
@@ -65,10 +65,10 @@ public static class FusionBlacklistHelper
         {
             blacklist.Add(barcode);
         }
-        
+
         SaveBlacklist(blacklist);
     }
-    
+
     public static bool IsBlacklisted(string barcodeID)
     {
         return ModBlacklist.IsBlacklisted(barcodeID);

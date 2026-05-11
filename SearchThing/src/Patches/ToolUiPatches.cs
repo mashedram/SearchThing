@@ -10,7 +10,7 @@ public static class ToolUiPatches
 {
     // For some reason, the panel refuses to render default behaviour without a set spawn gun
     private static SpawnGun? _DummySpawnGun;
-    
+
     private static SpawnGun GetDummySpawnGun()
     {
         if (_DummySpawnGun != null)
@@ -31,7 +31,7 @@ public static class ToolUiPatches
 
         if (__instance.spawnGun != null)
             return;
-        
+
         // It doesn't need to be real or persistent or attached or anything. The panel just NEEDS it to exist.
         __instance.spawnGun = GetDummySpawnGun();
         __instance._spawnGun_k__BackingField = GetDummySpawnGun();
@@ -41,9 +41,9 @@ public static class ToolUiPatches
     [HarmonyPostfix]
     public static void SpawnablesPanelView_Activate_Postfix(SpawnablesPanelView __instance)
     {
-        if (__instance == null) 
+        if (__instance == null)
             return;
-        
+
         SpawnablesPanelManager.Load(__instance);
     }
 
@@ -74,7 +74,7 @@ public static class ToolUiPatches
         extension.ChangePanelPage(1);
         return false;
     }
-    
+
     [HarmonyPatch(nameof(SpawnablesPanelView.PrevPage))]
     [HarmonyPrefix]
     public static bool PrevPage_Prefix(SpawnablesPanelView __instance)
@@ -91,7 +91,7 @@ public static class ToolUiPatches
         extension.ChangePanelPage(-1);
         return false;
     }
-    
+
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
     [HarmonyPrefix]
     public static bool SelectItem_Prefix(SpawnablesPanelView __instance, int idx)
@@ -108,7 +108,7 @@ public static class ToolUiPatches
         extension.OnSelectItem(idx);
         return false;
     }
-    
+
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectCategory))]
     [HarmonyPrefix]
     public static bool SelectCategory_Prefix(SpawnablesPanelView __instance, int idx)
@@ -142,7 +142,7 @@ public static class ToolUiPatches
         extension.ChangeTagPage(1);
         return false;
     }
-    
+
     [HarmonyPatch(nameof(SpawnablesPanelView.PrevTagPage))]
     [HarmonyPrefix]
     private static bool PrevTagPage_Prefix(SpawnablesPanelView __instance)
@@ -193,7 +193,7 @@ public static class ToolUiPatches
         extension.OnFavoriteButton();
         return false;
     }
-    
+
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
     [HarmonyPostfix]
     public static void SelectItem_Postfix(SpawnablesPanelView __instance, int idx)
@@ -208,7 +208,7 @@ public static class ToolUiPatches
             return;
 
         // We need a seperate postfix for this because SelectItem may run after a render
-        extension.RenderFavoriteButton();
+        extension.RenderAll();
     }
 
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
@@ -224,6 +224,6 @@ public static class ToolUiPatches
         if (!extension.IsSearchActive())
             return;
 
-        extension.RenderFavoriteButton();
+        extension.RenderAll();
     }
 }

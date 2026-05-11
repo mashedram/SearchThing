@@ -8,10 +8,11 @@ namespace SearchThing.Keyboard;
 
 public class Keyboard
 {
-    private static readonly Vector2 KeySize = new Vector2(80, 80);
-    private static readonly Vector2 KeySpacing = new Vector2(10, 10);
-    
+    private static readonly Vector2 KeySize = new(80, 80);
+    private static readonly Vector2 KeySpacing = new(10, 10);
+
     private const int KeyboardLayer = 5;
+
     private static readonly string[] KeyRows =
     {
         "1234567890",
@@ -19,7 +20,7 @@ public class Keyboard
         "ASDFGHJKL",
         "ZXCVBNM"
     };
-    
+
     private readonly GameObject _parent;
     private GameObject? _keyboardRoot;
     private string _text = "";
@@ -51,7 +52,7 @@ public class Keyboard
         _keyboardRoot.transform.localPosition = new Vector3(-85f, -450f, 0);
         _keyboardRoot.transform.localRotation = Quaternion.Euler(0, 0, 0);
         _keyboardRoot.layer = KeyboardLayer;
-        
+
         _keyboardRoot.AddComponent<CanvasRenderer>();
 
         var background = _keyboardRoot.AddComponent<Image>();
@@ -63,7 +64,7 @@ public class Keyboard
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.offsetMin = new Vector2(10, 10);
         rectTransform.offsetMax = new Vector2(-10, -10);
- 
+
         CreateKeys();
     }
 
@@ -104,7 +105,7 @@ public class Keyboard
         var sizeWithMargin = size + margin.GetValueOrDefault();
         collider.size = new Vector3(sizeWithMargin.x, sizeWithMargin.y, 1);
         collider.isTrigger = true;
-        
+
         var button = keyGo.AddComponent<Button>();
         button.onClick.AddListener(action);
 
@@ -117,10 +118,10 @@ public class Keyboard
         // Prevent weird coloration because the button stays selected after press
         colors.selectedColor = colors.normalColor;
         button.colors = colors;
-        
-        
+
+
         keyGo.AddComponent<ButtonHoverClick>();
-        
+
         var textGo = new GameObject("Text");
         textGo.transform.SetParent(keyGo.transform, false);
         var textComponent = textGo.AddComponent<TextMeshProUGUI>();
@@ -138,7 +139,7 @@ public class Keyboard
 
         keyRect.sizeDelta = size;
         keyRect.anchoredPosition = position;
-        
+
         // Set layers to ensure the keys are interactable
         keyGo.layer = KeyboardLayer;
         colliderGo.layer = KeyboardLayer;
@@ -183,9 +184,9 @@ public class Keyboard
 
     private void OnBackspace()
     {
-        if (_text.Length <= 0) 
+        if (_text.Length <= 0)
             return;
-        
+
         _text = _text[..^1];
         OnInternalTextChanged(_text);
     }

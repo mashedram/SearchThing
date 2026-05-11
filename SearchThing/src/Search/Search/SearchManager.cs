@@ -1,29 +1,30 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using FuzzySharp;
-using FuzzySharp.PreProcess;
 using Il2CppSLZ.Marrow.Warehouse;
 using MelonLoader;
+using SearchThing.Search.Containers;
+using SearchThing.Search.CrateData;
+using SearchThing.Search.Sorting;
 using SearchThing.Util;
 
-namespace SearchThing.Search;
+namespace SearchThing.Search.Search;
 
-public record ScoredCrate(ISearchableCrate Crate, int Score) : ISearchOrderable
+public record ScoredCrate(ISearchEntry Crate, int Score) : ISearchOrderable
 {
-    public ISearchableCrate Source => Crate;
+    public ISearchEntry Source => Crate;
     public IEnumerable<IFuzzySearchable> SearchFields { get; } = Crate.SearchFields;
     public int Salt => Crate.Salt;
 
-    public static ScoredCrate ScoreCrate(ISearchableCrate crate, string preprocessedQuery)
+    public static ScoredCrate ScoreCrate(ISearchEntry crate, string preprocessedQuery)
     {
         return new ScoredCrate(crate, SearchManager.ScoreCrate(preprocessedQuery, crate));
     }
 }
 
-interface ISearchTask
+internal interface ISearchTask
 {
     string Query { get; }
-    ISearchableCrateList<ISearchableCrate> PureSourceList { get; }
+    ISearchableCrateList<ISearchEntry> PureSourceList { get; }
     ISearchOrder SearchOrder { get; }
     CancellationToken CancellationToken { get; }
 
@@ -32,14 +33,14 @@ interface ISearchTask
     /// </summary>
     /// <param name="crate"></param>
     /// <returns></returns>
-    bool Filter(ISearchableCrate crate);
-    
+    bool Filter(ISearchEntry crate);
+
     /// <summary>
     /// Calls the OnComplete callback with the generic search results
     /// </summary>
     /// <remarks>Runs on the Search Thread</remarks>
     /// <param name="results">The results to process</param>
-    void RunAndStore(IEnumerable<ISearchableCrate> results);
+    void RunAndStore(IEnumerable<ISearchEntry> results);
 }
 
 public record SearchTask<TCrate>(
@@ -49,16 +50,16 @@ public record SearchTask<TCrate>(
     ISearchOrder SearchOrder,
     Action<SearchResults<TCrate>> OnComplete,
     CancellationToken CancellationToken
-) : ISearchTask where TCrate : class, ISearchableCrate
+) : ISearchTask where TCrate : class, ISearchEntry
 {
-    public ISearchableCrateList<ISearchableCrate> PureSourceList => SourceList;
-    
-    public bool Filter(ISearchableCrate crate)
+    public ISearchableCrateList<ISearchEntry> PureSourceList => SourceList;
+
+    public bool Filter(ISearchEntry crate)
     {
         return crate is TCrate typedCrate && TypedFilter(typedCrate);
     }
-    
-    public void RunAndStore(IEnumerable<ISearchableCrate> results)
+
+    public void RunAndStore(IEnumerable<ISearchEntry> results)
     {
         var typedResults = results.OfType<TCrate>().ToList();
         var searchResults = new SearchResults<TCrate>(typedResults);
@@ -87,14 +88,14 @@ public static class SearchManager
         };
         _searchThread.Start();
     }
-    
+
     public static void ShutdownSearchThread()
     {
         SearchThreadCts.Cancel();
         SearchQueue.CompleteAdding();
         _searchThread?.Join(TimeSpan.FromMilliseconds(500));
     }
-    
+
     private static void SearchThreadWorker()
     {
         try
@@ -115,7 +116,7 @@ public static class SearchManager
 #if DEBUG
         var stopwatch = Stopwatch.StartNew();
 #endif
-            
+
         var searchableCrates = task.PureSourceList.GetCrates();
 
         try
@@ -175,8 +176,9 @@ public static class SearchManager
 #endif
     }
 
-    public static void SearchAsync<TCrate>(string query, ISearchableCrateList<TCrate> crateList, Func<TCrate, bool> filter, ISearchOrder searchOrder, Action<SearchResults<TCrate>> onComplete)
-        where TCrate : class, ISearchableCrate
+    public static void SearchAsync<TCrate>(string query, ISearchableCrateList<TCrate> crateList, Func<TCrate, bool> filter, ISearchOrder searchOrder,
+        Action<SearchResults<TCrate>> onComplete)
+        where TCrate : class, ISearchEntry
     {
         lock (SearchLock)
         {
@@ -196,8 +198,8 @@ public static class SearchManager
 
         SearchQueue.Add(searchTask);
     }
-    
-    public static int ScoreCrate(string preprocessedQuery, ISearchableCrate crate)
+
+    public static int ScoreCrate(string preprocessedQuery, ISearchEntry crate)
     {
         return crate.SearchFields.Select(field => field.PartialRatio(preprocessedQuery))
             .DefaultIfEmpty(0)

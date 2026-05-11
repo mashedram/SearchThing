@@ -1,4 +1,5 @@
 ﻿using SearchThing.Search;
+using SearchThing.Search.Sorting;
 
 namespace SearchThing.Extensions.Sort;
 

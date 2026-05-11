@@ -26,10 +26,10 @@ public static class RigManagerPatches
         // Skip remote rigs
         if (Mod.IsFusionLoaded && !CheckIfLocalRig(__instance))
             return;
-        
+
         if (!AssetWarehouse.ready)
             return;
-        
+
         if (!AssetWarehouse.Instance.TryGetCrate(barcode, out var avatarCrate))
             return;
 

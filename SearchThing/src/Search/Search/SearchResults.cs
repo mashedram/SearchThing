@@ -1,19 +1,18 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-using SearchThing.Extensions.Panel;
+﻿using SearchThing.Search.CrateData;
 
-namespace SearchThing.Search;
+namespace SearchThing.Search.Search;
 
 public class SearchResults<TCrate>
-    where TCrate : class, ISearchableCrate
+    where TCrate : class, ISearchEntry
 {
-    public static SearchResults<ISearchableCrate> Empty { get; } = new(new List<ISearchableCrate>());
+    public static SearchResults<ISearchEntry> Empty { get; } = new(new List<ISearchEntry>());
     private IReadOnlyList<TCrate> Entries { get; }
-    
+
     public SearchResults(List<TCrate> entries)
     {
         Entries = entries;
     }
-    
+
     private IEnumerable<TCrate> GetPageIterator(int start, int end)
     {
         for (var i = start; i < end; i++)
@@ -30,7 +29,7 @@ public class SearchResults<TCrate>
 
         return GetPageIterator(start, end);
     }
-    
+
     public TCrate? GetEntryAt(int index)
     {
         if (index < 0 || index >= Entries.Count)
@@ -38,13 +37,13 @@ public class SearchResults<TCrate>
 
         return Entries[index];
     }
-    
+
     public TCrate? GetEntryAt(int page, int pageSize, int index)
     {
         var globalIndex = page * pageSize + index;
         return GetEntryAt(globalIndex);
     }
-    
+
     public int GetPageCount(int pageSize)
     {
         return (Entries.Count + pageSize - 1) / pageSize;

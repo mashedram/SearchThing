@@ -1,9 +1,16 @@
 ﻿using LabFusion.Network;
 using SearchThing.Extensions;
+using SearchThing.Extensions.Components;
+using SearchThing.Extensions.Components.Info;
 using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
 using SearchThing.Search;
+using SearchThing.Search.CrateData;
+using SearchThing.Search.Data;
+using SearchThing.Search.Marrow;
+using SearchThing.Search.Search;
+using SearchThing.Search.Sorting;
 using SearchThing.Util;
 using UnityEngine;
 
@@ -12,41 +19,51 @@ namespace SearchThing.Fusion;
 public class FusionBlocklistPage : BasicSearchPanel<MarrowCrate>
 {
     private static readonly Sprite BlockIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.BlockIcon.png");
-    
-    public override string Tag => "Fusion Blocklist";
-    public override bool CanAssign => false;
-    public override Sprite ItemFunctionIcon => BlockIcon;
 
-    public override bool HasItemFunction => true;
+    public override string Name => "Fusion Blocklist";
+    public override bool CanSelect => false;
 
-    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate)
+    public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
-        if (crate is not IBarcodeHolder holder)
+        if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })
             return null;
         
-        return FusionBlacklistHelper.IsBlacklisted(holder.Barcode._id) ? Color.red : Color.green;
-    }
+        if (barcode == null)
+            return null;
 
-    public override void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData crate)
+        return FusionBlacklistHelper.IsBlacklisted(barcode._id) ? Color.red : Color.green;
+    }
+    
+    private void OnItemFunction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
-        if (crate is not IBarcodeHolder holder)
+        if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })
             return;
-        
-        FusionBlacklistHelper.ToggleBlacklist(holder.Barcode._id);
-        
+
+        FusionBlacklistHelper.ToggleBlacklist(barcode._id);
+
         MakeDirty();
         extension.RequestRefresh();
     }
-    
+
     // Change search order
-    public override ISelectableSearchOrder[] SupportedOrders { get; } = {
+    public override ISelectableSearchOrder[] SupportedOrders { get; } =
+    {
         new IsBlockedFilter(),
         new DateNewAddedSearchOrder(),
         new DateOldAddedSearchOrder(),
         new ScoreSearchOrder(),
         new AlphabeticalSearchOrder()
     };
-    
+
+    public override ItemRender GetRenderDataForCrate(MarrowCrate crate)
+    {
+        return new ItemRenderWithAction(crate, OnItemFunction)
+        {
+            GetActionIconFunc = (_, _) => BlockIcon,
+            GetActionHighlightFunc = GetItemFunctionHighlight
+        };
+    }
+
     protected override void Search(string query, ISearchOrder order, Action<SearchResults<MarrowCrate>> callback)
     {
         SearchManager.SearchAsync(query, MarrowCrateManager.GetCrates(), c => c.CrateType == CrateType.Prop, order, callback);

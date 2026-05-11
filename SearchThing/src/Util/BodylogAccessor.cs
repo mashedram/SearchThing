@@ -11,7 +11,7 @@ public class BodylogAccessor
     {
         return RigData.Refs.RigManager;
     }
-    
+
     private static RigManager GetRig()
     {
         if (Mod.IsFusionLoaded)
@@ -21,7 +21,7 @@ public class BodylogAccessor
     }
 
     private static PullCordDevice? _cordDevice;
-    
+
     public static PullCordDevice? GetCordDevice()
     {
         if (_cordDevice != null)

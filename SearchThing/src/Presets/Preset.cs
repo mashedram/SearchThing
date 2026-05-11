@@ -1,100 +1,110 @@
-﻿using FuzzySharp.PreProcess;
-using Il2CppSLZ.Marrow.Warehouse;
+﻿using Il2CppSLZ.Marrow.Warehouse;
 using SearchThing.Extensions;
+using SearchThing.Extensions.Components;
+using SearchThing.Extensions.Components.Info;
 using SearchThing.Extensions.Panel;
 using SearchThing.Extensions.Panel.Abstract;
+using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
 using SearchThing.Presets.Data;
 using SearchThing.Search;
+using SearchThing.Search.Containers;
+using SearchThing.Search.CrateData;
+using SearchThing.Search.Data;
+using SearchThing.Search.Search;
+using SearchThing.Search.Sorting;
 using SearchThing.Util;
 using UnityEngine;
 using Random = System.Random;
 
 namespace SearchThing.Presets;
 
-internal class SpawnableCrateComparer : IEqualityComparer<IFullCrate>
+internal class SpawnableCrateComparer : IEqualityComparer<IRequiredItemInfo>
 {
-    public bool Equals(IFullCrate? x, IFullCrate? y)
+    public bool Equals(IRequiredItemInfo? x, IRequiredItemInfo? y)
     {
         if (x == null || y == null)
             return false;
-        
-        return x.Name == y.Name;
+
+        return x.Id == y.Id;
     }
 
-    public int GetHashCode(IFullCrate obj)
+    public int GetHashCode(IRequiredItemInfo obj)
     {
-        return obj.Name.GetHashCode();
+        return obj.Id.GetHashCode();
     }
 }
 
-public class Preset : BasicSearchPanel<IFullCrate>
+public class Preset : BasicSearchPanel<ISearchableItemInfo>, IQuickActionItemInfo
 {
     private const string DefaultTag = "EMPTY";
- 
+
     private static readonly Sprite PresetRemoveIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.RemoveIcon.png");
     private static readonly Sprite EditIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.EditIcon.png");
-    
+
     private string _tag = DefaultTag;
-    public override string Tag => IsInitialized ? _tag : (PresetManager.IsAssignmentMode ? "Add Presset" : "Empty Preset");
+    public override string Name => IsInitialized ? _tag : PresetManager.IsAssignmentMode ? "Add Presset" : "Empty Preset";
     public override bool TagEditable => true;
     public bool IsInitialized { get; private set; }
     public override bool ResearchOnPageChange => true;
-    public HashSet<IFullCrate> AssignedCrates { get; } = new(new SpawnableCrateComparer());
+    public HashSet<ISearchableItemInfo> AssignedCrates { get; } = new(new SpawnableCrateComparer());
 
     public Preset()
     {
         IsInitialized = false;
     }
-    
+
     public Preset(string tag)
     {
         _tag = tag;
         IsInitialized = true;
     }
+    
+    // Panel functions
+    public Sprite? GetActionIcon(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    {
+        return EditIcon;
+    }
+    
+    public Color? GetActionHighlight(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    {
+        return extension.IsEditing ? Color.green : Color.white; 
+    }
+    
+    public void PerformQuickAction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    {
+        extension.SetIsEditing(!extension.IsEditing); 
+        extension.RenderAll();
+    }
+    
+    // Item functions
 
-    public override bool HasPanelFunction => true;
-    public override Sprite PanelFunctionIcon => EditIcon;
-    public override bool HasItemFunction => true;
-    public override Sprite ItemFunctionIcon => PresetRemoveIcon;
-
-    public override Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate)
+    public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
         return Color.red;
     }
 
-    public override void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData crate)
+    public void OnItemFunction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
         PresetManager.IsAssignmentMode = false;
-        
-        if (crate is not IFullCrate spawnableCrate)
+
+        if (itemInfo is not ISearchableItemInfo requiredItemInfo)
             return;
-        RemoveCrate(spawnableCrate);
-                
+        RemoveCrate(requiredItemInfo);
+
         extension.RequestRefresh();
     }
 
-    public override Color? GetPanelFunctionHighlight(SpawnablePanelExtension extension)
-    {
-        return extension.IsEditing ? Color.green : Color.white;
-    }
-
-    public override void OnPanelFunction(SpawnablePanelExtension extension)
-    {
-        extension.SetIsEditing(!extension.IsEditing);
-            
-        extension.RenderFavoriteButton();
-    }
-
-    public override Color? IsForceHighlighted(SpawnablePanelExtension extension, IFullCrateData? selectedCrate)
+    public override Color? IsForceHighlighted(SpawnablePanelExtension extension)
     {
         if (extension.IsPanelSelected(this))
             return Color.white;
-        
+
+        var selectedCrate = extension.GetSelectedSpawnable();
         var isForceHighlighted = IsInitialized && selectedCrate != null && AssignedCrates.Contains(selectedCrate);
         return isForceHighlighted ? Color.yellow : null;
     }
-    
+
     private bool IsTagValid(string tag)
     {
         return !string.IsNullOrEmpty(tag);
@@ -103,9 +113,9 @@ public class Preset : BasicSearchPanel<IFullCrate>
     public override void OnTagEdited(SpawnablePanelExtension extension, string newTag)
     {
         // If the tag is valid, assign it
-        if (!IsTagValid(newTag)) 
+        if (!IsTagValid(newTag))
             return;
-        
+
         _tag = newTag;
         IsInitialized = true;
     }
@@ -118,9 +128,9 @@ public class Preset : BasicSearchPanel<IFullCrate>
         var isSelected = extension.IsPanelSelected(this);
 
         var crate = extension.GetSelectedSpawnable();
-        if (crate is not IFullCrate spawnableCrate)
+        if (crate is not ISearchableItemInfo spawnableCrate)
             return false;
-        
+
         // TODO: When initializing prompt for a tag
         if (!IsInitialized)
         {
@@ -132,29 +142,37 @@ public class Preset : BasicSearchPanel<IFullCrate>
         {
             AssignedCrates.Remove(spawnableCrate);
         }
-        
+
         // Exiting assignment mode immediately feels nicer
         PresetManager.IsAssignmentMode = false;
-        
+
         if (isSelected)
         {
             extension.RequestRefresh();
         }
         else
         {
-            extension.RenderTags();
-            extension.RenderFavoriteButton();
+            extension.RenderAll();
         }
-        
+
         return false;
     }
-    
-    public void RemoveCrate(IFullCrate crate)
+
+    public void RemoveCrate(ISearchableItemInfo crate)
     {
         AssignedCrates.Remove(crate);
     }
-    
-    protected override void Search(string query, ISearchOrder order, Action<SearchResults<IFullCrate>> callback)
+
+    public override ItemRender GetRenderDataForCrate(ISearchableItemInfo crate)
+    {
+        return new ItemRenderWithAction(crate, OnItemFunction)
+        {
+            GetActionIconFunc = (_, _) => PresetRemoveIcon,
+            GetActionHighlightFunc = GetItemFunctionHighlight
+        };
+    }
+
+    protected override void Search(string query, ISearchOrder order, Action<SearchResults<ISearchableItemInfo>> callback)
     {
         SearchManager.SearchAsync(query, AssignedCrates.ToSearchable(), _ => true, order, callback);
     }

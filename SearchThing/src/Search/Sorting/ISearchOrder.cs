@@ -1,4 +1,4 @@
-﻿namespace SearchThing.Search;
+﻿namespace SearchThing.Search.Sorting;
 
 public interface ISearchOrder
 {

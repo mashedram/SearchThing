@@ -1,48 +1,27 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
+using SearchThing.Extensions.Components;
+using SearchThing.Extensions.Components.Info;
 using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
 using SearchThing.Search;
+using SearchThing.Search.CrateData;
+using SearchThing.Search.Data;
 using UnityEngine;
 
 namespace SearchThing.Extensions.Panel;
 
-public interface ISearchPanel
+public interface ISearchPanel : IRequiredItemInfo
 {
     public const int PanelSize = 12;
-    
-    Guid Id { get; }
-    string Tag { get; }
-    bool IsVisible { get; }
-    bool CanAssign { get; }
+
+    bool CanSelect { get; }
     bool TagEditable { get; }
     string Query { get; set; }
     int SelectedOrderIndex { get; set; }
     ISelectableSearchOrder[] SupportedOrders { get; }
     int Page { get; set; }
     int PageCount { get; }
-    
-    bool HasPanelFunction { get; }
-    Color? GetPanelFunctionHighlight(SpawnablePanelExtension extension);
-    Sprite? PanelFunctionIcon { get; }
-    /// <summary>
-    /// Whether each item on the panel has a function
-    /// </summary>
-    bool HasItemFunction { get; }
-    Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IFullCrateData? crate);
-    Sprite? ItemFunctionIcon { get; }
-    
-    /// <summary>
-    /// Get's called when the panel function is used
-    /// </summary>
-    /// <param name="extension"></param>
-    void OnPanelFunction(SpawnablePanelExtension extension);
-    /// <summary>
-    /// Get's called when the item function is used on a crate, idx is the index of the crate in the current page (0-11)
-    /// </summary>
-    /// <param name="extension"></param>
-    /// <param name="idx"></param>
-    void OnItemFunction(SpawnablePanelExtension extension, IFullCrateData fullCrateData);
-    
+
     /// <summary>
     /// Get's called when the tag edit is complete, this is where you should save the new tag
     /// </summary>
@@ -54,7 +33,7 @@ public interface ISearchPanel
     /// Get's called for every crate that is rendered, return true to force the crate to be highlighted in the menu
     /// </summary>
     /// <returns></returns>
-    Color? IsForceHighlighted(SpawnablePanelExtension extension, IFullCrateData? selectedCrate);
+    Color? IsForceHighlighted(SpawnablePanelExtension extension);
     /// <summary>
     /// Called when the panel should perform a search
     /// </summary>
@@ -72,6 +51,6 @@ public interface ISearchPanel
     /// </summary>
     /// <returns>Return false to prevent the panel from being selected</returns>
     bool OnSelected(SpawnablePanelExtension extension);
-    IFullCrateData? GetCrateAt(int index);
-    IReadOnlyList<ItemRenderData> GetPage(int page);
+    IRequiredItemInfo? GetCrateAt(int index);
+    IReadOnlyList<ItemRender> GetPage(int page);
 }

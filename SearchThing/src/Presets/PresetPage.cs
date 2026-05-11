@@ -7,7 +7,8 @@ namespace SearchThing.Presets;
 public class PresetPage : ISearchPage
 {
     public const int MaxPresets = 6;
-    private readonly List<Preset> _presets = new List<Preset>();
+
+    private readonly List<Preset> _presets = new();
     // TODO: Only show a page if it has at least 1 preset assigned, or the previous page is full
     public bool IsVisible => true;
     public IReadOnlyList<ISearchPanel> Panels => _presets;

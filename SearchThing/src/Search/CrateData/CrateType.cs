@@ -1,4 +1,4 @@
-﻿namespace SearchThing.Search;
+﻿namespace SearchThing.Search.CrateData;
 
 public enum CrateType
 {
@@ -11,15 +11,18 @@ public enum CrateType
 public enum CrateSubType
 {
     None,
+
     // Spawnable subtypes
     Gun,
     Melee,
     Throwable,
     Vehicle,
+
     // Avatar subtypes
     Large,
     Medium,
-    Small,
+
+    Small
     // Level subtypes
     // TODO
 }

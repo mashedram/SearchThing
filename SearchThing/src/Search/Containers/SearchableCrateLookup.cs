@@ -1,12 +1,16 @@
-﻿namespace SearchThing.Search;
+﻿using SearchThing.Search.CrateData;
+using SearchThing.Search.Data;
+using SearchThing.Search.Search;
+
+namespace SearchThing.Search.Containers;
 
 public class SearchableCrateLookup<T> : ISearchableCrateList<T>
-    where T : class, ISearchableCrate, IBarcodeHolder
+    where T : class, ISearchEntry, ICrateBoundItemInfo
 {
     private readonly ReaderWriterLockSlim _lock = new();
     private readonly Dictionary<string, T> _lookup = new();
     private readonly List<T> _crates = new();
-    
+
     public void AddCrate(T crate)
     {
         _lock.EnterWriteLock();
@@ -20,7 +24,7 @@ public class SearchableCrateLookup<T> : ISearchableCrateList<T>
             _lock.ExitWriteLock();
         }
     }
-    
+
     public void AddCrates(IEnumerable<T> crates)
     {
         _lock.EnterWriteLock();
@@ -37,7 +41,7 @@ public class SearchableCrateLookup<T> : ISearchableCrateList<T>
             _lock.ExitWriteLock();
         }
     }
-    
+
     public T? GetCrateByBarcode(string barcode)
     {
         _lock.EnterReadLock();

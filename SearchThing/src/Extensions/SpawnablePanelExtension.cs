@@ -7,11 +7,16 @@ using Il2CppSLZ.UI;
 using Il2CppTMPro;
 using MelonLoader;
 using SearchThing.Extensions.Components;
+using SearchThing.Extensions.Components.ItemButtons;
+using SearchThing.Extensions.Components.PanelButtons;
 using SearchThing.Extensions.Pages;
 using SearchThing.Extensions.Panel;
 using SearchThing.Patches;
 using SearchThing.Presets;
 using SearchThing.Search;
+using SearchThing.Search.CrateData;
+using SearchThing.Search.Data;
+using SearchThing.Search.Interaction;
 using SearchThing.Util;
 using UnityEngine;
 using UnityEngine.Events;
@@ -26,60 +31,57 @@ public class SpawnablePanelExtension
 
     private const string SourceTabButtonPath = "group_tabs/grid_tabs/button_tab_05";
     private const string SearchTabName = "button_tab_search";
-    
+
     private string _searchQuery = "";
-    private readonly SpawnablesPanelView _panelView;
+    public SpawnablesPanelView PanelView { get; }
     private readonly Keyboard.Keyboard _keyboard;
     
-    // Item List
-    private readonly List<ItemButton> _itemButtons = new List<ItemButton>();
-    private GameObject _itemPageNextButton;
-    private GameObject _itemPagePreviousButton;
-    
-    // Tag List
-    private readonly List<TagButton> _tagButtons = new List<TagButton>();
-    private GameObject _tagPageNextButton;
-    private GameObject _tagPagePreviousButton;
+    // Components
+    private readonly PanelButtonView _panelButtonView;
+    private readonly ItemButtonView _itemButtonView;
+    private readonly ItemInfoBox _infoBox;
 
     private static readonly Sprite TabIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.SearchIcon.png");
-    
+
     // Editing
-    private SpawnInfoFocus _currentFocus = SpawnInfoFocus.SelectedItem;
     private string _editValue = "";
     public bool IsEditing { get; private set; }
-    // Favorite button
-    private Image _fadedButtonImage = null!;
-    private Image _favoriteButtonImage = null!; 
-    private Sprite _originalFavoriteSprite = null!;
-    private Color _originalFavoriteColor = Color.white;
-    // There is no easily stealable default behavior for the sorting button, so we need to get references to it
-    private TextMeshPro _sortButtonText = null!;
-    private GameObject _sortButtonObject = null!;
-    
+
+    // // Favorite button
+    // private Image _fadedButtonImage = null!;
+    // private Image _favoriteButtonImage = null!;
+    // private Sprite _originalFavoriteSprite = null!;
+    //
+    // private Color _originalFavoriteColor = Color.white;
+
     // The page currently selected in the tag page, but not used for rendering in case a rerender gets called when the page changes but selected tag doesn't
-    private int _renderedTagPageIndex;
-    // We need the selected tag in a prefix context, so we need to store it
-    private int _selectedItemIndex;
-    private int _selectedTagIndex;
-    private int _selectedPageIndex;
-    private readonly SpawnablePageProvider _pages = new SpawnablePageProvider();
+    // private int _renderedTagPageIndex;
+    //
+    // // We need the selected tag in a prefix context, so we need to store it
+    // private int _selectedItemIndex;
+    // private int _selectedTagIndex;
+    // private int _selectedPageIndex;
+    // // Confirmation logic
+    // private int _lastSelectedItemIndex;
+    // Pages
+    private readonly SpawnablePageProvider _pages = new();
 
     private void AddTab()
     {
-        var sourceButton = _panelView.transform.Find(SourceTabButtonPath);
+        var sourceButton = PanelView.transform.Find(SourceTabButtonPath);
         if (sourceButton == null)
         {
             MelonLogger.Error($"Failed to find source button at path: {SourceTabButtonPath}");
             return;
         }
-        
+
         // Prevent accidentally adding the button if we have already found it
         if (sourceButton.transform.FindChild(SearchTabName) != null)
             return;
-        
+
         var searchButton = UnityEngine.Object.Instantiate(sourceButton.gameObject, sourceButton.parent);
         searchButton.name = SearchTabName;
-        
+
         var searchTabButton = searchButton.GetComponent<Button>();
         var tabButtonReferenceHolder = searchButton.GetComponent<ButtonReferenceHolder>();
         if (searchTabButton == null || tabButtonReferenceHolder == null)
@@ -95,9 +97,9 @@ public class SpawnablePanelExtension
         if (image != null)
             image.sprite = TabIcon;
 
-        var tabButtons = _panelView.tabButtons.ToList();
+        var tabButtons = PanelView.tabButtons.ToList();
         tabButtons.Add(tabButtonReferenceHolder);
-        _panelView.tabButtons = new Il2CppReferenceArray<ButtonReferenceHolder>(tabButtons.ToArray());
+        PanelView.tabButtons = new Il2CppReferenceArray<ButtonReferenceHolder>(tabButtons.ToArray());
 
         var text = searchButton.transform.Find("text_spawnable_val")?.GetComponent<TextMeshPro>();
         if (text != null)
@@ -113,140 +115,40 @@ public class SpawnablePanelExtension
     private void OnSearchTabClicked()
     {
         // Tab 5 is the new tab we added
-        _panelView.SelectTab(SearchTabIndex);
+        PanelView.SelectTab(SearchTabIndex);
     }
-    
-    private void FetchSortButton()
-    {
-        _sortButtonText = _panelView.transform.Find("group_treePath/text_treePath")!.GetComponent<TextMeshPro>();
-        // For some reason the text is centered by default and only goes to the left after a SwapSort call
-        // SwapSort forces you to tab 3, so we need to do this workaround
-        _sortButtonText.alignment = TextAlignmentOptions.Left;
-        
-        _sortButtonObject = _panelView.transform.Find("group_treePath/button_SwapSort")!.gameObject;
-    }
-    
-    private void FetchFavoriteButton()
-    {
-        var favoriteButton = _panelView.transform.Find("group_selectedInfo/button_Favorite");
-        if (favoriteButton == null)
-        {
-            MelonLogger.Error("Failed to find favorite button.");
-            return;
-        }
 
-        var references = favoriteButton.GetComponent<ButtonReferenceHolder>();
-        _fadedButtonImage = references.highlight;
-        _favoriteButtonImage = references.special;
-        if (_favoriteButtonImage == null || _fadedButtonImage == null)
-        {
-            MelonLogger.Error("Failed to find Image component in favorite button.");
-            return;
-        }
-
-        _originalFavoriteSprite = _favoriteButtonImage.sprite;
-        _originalFavoriteColor = _favoriteButtonImage.color;
-    }
-    
-    private void FetchTagButtons()
-    {
-        foreach (var panelViewTagButton in _panelView.treeButtons)
-        {
-            if (panelViewTagButton == null)
-                continue;
-
-            _tagButtons.Add(new TagButton(panelViewTagButton));
-        }
-
-        _tagPageNextButton = _panelView.treeScrollDownButton.gameObject;
-        _tagPagePreviousButton = _panelView.treeScrollUpButton.gameObject;
-    }
-    
-    private void FetchItemButtons()
-    {
-        foreach (var panelViewItemButton in _panelView.itemButtons)
-        {
-            if (panelViewItemButton == null)
-                continue;
-
-            _itemButtons.Add(new ItemButton(panelViewItemButton));
-        }
-
-        _itemPageNextButton = _panelView.itemScrollDownButton.gameObject;
-        _itemPagePreviousButton = _panelView.itemScrollUpButton.gameObject;
-    }
-    
     public SpawnablePanelExtension(SpawnablesPanelView panelView)
     {
-        _panelView = panelView;
-        
+        PanelView = panelView;
+
         AddTab();
-        FetchSortButton();
-        FetchFavoriteButton();
-        FetchItemButtons();
-        FetchTagButtons();
         
+        _panelButtonView = new PanelButtonView(this, _pages);
+        _itemButtonView = new ItemButtonView(this);
+        _infoBox = new ItemInfoBox(this);
+        
+        // Set default content
+        _itemButtonView.SetPanel(_panelButtonView.SelectedPanel);
+
         // Find the buttonReference we want to use for our style
-        var buttonStyleReference = _panelView.transform.Find("group_spawnSelect/section_SpawnablesList/grid_buttons/button_item_01").GetComponent<ButtonReferenceHolder>();
-        
-        _keyboard = new Keyboard.Keyboard(_panelView.gameObject, buttonStyleReference);
+        var buttonStyleReference = PanelView.transform.Find("group_spawnSelect/section_SpawnablesList/grid_buttons/button_item_01")
+            .GetComponent<ButtonReferenceHolder>();
+
+        _keyboard = new Keyboard.Keyboard(PanelView.gameObject, buttonStyleReference);
         _keyboard.OnTextChanged += OnSearchQueryChanged;
         _keyboard.Hide();
-        
+
         // Prefetch to avoid the delay on first load
         RequestRefresh();
     }
     
-    public bool IsPanelSelected(ISearchPanel page)
-    {
-        var selectedPage = GetSelectedPanel();
-        return selectedPage.Id == page.Id;
-    }
-
-    private ISearchPage GetRenderPage()
-    {
-        var selectedPageIndex = _renderedTagPageIndex;
-        if (selectedPageIndex < 0 || selectedPageIndex >= _pages.PageCount)
-            return _pages.GetBasePage();
-        
-        return _pages.GetPage(selectedPageIndex);
-    }
-    
-    private ISearchPanel? GetRenderPanel(int idx)
-    {
-        var page = GetRenderPage();
-        if (idx < 0 || idx >= page.Panels.Count)
-            return null;
-        
-        return page.Panels[idx];
-    }
-
-    private ISearchPage GetSelectedPage()
-    {
-        var selectedPageIndex = _selectedPageIndex;
-        if (selectedPageIndex < 0 || selectedPageIndex >= _pages.PageCount)
-            return _pages.GetBasePage();
-        
-        return _pages.GetPage(selectedPageIndex);
-    }
-    
-    private ISearchPanel GetSelectedPanel(int idx = -1)
-    {
-        var page = GetSelectedPage();
-        var selectedTagIndex = _selectedTagIndex;
-        if (selectedTagIndex < 0 || selectedTagIndex >= page.Panels.Count)
-            return page.Panels[0];
-        
-        return page.Panels[idx >= 0 ? idx : selectedTagIndex];
-    }
-
     private void OnSearchQueryChanged(string query)
     {
         if (IsEditing)
         {
             _editValue = query;
-            RenderTags();
-            RenderFocus();
+            RenderAll();
         }
         else
         {
@@ -254,45 +156,61 @@ public class SpawnablePanelExtension
             RequestRefresh();
         }
     }
-    
+
     public void SetIsEditing(bool isEditing)
     {
         // Skip if we are already in the correct mode
         if (isEditing == IsEditing)
             return;
-        
+
         IsEditing = isEditing;
-        var panel = GetSelectedPanel();
-        
-        if (!panel.TagEditable)
-        {
-            IsEditing = false;
-            return;
-        }
-        
-        // Enter editing
-        if (IsEditing)
-        {
-            // Ensure we aren't assigning
-            PresetManager.IsAssignmentMode = false;
-            // Force the tag to know its in edit mode
-            _editValue = panel.Tag;
-            // We don't want to trigger events to prevent circular calls
-            _keyboard.SetText(_editValue, false);
-        }
-        // Exit editing
-        else
-        {
-            // Reset back to the search query
-            _keyboard.SetText(_searchQuery, false);
-            panel.OnTagEdited(this, _editValue);
-            
-            // Render tags to ensure the new tag is shown if it was changed
-            RenderTags();
-        }
-        
-        // Do an empty search to fill the void, prevents small hitch on load
-        RequestRefresh();
+        // var panel = GetSelectedPanel();
+        //
+        // if (!panel.TagEditable)
+        // {
+        //     IsEditing = false;
+        //     return;
+        // }
+        //
+        // // Enter editing
+        // if (IsEditing)
+        // {
+        //     // Ensure we aren't assigning
+        //     PresetManager.IsAssignmentMode = false;
+        //     // Force the tag to know its in edit mode
+        //     _editValue = panel.Name;
+        //     // We don't want to trigger events to prevent circular calls
+        //     _keyboard.SetText(_editValue, false);
+        // }
+        // // Exit editing
+        // else
+        // {
+        //     // Reset back to the search query
+        //     _keyboard.SetText(_searchQuery, false);
+        //     panel.OnTagEdited(this, _editValue);
+        //
+        //     // Render tags to ensure the new tag is shown if it was changed
+        //     // TODO
+        //     // RenderTags();
+        // }
+        //
+        // // Do an empty search to fill the void, prevents small hitch on load
+        // RequestRefresh();
+    }
+    
+    public ISearchPanel GetSelectedPanel()
+    {
+        return _panelButtonView.SelectedPanel;
+    }
+    
+    public bool IsPanelSelected(ISearchPanel panel)
+    {
+        return GetSelectedPanel().Id == panel.Id;
+    }
+    
+    public IRequiredItemInfo? GetSelectedSpawnable()
+    {
+        return _itemButtonView.SelectedItem;
     }
 
     public void RequestRefresh()
@@ -301,215 +219,16 @@ public class SpawnablePanelExtension
         panel.Query = _searchQuery;
         panel.RequestSearch(this);
     }
-    
-    public IFullCrateData? GetSelectedSpawnable()
-    {
-        var selectedPanel = GetSelectedPanel();
-        
-        if (_selectedItemIndex is < 0 or >= ISearchPanel.PanelSize)
-            return null;
-        
-        return selectedPanel.GetCrateAt(_selectedItemIndex);
-    }
-    
-    public void RenderTags()
-    {
-        var selectedCrate = GetSelectedSpawnable();
-        // We need to manually set the outline, because we skip the method that does so internally
-        for (var i = 0; i < _tagButtons.Count; i++)
-        {
-            var button = _tagButtons[i];
-            var panel = GetRenderPanel(i);
-            
-            if (panel is not { IsVisible: true })
-            {
-                button.Hide();
-                continue;
-            }
-            
-            var isSelected = i == _selectedTagIndex && _selectedPageIndex == _renderedTagPageIndex;
-            var tag = IsEditing && _currentFocus == SpawnInfoFocus.SelectedPage && isSelected 
-                ? _editValue 
-                : panel.Tag;
-            var forceHighlight = panel.IsForceHighlighted(this, selectedCrate);
-            
-            button.SetTag(tag, isSelected || forceHighlight != null, forceHighlight);
-        }
-        
-        var pageCount = _pages.PageCount;
-        _panelView.treePageText .text = $"{_renderedTagPageIndex + 1}/{pageCount}";
-        _tagPageNextButton.SetActive(_renderedTagPageIndex < pageCount - 1);
-        _tagPagePreviousButton.SetActive(_renderedTagPageIndex > 0);
-    }
 
-    public void RenderSpecialButtons(ISearchPanel? selectedPanel = null)
-    {
-        selectedPanel ??= GetSelectedPanel();
-        
-        // Update sort button
-        if (selectedPanel.SupportedOrders.Length > 1)
-        {
-            _sortButtonObject.SetActive(true);
-            _sortButtonText.gameObject.SetActive(true);
-            
-            var order = selectedPanel.SupportedOrders[selectedPanel.SelectedOrderIndex];
-            _sortButtonText.text = order.Name;
-            // We do what FetchSortButton does every tick in case a tab switch undoes the left alignment
-            _sortButtonText.alignment = TextAlignmentOptions.Left;
-        }
-        else
-        {
-            _sortButtonObject.SetActive(false);
-            _sortButtonText.gameObject.SetActive(false);
-        }
-        
-        RenderFavoriteButton();
-    }
-
-    public (Sprite?, Color?) GetFavoriteSprite()
-    {
-        var selectedPanel = GetSelectedPanel();
-        
-        if (_currentFocus == SpawnInfoFocus.SelectedItem && selectedPanel.HasItemFunction)
-        {
-            var selectedCrate = GetSelectedSpawnable();
-            var highlight = selectedPanel.GetItemFunctionHighlight(this, selectedCrate);
-            var icon = selectedPanel.ItemFunctionIcon ?? _originalFavoriteSprite;
-            return (icon, highlight);
-        }
-        
-        if (selectedPanel.HasPanelFunction)
-        {
-            var highlight = selectedPanel.GetPanelFunctionHighlight(this);
-            var icon = selectedPanel.PanelFunctionIcon ?? _originalFavoriteSprite;
-            return (icon, highlight);
-        }
-        
-        return (null, null);
-    }
-
-    public void RenderFavoriteButton()
-    {
-        var isFavorite = _panelView.selectedObject != null && _panelView.favoriteCrates.ContainsKey(_panelView.selectedObject._barcode._id);
-        if (!IsSearchActive())
-        {
-            // Toggle buttons
-            _fadedButtonImage.enabled = !isFavorite;
-            _favoriteButtonImage.enabled = isFavorite;
-            
-            // Reset sprite in case we were assignment mode or edit mode
-            _favoriteButtonImage.sprite = _originalFavoriteSprite;
-            _fadedButtonImage.sprite = _originalFavoriteSprite;
-            
-            return;
-        }
-        
-        var favoriteSprite = GetFavoriteSprite();
-
-        var overrideSprite = favoriteSprite.Item1;
-        var isVisible = overrideSprite != null;
-        
-        var highlightColor = favoriteSprite.Item2;
-        var isHighlightOn = highlightColor != null;
-        
-        // Assign values
-        _fadedButtonImage.enabled = !isHighlightOn && isVisible;
-        _favoriteButtonImage.enabled = isHighlightOn && isVisible;
-        // This also ensures sprite isn't null
-        _fadedButtonImage.sprite = overrideSprite;
-        _favoriteButtonImage.sprite = overrideSprite;
-        // And assign the highlight color if we have one
-        if (isHighlightOn)
-            _favoriteButtonImage.color = highlightColor!.Value;
-    }
-
-    public void RenderFocus()
-    {
-        if (_currentFocus == SpawnInfoFocus.SelectedItem)
-        {
-            var selectedCrate = GetSelectedSpawnable();
-
-            if (selectedCrate == null)
-            {
-                _panelView.selectedTitle.text = "";
-                _panelView.selectedDescription.text = "";
-                _panelView.selectedAuthor.text = "";
-                _panelView.selectedPallet.text = "";
-                _panelView.selectedTags.text = "";
-            }
-            else
-            {
-                _panelView.selectedTitle.text = selectedCrate.Name;
-                _panelView.selectedDescription.text = selectedCrate.Description;
-                _panelView.selectedPallet.text = selectedCrate.PalletName;
-                _panelView.selectedPallet.text = selectedCrate.PalletName;
-                _panelView.selectedAuthor.text = $"{selectedCrate.Author}";
-                _panelView.selectedTags.text = string.Join(", ", selectedCrate.Tags);
-            }
-        }
-        // The page is selected
-        else
-        {
-            var selectedPanel = GetSelectedPanel();
-            _panelView.selectedTitle.text = IsEditing ? _editValue : selectedPanel.Tag;
-            _panelView.selectedDescription.text = "N/A";
-            _panelView.selectedAuthor.text = "N/A";
-            _panelView.selectedPallet.text = "N/A";
-            _panelView.selectedTags.text = "N/A";
-        }
-        
-        RenderFavoriteButton();
-    }
-
-    public void RenderItemButtons()
-    {
-        var selectedPanel = GetSelectedPanel();
-        
-        var entries = selectedPanel
-            .GetPage(selectedPanel.Page);
-        
-        if (_selectedItemIndex >= entries.Count)
-        {
-            _selectedItemIndex = entries.Count - 1;
-            RenderFocus();
-        }
-        
-        for (var i = 0; i < _itemButtons.Count; i++)
-        {
-            var button = _itemButtons[i];
-            if (i < entries.Count)
-            {
-                var entry = entries[i];
-                button.SetCrate(entry, _selectedItemIndex == i);
-            }
-            else
-            {
-                button.Hide();
-            }
-        }
-
-        var pageCount = selectedPanel.PageCount;
-        _panelView._numberOfPages = pageCount;
-
-        _panelView.labelText.text = _searchQuery;
-        _panelView.itemPageText.text = $"{selectedPanel.Page + 1}/{pageCount}";
-        
-        _itemPageNextButton.SetActive(selectedPanel.Page < selectedPanel.PageCount - 1);
-        _itemPagePreviousButton.SetActive(selectedPanel.Page > 0);
-    }
-    
     public void RenderAll()
     {
         // Skip rendering if we left the search page before render gets called
         if (!IsSearchActive())
             return;
-        
-        // Render tags page
-        RenderTags();
-        // Render page
-        RenderItemButtons();
-        RenderFocus();
-        RenderSpecialButtons();
+
+        _panelButtonView.Render();
+        _itemButtonView.Render();
+        _infoBox.Render();
     }
 
     public void ChangePanelPage(int offset)
@@ -518,136 +237,59 @@ public class SpawnablePanelExtension
         selectedPage.ChangePage(this, offset);
     }
 
-    private void AssignSpawnableCrate(SpawnableCrate spawnableCrate)
-    {
-        SpawnGunPatches.SelectCrate(spawnableCrate);
-    }
-    
-    private void AssignAvatarCrate(Scannable avatarCrate)
-    {
-        var reference = new AvatarCrateReference(avatarCrate._barcode);
-        var cordDevice = BodylogAccessor.GetCordDevice();
-        if (cordDevice != null)
-        {
-            cordDevice.SwapAvatar(reference).Forget();
-        }
-    }
-    
-    private void LoadLevelCrate(Scannable levelCrate)
-    {
-        var reference = new LevelCrateReference(levelCrate._barcode);
-        SceneStreamer.LoadAsync(reference).Forget();
-    }
-
-    private void AssignCrate()
-    {
-        var selectedCrate = GetSelectedSpawnable();
-        if (selectedCrate is not IBarcodeHolder barcodeHolder)
-            return;
-        if (!barcodeHolder.TryGetCrate(out var crate))
-            return;
-        
-        var selectedAvatarCrate = crate.TryCast<AvatarCrate>();
-        if (selectedAvatarCrate != null)
-        {
-            AssignAvatarCrate(selectedAvatarCrate);
-            return;
-        }
-        
-        var spawnableCrate = crate.TryCast<SpawnableCrate>();
-        if (spawnableCrate != null) {
-            AssignSpawnableCrate(spawnableCrate);
-        }
-        
-        var levelCrate = crate.TryCast<LevelCrate>();
-        if (levelCrate != null)
-        {
-            LoadLevelCrate(levelCrate);
-        }
-    }
-
     public void OnSelectItem(int idx)
     {
-        // Test name overwrite
-        _currentFocus = SpawnInfoFocus.SelectedItem;
-        _selectedItemIndex = idx;
-        
         SetIsEditing(false);
         
-        // Update tags to ensure any forced highlights are updated
-        RenderItemButtons();
-        RenderTags();
-        RenderFocus();
-
         var panel = GetSelectedPanel();
-        if (panel.CanAssign)
-            AssignCrate();
+        if (panel.CanSelect)
+            _itemButtonView.SelectItem(idx);
+        
+        // Update the infobox
+        _infoBox.SetContent(GetSelectedSpawnable());
+        
+        // Update tags to ensure any forced highlights are updated
+        RenderAll();
     }
-    
+
     public void SelectCategory(int idx)
     {
         // Get the new selected panel instead of the one currently selected
-        var result = GetRenderPanel(idx)?.OnSelected(this) ?? false;
+        var result = _panelButtonView.SelectPage(idx);
 
         if (!result)
             return;
-
-        // Test name overwrite
-        _currentFocus = SpawnInfoFocus.SelectedPage;
         
+        // Update the item buttons to the new panel
+        _itemButtonView.SetPanel(_panelButtonView.SelectedPanel);
+
         // Force out of edit mode if we switch tabs
         SetIsEditing(false);
-        
-        // We've selected a new tag, so we need to update what we have selected to what we rendered
-        _selectedPageIndex = _renderedTagPageIndex;
-        _selectedTagIndex = idx;
-        
+
         // Clear the query so the user doesn't get an empty screen
         _searchQuery = "";
         _keyboard.SetText(_searchQuery, false);
-        
+
         // Update everything to reflect the new selected panel
         RequestRefresh();
     }
 
     public void ChangeTagPage(int offset)
     {
-        var newPage = _renderedTagPageIndex + offset;
-        if (newPage < 0 || newPage >= _pages.PageCount)            
-            return;
-        _renderedTagPageIndex = newPage;
-        
-        RenderTags();
+        _panelButtonView.OffsetPage(offset);
+        RenderAll();
     }
-    
+
     public void SwapSortButton()
     {
         var selectedPage = GetSelectedPanel();
         selectedPage.SelectedOrderIndex = (selectedPage.SelectedOrderIndex + 1) % selectedPage.SupportedOrders.Length;
         RequestRefresh();
     }
-    
+
     public void OnFavoriteButton()
     {
-        var panel = GetSelectedPanel();
-        if (_currentFocus == SpawnInfoFocus.SelectedItem)
-        {
-            if (!panel.HasItemFunction)
-                return;
-            
-            var selectedCrate = GetSelectedSpawnable();
-            if (selectedCrate == null)
-                return;
-            
-            panel.OnItemFunction(this, selectedCrate);
-        }
-        else
-        {
-            if (!panel.HasPanelFunction)
-                return;
-            
-            panel.OnPanelFunction(this);
-        }
+        _infoBox.OnQuickAction();
     }
 
     public void Show()
@@ -655,8 +297,7 @@ public class SpawnablePanelExtension
         // Show keyboard first
         ShowKeyboard();
         // Render these to prevent flickers
-        RenderTags();
-        RenderSpecialButtons();
+        RenderAll();
         RequestRefresh();
     }
 
@@ -664,21 +305,10 @@ public class SpawnablePanelExtension
     {
         CloseKeyboard();
         
-        // Assign the original sprite back in case we were in a special mode when hiding
-        _fadedButtonImage.sprite = _originalFavoriteSprite;
-        _favoriteButtonImage.sprite = _originalFavoriteSprite;
-        _favoriteButtonImage.color = _originalFavoriteColor;
-        
         // Clear button images
-        foreach (var itemButton in _itemButtons)
-        {
-            itemButton.Reset();
-        }
-        // Clear tag colors
-        foreach (var tagButton in _tagButtons)
-        {
-            tagButton.Reset();
-        }
+        _itemButtonView.Reset();
+        _panelButtonView.Reset();
+        _infoBox.Reset();
     }
 
     public void ShowKeyboard()
@@ -693,17 +323,17 @@ public class SpawnablePanelExtension
 
     public bool IsSearchActive()
     {
-        return _panelView._selectedTabIndex == SearchTabIndex;
+        return PanelView._selectedTabIndex == SearchTabIndex;
     }
-    
+
     public bool Is(SpawnablesPanelView panelView)
     {
-        if (_panelView == null || panelView == null)
+        if (PanelView == null || panelView == null)
             return false;
-        
-        if (_panelView.gameObject == null)
+
+        if (PanelView.gameObject == null)
             return false;
-        
-        return _panelView.gameObject.GetInstanceID() == panelView.gameObject.GetInstanceID();
+
+        return PanelView.gameObject.GetInstanceID() == panelView.gameObject.GetInstanceID();
     }
 }

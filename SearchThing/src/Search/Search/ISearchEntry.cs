@@ -1,9 +1,8 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-using SearchThing.Util;
+﻿using SearchThing.Search.CrateData;
 
-namespace SearchThing.Search;
+namespace SearchThing.Search.Search;
 
-public interface ISearchableCrate
+public interface ISearchEntry
 {
     IEnumerable<IFuzzySearchable> SearchFields { get; }
     /// <summary>

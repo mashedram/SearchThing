@@ -15,7 +15,7 @@ public class ItemInfoBox
 
     private readonly ItemQuickAction _quickAction;
 
-    private IRequiredItemInfo? _currentData;
+    public IRequiredItemInfo? SelectedItem { get; private set; }
 
     public ItemInfoBox(SpawnablePanelExtension extension)
     {
@@ -30,7 +30,7 @@ public class ItemInfoBox
         _pallet = panelView.selectedPallet;
         _tags = panelView.selectedTags;
     }
-
+    
     private void Clear(string placeholder = "")
     {
         _title.text = placeholder;
@@ -48,18 +48,18 @@ public class ItemInfoBox
 
     public void Render()
     {
-        _quickAction.Render(_currentData);
+        _quickAction.Render(SelectedItem);
 
-        if (_currentData == null)
+        if (SelectedItem == null)
         {
             Clear();
             return;
         }
 
         // Ensure that overwrites always render in case the value is being edited
-        _title.text = _currentData.Name;
+        _title.text = SelectedItem.Name;
 
-        if (_currentData is ICreatorItemInfo sourceData)
+        if (SelectedItem is ICreatorItemInfo sourceData)
         {
             _author.text = $"Author: {sourceData.Author}";
             _pallet.text = $"Pallet: {sourceData.PalletName}";
@@ -70,7 +70,7 @@ public class ItemInfoBox
             _pallet.text = "Pallet: Unknown";
         }
 
-        if (_currentData is IDescriptiveItemInfo descriptiveData)
+        if (SelectedItem is IDescriptiveItemInfo descriptiveData)
         {
             _description.text = descriptiveData.Description;
             _tags.text = $"Tags: {string.Join(", ", descriptiveData.Tags)}";
@@ -84,7 +84,7 @@ public class ItemInfoBox
 
     public void SetContent(IRequiredItemInfo? data)
     {
-        _currentData = data;
+        SelectedItem = data;
 
         if (data is IQuickActionItemInfo quickActionInfo)
         {
@@ -98,9 +98,9 @@ public class ItemInfoBox
 
     public void OnQuickAction()
     {
-        if (_currentData == null)
+        if (SelectedItem == null)
             return;
 
-        _quickAction.CallQuickAction(_currentData);
+        _quickAction.CallQuickAction(SelectedItem);
     }
 }

@@ -397,8 +397,4 @@
         <Folder Include="staging\Mods\"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Content Include="dependencies\LiteDB\LiteDB.csproj"/>
-    </ItemGroup>
-
 </Project>

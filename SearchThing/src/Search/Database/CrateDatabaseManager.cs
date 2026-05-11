@@ -1,8 +1,7 @@
 ﻿using Il2CppSLZ.Marrow.Forklift.Model;
 using Il2CppSLZ.Marrow.Warehouse;
-using SearchThing.dependencies.LiteDB.Client.Database;
+using LiteDB;
 using SearchThing.Search.Database.Entity;
-using UnityEngine.Rendering;
 
 namespace SearchThing.Search.Database;
 

@@ -142,7 +142,7 @@ public class SpawnablePanelExtension
 
     public IRequiredItemInfo? GetSelectedItemInfo()
     {
-        return ItemButtonView.SelectedItem;
+        return InfoBox.SelectedItem;
     }
 
     public void RequestRefresh()
@@ -181,7 +181,7 @@ public class SpawnablePanelExtension
             ItemButtonView.SelectItem(idx);
 
         // Update the infobox
-        InfoBox.SetContent(GetSelectedItemInfo());
+        InfoBox.SetContent(ItemButtonView.SelectedItem);
 
         // If the panel got updated internally, update the search
         if (panel.IsDirty)

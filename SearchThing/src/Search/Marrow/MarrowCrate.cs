@@ -132,7 +132,7 @@ public class MarrowCrate :
             return false; // Not in a multiplayer session
 
         FusionPermissions.FetchPermissionLevel(PlayerIDManager.LocalPlatformID, out var level, out _);
-
+        
         if (!FusionPermissions.HasSufficientPermissions(level, LobbyInfoManager.LobbyInfo.DevTools))
             return true; // Don't attempt to spawn locally if we don't have permissions
 

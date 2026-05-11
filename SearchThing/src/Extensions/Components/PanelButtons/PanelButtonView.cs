@@ -84,7 +84,7 @@ public class PanelButtonView
             button.SetTag(tag, isSelected || forceHighlight != null, forceHighlight);
         }
 
-        var pageCount = _currentPage.Panels.Count;
+        var pageCount = _provider.PageCount;
         _treePageText.text = $"{_pageIndex + 1}/{pageCount}";
         _tagPageNextButton.SetActive(_pageIndex < pageCount - 1);
         _tagPagePreviousButton.SetActive(_pageIndex > 0);

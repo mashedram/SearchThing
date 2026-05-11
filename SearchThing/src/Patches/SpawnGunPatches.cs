@@ -56,6 +56,10 @@ public class SpawnGunPatches
             return;
 
         HeldSpawnGun = __instance;
+        // I want to spawn things at a distance, pretty please
+#if UNLOCKED
+        HeldSpawnGun.effectiveRange = float.MaxValue;
+#endif
 
         // Ensure that whatever spawnable we grab with is selected in the spawn gun
         if (_selectedCrate != null)

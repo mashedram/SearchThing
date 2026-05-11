@@ -10,11 +10,11 @@ using SearchThing.Search.Data;
 using SearchThing.Search.Marrow;
 using SearchThing.Search.Search;
 using SearchThing.Search.Sorting;
-using SearchThing.Util;
 
 namespace SearchThing.Fusion;
 
-public record FusionSpawnHistoryEntry(Barcode Barcode, PlayerID? SpawnerId) : ITrackedDateItemInfo, IDescriptiveItemInfo, ICreatorItemInfo, ICrateTypeItemInfo, ICrateBoundItemInfo, ISearchEntry
+public record FusionSpawnHistoryEntry(Barcode Barcode, PlayerID? SpawnerId)
+    : ITrackedDateItemInfo, IDescriptiveItemInfo, ICreatorItemInfo, ICrateTypeItemInfo, ICrateBoundItemInfo, ISearchEntry
 {
     public MarrowCrate? MarrowCrate { get; } = MarrowCrateManager.GetCrate(Barcode);
 

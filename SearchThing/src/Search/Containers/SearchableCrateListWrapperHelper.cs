@@ -20,7 +20,7 @@ public static class SearchableCrateListWrapperHelper
     {
         return new SearchableCrateListWrapper<TCrate>(crates);
     }
-    
+
     public static ISearchableCrateList<ISearchEntry> CastToSearchable<TCrate>(this IEnumerable<TCrate> crates) where TCrate : class, IRequiredItemInfo
     {
         return new SearchableCrateListWrapper<ISearchEntry>(crates.OfType<ISearchEntry>());

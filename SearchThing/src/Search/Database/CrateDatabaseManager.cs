@@ -1,6 +1,6 @@
 ﻿using Il2CppSLZ.Marrow.Forklift.Model;
 using Il2CppSLZ.Marrow.Warehouse;
-using LiteDB;
+using SearchThing.dependencies.LiteDB.Client.Database;
 using SearchThing.Search.Database.Entity;
 using UnityEngine.Rendering;
 
@@ -10,23 +10,23 @@ public static class CrateDatabaseManager
 {
     private static LiteDatabase _db = null!;
     private static ILiteCollection<KnownCrate> _knownCrates = null!;
-    
+
     public static void Initialize(string path)
     {
         _db = new LiteDatabase(path);
         _knownCrates = _db.GetCollection<KnownCrate>("known_crates");
-        
+
         _knownCrates.EnsureIndex(x => x.Id, true);
         _knownCrates.EnsureIndex(x => x.Barcode, true);
     }
-    
+
     public static void Dispose()
     {
         _db.Dispose();
     }
-    
+
     // Crate accessors
-    
+
     private static long? GetModId(Crate crate)
     {
         // Try to get the manifest for the crate's pallet
@@ -36,7 +36,7 @@ public static class CrateDatabaseManager
         var listing = manifest.ModListing;
         if (listing == null)
             return null;
-        
+
         foreach (var target in listing.Targets)
         {
             var modIOTarget = target.Value.TryCast<ModIOModTarget>();
@@ -46,7 +46,7 @@ public static class CrateDatabaseManager
                 return modIOTarget.ModId;
             }
         }
-        
+
         return null;
     }
 
@@ -56,7 +56,7 @@ public static class CrateDatabaseManager
         var knownCrate = _knownCrates.FindOne(kc => kc.Barcode == barcode);
         if (knownCrate != null)
             return knownCrate;
-        
+
 
         knownCrate = new KnownCrate
         {
@@ -68,7 +68,7 @@ public static class CrateDatabaseManager
         _knownCrates.Insert(knownCrate);
         return knownCrate;
     }
-    
+
     public static string? GetBarcode(Guid crateId)
     {
         var knownCrate = _knownCrates.FindOne(kc => kc.Id == crateId);

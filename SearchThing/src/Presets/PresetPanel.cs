@@ -15,7 +15,7 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
 {
     private static readonly Sprite PresetRemoveIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.RemoveIcon.png");
     private static readonly Sprite EditIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.EditIcon.png");
-    
+
     public override string Name => "Presets";
     private Preset? _preset;
 
@@ -32,17 +32,17 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
                 return true;
 
             preset.ToggleCrate(searchableItemInfo);
-            
+
             PresetManager.ToggleAssigmentMode(extension);
             return false;
         }
-        
+
 
         _preset = preset;
         Query = string.Empty;
         MakeDirty();
         extension.RequestRefresh();
-        
+
         return true;
     }
 
@@ -52,13 +52,14 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
         MakeDirty();
         return true;
     }
-    
+
     private void ItemQuickAction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
         if (_preset == null)
             return;
 
-        if (itemInfo is ICrateBoundItemInfo { Crate: Preset preset }) {
+        if (itemInfo is ICrateBoundItemInfo { Crate: Preset preset })
+        {
             _preset = null;
             PresetManager.RemovePreset(preset);
             MakeDirty();
@@ -66,10 +67,10 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
             extension.RequestRefresh();
             return;
         }
-        
+
         if (itemInfo is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
             return;
-        
+
         _preset.ToggleCrate(searchableItemInfo);
         extension.InfoBox.SetContent(null);
         MakeDirty();
@@ -90,33 +91,33 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
         {
             if (_preset.AssignedCrates.Count == 0)
                 return new SearchButtonList(new SearchLabel("Here be dragons!"));
-            
+
             return results;
         }
 
         // Add an add button to the end of the preset list if we are typing a new preset name
         if (!string.IsNullOrWhiteSpace(Query))
             return new SearchButtonOverwrite<ISearchableItemInfo>(results, (0, new ActionButton($"Add: \"{Query}\"", AddPreset)));
-        
+
         if (PresetManager.PresetCount == 0)
             return new SearchButtonList(new SearchLabel("Type to create a preset"));
-            
+
         return results;
     }
-    
+
     private void AddPreset(SpawnablePanelExtension extension, int idx)
     {
         var preset = new Preset(Query);
         PresetManager.AddPreset(preset);
         Query = string.Empty;
-        
+
         var itemInfo = extension.GetSelectedItemInfo();
         if (itemInfo is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
             return;
-        
+
         preset.ToggleCrate(searchableItemInfo);
         MakeDirty();
-        
+
         PresetManager.ToggleAssigmentMode(extension);
     }
 
@@ -127,7 +128,7 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
             SearchManager.SearchAsync(query, PresetManager.PresetList.ToSearchable(), c => !c.Redacted, order, callback);
             return;
         }
-        
+
         SearchManager.SearchAsync(query, _preset.AssignedCrates.ToSearchable(), c => true, order, callback);
     }
 }

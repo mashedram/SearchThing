@@ -25,12 +25,12 @@ public class SpawnablePageProvider
         )
 #endif
     };
-    
+
     public ISearchPage[] GetVisiblePages()
     {
         return _basePages.Where(p => p.IsVisible).ToArray();
     }
-    
+
     public int PageCount => _basePages.Count(c => c.IsVisible);
 
     public ISearchPage GetBasePage()
@@ -45,7 +45,7 @@ public class SpawnablePageProvider
             return null;
         if (index < 0 || index >= visiblePages.Length)
             return null;
-        
+
         return visiblePages[index];
     }
 }

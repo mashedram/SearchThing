@@ -29,7 +29,7 @@ public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
     public override bool CanSelect => false;
 
     public override bool ResearchOnPageChange => true;
-    
+
     public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
         if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })

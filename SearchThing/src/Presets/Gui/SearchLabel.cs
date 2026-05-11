@@ -16,12 +16,12 @@ public class SearchLabel : ISearchableItemInfo, ISelectableCrate
     {
         Name = query;
     }
-    
+
     public bool OnSelected(SpawnablePanelExtension extension, int idx)
     {
         return false;
     }
-    
+
     // Unused
     public IEnumerable<IFuzzySearchable> SearchFields => Array.Empty<IFuzzySearchable>();
     public int Salt => 0;

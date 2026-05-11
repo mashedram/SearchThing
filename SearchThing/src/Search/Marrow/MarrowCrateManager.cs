@@ -20,7 +20,7 @@ public static class MarrowCrateManager
                 .Select(crate => new MarrowCrate(crate))
         );
     }
-    
+
     public static MarrowCrate? GetCrate(string id)
     {
         return SearchableCrateCrates.GetCrateByBarcode(id);

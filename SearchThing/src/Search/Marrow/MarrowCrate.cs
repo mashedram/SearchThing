@@ -21,7 +21,7 @@ using UnityEngine;
 
 namespace SearchThing.Search.Marrow;
 
-public class MarrowCrate : 
+public class MarrowCrate :
     ISearchableItemInfo,
     ICrateTypeItemInfo,
     IDescriptiveItemInfo,
@@ -60,7 +60,7 @@ public class MarrowCrate :
             throw new ArgumentNullException(nameof(spawnableCrate));
 
         var knownCrate = CrateDatabaseManager.GetOrCreateKnownCrate(spawnableCrate);
-        
+
         Id = knownCrate.Id;
         _name = new SearchTag(spawnableCrate.name);
         Description = spawnableCrate._description;
@@ -123,35 +123,35 @@ public class MarrowCrate :
         _author,
         new SearchTagGroup(_tags)
     };
-    
+
     // Menu interaction
-    
+
     private bool SpawnNetworkedCrate(SpawnableCrate spawnableCrate, Vector3 position)
     {
         if (!NetworkInfo.HasServer)
             return false; // Not in a multiplayer session
-        
+
         FusionPermissions.FetchPermissionLevel(PlayerIDManager.LocalPlatformID, out var level, out _);
-        
+
         if (!FusionPermissions.HasSufficientPermissions(level, LobbyInfoManager.LobbyInfo.DevTools))
             return true; // Don't attempt to spawn locally if we don't have permissions
-        
+
         var spawnable = LocalAssetSpawner.CreateSpawnable(spawnableCrate.Barcode._id);
         NetworkAssetSpawner.Spawn(new NetworkAssetSpawner.SpawnRequestInfo
         {
-            Spawnable =  spawnable,
+            Spawnable = spawnable,
             Position = position,
             Rotation = Quaternion.identity
         });
-        
+
         return true;
     }
-    
+
     private void AssignSpawnableCrate(SpawnableCrate spawnableCrate, SpawnablePanelExtension extension, int idx)
     {
         if (SpawnGunPatches.SelectCrate(spawnableCrate))
             return;
-        
+
         // Figure out the pressed buttons world position
         var buttons = extension.PanelView.itemButtons;
         if (buttons == null || idx < 0 || idx >= buttons.Length)
@@ -160,18 +160,22 @@ public class MarrowCrate :
 
         if (Mod.IsFusionLoaded && SpawnNetworkedCrate(spawnableCrate, position))
             return;
-        
-        var spawnable = new Spawnable { crateRef = new SpawnableCrateReference(spawnableCrate.Barcode._id), policyData = null };
+
+        var spawnable = new Spawnable
+        {
+            crateRef = new SpawnableCrateReference(spawnableCrate.Barcode._id),
+            policyData = null
+        };
         AssetSpawner.Register(spawnable);
-        
+
         var scale = new Il2CppSystem.Nullable<Vector3>(Vector3.zero)
         {
-            hasValue = false,
+            hasValue = false
         };
 
         var groupId = new Il2CppSystem.Nullable<int>(0)
         {
-            hasValue = false,
+            hasValue = false
         };
 
         AssetSpawner
@@ -199,7 +203,7 @@ public class MarrowCrate :
     {
         if (!this.TryGetCrate(out var crate))
             return true;
-        
+
         // On first select, assign it to the spawngun but don't do anything special yet.
         var spawnableCrate = crate.TryCast<SpawnableCrate>();
         if (spawnableCrate != null)

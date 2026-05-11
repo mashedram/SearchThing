@@ -27,13 +27,13 @@ public class FusionBlocklistPage : BasicSearchPanel<MarrowCrate>
     {
         if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })
             return null;
-        
+
         if (barcode == null)
             return null;
 
         return FusionBlacklistHelper.IsBlacklisted(barcode._id) ? Color.red : Color.green;
     }
-    
+
     private void OnItemFunction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
         if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })

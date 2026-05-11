@@ -1,6 +1,4 @@
-﻿using SearchThing.Search;
-using SearchThing.Search.CrateData;
-using SearchThing.Search.Search;
+﻿using SearchThing.Search.Search;
 
 namespace SearchThing.Util;
 

@@ -41,11 +41,13 @@ internal class SpawnableCrateComparer : IEqualityComparer<IRequiredItemInfo>
 public class Preset : ISearchableItemInfo
 {
     private readonly SearchTag _nameTag;
-    
+
     public Guid Id { get; } = Guid.NewGuid();
     public string Name => _nameTag.Original;
+
     // Used for deletion marking
     private bool _isRedacted;
+
     public bool Redacted
     {
         get => _isRedacted;
@@ -57,12 +59,15 @@ public class Preset : ISearchableItemInfo
     }
 
     public DateTime DateAdded { get; } = DateTime.Now;
-    public IEnumerable<IFuzzySearchable> SearchFields => new IFuzzySearchable[] { _nameTag };
+    public IEnumerable<IFuzzySearchable> SearchFields => new IFuzzySearchable[]
+    {
+        _nameTag
+    };
     public int Salt { get; } = Random.Shared.Next();
-    
+
     public HashSet<ISearchableItemInfo> AssignedCrates { get; } = new(new SpawnableCrateComparer());
     public bool IsDirty { get; private set; } = true;
-    
+
     public void ToggleCrate(ISearchableItemInfo crate)
     {
         if (!AssignedCrates.Add(crate))
@@ -70,7 +75,7 @@ public class Preset : ISearchableItemInfo
 
         IsDirty = true;
     }
-    
+
     public PresetData ToData()
     {
         return new PresetData
@@ -82,7 +87,7 @@ public class Preset : ISearchableItemInfo
             Items = AssignedCrates.Select(c => c.Id).ToList()
         };
     }
-    
+
     public Preset(PresetData data)
     {
         if (data.Version != 1)
@@ -99,7 +104,7 @@ public class Preset : ISearchableItemInfo
             MelonLogger.Msg($"Looking for crate with id {id}, found barcode {barcode}");
             if (barcode == null)
                 continue;
-            
+
             var crate = MarrowCrateManager.GetCrate(barcode);
             if (crate != null)
                 AssignedCrates.Add(crate);
@@ -107,7 +112,7 @@ public class Preset : ISearchableItemInfo
 
         IsDirty = false;
     }
-    
+
     public Preset(string name)
     {
         _nameTag = new SearchTag(name);

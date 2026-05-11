@@ -13,19 +13,19 @@ public class ItemButtonView
     private readonly GameObject _itemPageNextButton;
     private readonly GameObject _itemPagePreviousButton;
     private readonly TextMeshPro _itemPageText;
-    
+
     // Child
     private readonly SortButton _sortButton;
-    
+
     // Data
     private ISearchPanel? _panel;
-    
+
     // The panel and item that the selection is on
     private ISearchPanel? _selectedPanel;
     private ItemButton? _selectedItemButton;
-    
+
     public IRequiredItemInfo? SelectedItem => _selectedItemButton?.ItemInfo;
-    
+
     public ItemButtonView(SpawnablePanelExtension panelExtension)
     {
         var panelView = panelExtension.PanelView;
@@ -40,23 +40,23 @@ public class ItemButtonView
 
         _itemPageNextButton = panelView.itemScrollDownButton.gameObject;
         _itemPagePreviousButton = panelView.itemScrollUpButton.gameObject;
-        
+
         _itemPageText = panelView.itemPageText;
-        
+
         _sortButton = new SortButton(panelExtension);
     }
-    
+
     public IRequiredItemInfo? GetItemInfo(int index)
     {
         if (index < 0 || index >= _itemButtons.Count)
             return null;
         var itemButton = _itemButtons[index];
-        if (!itemButton.IsVisible)           
+        if (!itemButton.IsVisible)
             return null;
-        
+
         return itemButton.ItemInfo;
     }
-    
+
     public void SelectItem(int index)
     {
         if (_panel == null)
@@ -66,7 +66,7 @@ public class ItemButtonView
         var item = _itemButtons[index];
         if (!item.IsVisible)
             return;
-        
+
         if (!item.OnSelected())
             return;
 
@@ -79,12 +79,12 @@ public class ItemButtonView
         _panel = panel;
         _sortButton.SetPanel(panel);
     }
-    
+
     public void Render()
     {
         if (_panel == null)
             return;
-        
+
         var entries = _panel
             .GetPage(_panel.Page);
 
@@ -110,10 +110,10 @@ public class ItemButtonView
 
         _itemPageNextButton.SetActive(_panel.Page < _panel.PageCount - 1);
         _itemPagePreviousButton.SetActive(_panel.Page > 0);
-        
+
         _sortButton.Render();
     }
-    
+
     public void Reset()
     {
         foreach (var button in _itemButtons)

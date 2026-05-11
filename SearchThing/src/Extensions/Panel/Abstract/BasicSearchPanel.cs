@@ -7,7 +7,6 @@ using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Search;
 using SearchThing.Search.Sorting;
-using SearchThing.Util;
 using UnityEngine;
 
 namespace SearchThing.Extensions.Panel.Abstract;
@@ -108,7 +107,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
     {
         IsDirty = true;
     }
-    
+
     public virtual Color? IsForceHighlighted(SpawnablePanelExtension extension)
     {
         // No special logic needed

@@ -43,7 +43,7 @@ public static class PresetManager
     {
         Presets.Add(preset);
     }
-    
+
     public static void RemovePreset(Preset preset)
     {
         preset.Redacted = true;
@@ -56,7 +56,8 @@ public static class PresetManager
         Presets.Clear();
         try
         {
-            var files = Directory.GetFiles(UserData.PresetsPath, "*.json");;
+            var files = Directory.GetFiles(UserData.PresetsPath, "*.json");
+            ;
             foreach (var file in files)
             {
                 try
@@ -79,7 +80,7 @@ public static class PresetManager
         {
             MelonLogger.Error("Failed to load presets from file!", exception);
         }
-        
+
         Presets.Sort((a, b) => a.DateAdded.CompareTo(b.DateAdded));
     }
 
@@ -88,25 +89,28 @@ public static class PresetManager
         var dirtyPresets = Presets.Where(p => p.IsDirty).ToList();
         if (dirtyPresets.Count == 0)
             return;
-        
+
         foreach (var preset in dirtyPresets)
         {
             try
-            {   
+            {
                 var sanitizedName = string.Join("_", preset.Name.Split(Path.GetInvalidFileNameChars()));
                 var path = UserData.PresetsPath + $"/{sanitizedName}_{preset.Id}.json";
-                
+
                 if (preset.Redacted)
                 {
                     if (File.Exists(path))
                         File.Delete(path);
-                    
+
                     Presets.Remove(preset);
                     continue;
                 }
-                
+
                 var data = preset.ToData();
-                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
                 File.WriteAllText(path, json);
             }
             catch (Exception exception)

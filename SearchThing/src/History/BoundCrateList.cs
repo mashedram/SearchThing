@@ -4,7 +4,6 @@ using SearchThing.Search.Containers;
 using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Search;
-using SearchThing.Util;
 
 namespace SearchThing.History;
 

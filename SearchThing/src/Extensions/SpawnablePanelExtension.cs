@@ -36,13 +36,14 @@ public class SpawnablePanelExtension
     private string _searchQuery = "";
     public SpawnablesPanelView PanelView { get; }
     private readonly Keyboard.Keyboard _keyboard;
-    
+
     // Components
     public readonly PanelButtonView PanelButtonView;
     public readonly ItemButtonView ItemButtonView;
     public readonly ItemInfoBox InfoBox;
 
     private static readonly Sprite TabIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.SearchIcon.png");
+
     // Pages
     private readonly SpawnablePageProvider _pages = new();
 
@@ -103,11 +104,11 @@ public class SpawnablePanelExtension
         PanelView = panelView;
 
         AddTab();
-        
+
         PanelButtonView = new PanelButtonView(this, _pages);
         ItemButtonView = new ItemButtonView(this);
         InfoBox = new ItemInfoBox(this);
-        
+
         // Set default content
         ItemButtonView.SetPanel(PanelButtonView.SelectedPanel);
 
@@ -122,23 +123,23 @@ public class SpawnablePanelExtension
         // Prefetch to avoid the delay on first load
         RequestRefresh();
     }
-    
+
     private void OnSearchQueryChanged(string query)
     {
         _searchQuery = query;
         RequestRefresh();
     }
-    
+
     public ISearchPanel GetSelectedPanel()
     {
         return PanelButtonView.SelectedPanel;
     }
-    
+
     public bool IsPanelSelected(ISearchPanel panel)
     {
         return GetSelectedPanel().Id == panel.Id;
     }
-    
+
     public IRequiredItemInfo? GetSelectedItemInfo()
     {
         return ItemButtonView.SelectedItem;
@@ -175,10 +176,10 @@ public class SpawnablePanelExtension
         var targetItem = ItemButtonView.GetItemInfo(idx);
         if (targetItem == null)
             return;
-        
+
         if (panel.OnItemSelected(this, targetItem))
             ItemButtonView.SelectItem(idx);
-        
+
         // Update the infobox
         InfoBox.SetContent(GetSelectedItemInfo());
 
@@ -207,14 +208,14 @@ public class SpawnablePanelExtension
         // Update everything to reflect the new selected panel
         RequestRefresh();
     }
-    
+
     public void OpenPanel(Type returnPanel)
     {
         var result = PanelButtonView.OpenPanel(returnPanel);
 
         if (!result)
             return;
-        
+
         OnPanelViewChanged();
     }
 
@@ -225,7 +226,7 @@ public class SpawnablePanelExtension
 
         if (!result)
             return;
-        
+
         OnPanelViewChanged();
     }
 
@@ -245,7 +246,7 @@ public class SpawnablePanelExtension
     public void OnFavoriteButton()
     {
         InfoBox.OnQuickAction();
-        
+
         if (GetSelectedPanel().IsDirty)
             RequestRefresh();
     }
@@ -262,7 +263,7 @@ public class SpawnablePanelExtension
     public void Hide()
     {
         CloseKeyboard();
-        
+
         // Clear button images
         ItemButtonView.Reset();
         PanelButtonView.Reset();

@@ -23,16 +23,16 @@ public class ItemRender : IDescriptiveItemInfo, ICreatorItemInfo, ICrateIconProv
     public string Author { get; init; }
 
     public Barcode? Barcode { get; init; }
-    
+
     public ItemRender(IRequiredItemInfo crate)
     {
         Crate = crate;
-        
+
         Id = crate.Id;
         Name = crate.Name;
         Redacted = crate.Redacted;
         DateAdded = crate.DateAdded;
-        
+
         if (crate is IDescriptiveItemInfo descriptive)
         {
             Description = descriptive.Description;
@@ -43,7 +43,7 @@ public class ItemRender : IDescriptiveItemInfo, ICreatorItemInfo, ICrateIconProv
             Description = string.Empty;
             Tags = Array.Empty<string>();
         }
-        
+
         if (crate is ICreatorItemInfo creator)
         {
             PalletName = creator.PalletName;
@@ -54,7 +54,7 @@ public class ItemRender : IDescriptiveItemInfo, ICreatorItemInfo, ICrateIconProv
             PalletName = string.Empty;
             Author = string.Empty;
         }
-        
+
         if (crate is ICrateBoundItemInfo bound)
         {
             Barcode = bound.Barcode;
@@ -63,7 +63,7 @@ public class ItemRender : IDescriptiveItemInfo, ICreatorItemInfo, ICrateIconProv
         {
             Barcode = null;
         }
-        
+
         Icon = crate switch
         {
             ICrateIconProvider iconProvider => iconProvider.Icon,

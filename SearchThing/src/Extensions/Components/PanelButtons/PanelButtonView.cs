@@ -9,13 +9,13 @@ public class PanelButtonView
 {
     // Source
     private readonly SpawnablePanelExtension _parent;
-    
+
     // Renderers
     private readonly List<PanelButton> _tagButtons = new();
     private readonly GameObject _tagPageNextButton;
     private readonly GameObject _tagPagePreviousButton;
     private readonly TextMeshPro _treePageText;
-    
+
     // Data
     private readonly SpawnablePageProvider _provider;
     private int _pageIndex;
@@ -28,10 +28,10 @@ public class PanelButtonView
     {
         _parent = parent;
         _provider = provider;
-        
+
         _currentPage = _provider.GetPage(0) ?? throw new Exception("No pages found");
         SelectedPanel = _currentPage.Panels.FirstOrDefault(p => !p.Redacted) ?? throw new Exception("No panels found");
-        
+
         var panelView = parent.PanelView;
         foreach (var panelViewTagButton in panelView.treeButtons)
         {
@@ -52,7 +52,7 @@ public class PanelButtonView
             return null;
         if (idx >= _currentPage.Panels.Count)
             return null;
-        
+
         var panel = _currentPage.Panels[idx];
         if (panel.Redacted)
             return null;
@@ -89,7 +89,7 @@ public class PanelButtonView
         _tagPageNextButton.SetActive(_pageIndex < pageCount - 1);
         _tagPagePreviousButton.SetActive(_pageIndex > 0);
     }
-    
+
     public void Reset()
     {
         foreach (var button in _tagButtons)
@@ -97,7 +97,7 @@ public class PanelButtonView
             button.Reset();
         }
     }
-    
+
     public bool OpenPanel(Type returnPanel)
     {
         var pages = _provider.GetVisiblePages();
@@ -107,7 +107,7 @@ public class PanelButtonView
             var panel = searchPage.Panels.FirstOrDefault(p => p.GetType() == returnPanel && !p.Redacted);
             if (panel == null)
                 continue;
-            
+
             if (panel.Redacted)
                 continue;
 
@@ -128,11 +128,11 @@ public class PanelButtonView
             return false;
         if (idx >= _currentPage.Panels.Count)
             return false;
-        
+
         var panel = _currentPage.Panels[idx];
         if (panel.Redacted)
             return false;
-        
+
         // Check if we can select the panel
         if (!panel.OnPanelSelected(_parent))
             return false;
@@ -140,18 +140,18 @@ public class PanelButtonView
         SelectedPanel = panel;
         return true;
     }
-    
+
     public void SetPage(int index)
     {
         if (index < 0)
             return;
-        
+
         // Clamp the index to the page count
         index = Math.Clamp(index, 0, _provider.PageCount - 1);
         var page = _provider.GetPage(index);
         if (page == null)
             return;
-        
+
         _pageIndex = index;
         _currentPage = page;
     }

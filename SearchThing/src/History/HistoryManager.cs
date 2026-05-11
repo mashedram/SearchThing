@@ -5,7 +5,6 @@ using SearchThing.Search.Data;
 using SearchThing.Search.Marrow;
 using SearchThing.Search.Search;
 using SearchThing.Search.Sorting;
-using SearchThing.Util;
 
 namespace SearchThing.History;
 

@@ -7,5 +7,5 @@ namespace SearchThing.Search.Data;
 /// </summary>
 public interface ISearchableItemInfo : IRequiredItemInfo, ISearchEntry
 {
-    
+
 }

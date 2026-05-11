@@ -7,7 +7,7 @@ public class SearchButtonOverwrite<TCrate> : ISearchResults<ISearchableItemInfo>
 {
     private ISearchResults<TCrate> Parent { get; }
     private readonly Dictionary<int, ISearchableItemInfo> _overwriteEntries = new();
-    
+
     public SearchButtonOverwrite(ISearchResults<TCrate> parent, params (int key, ISearchableItemInfo item)[] overwrites)
     {
         Parent = parent;
@@ -21,7 +21,7 @@ public class SearchButtonOverwrite<TCrate> : ISearchResults<ISearchableItemInfo>
     {
         return _overwriteEntries.Count(e => e.Key < pageSize);
     }
-    
+
     public IEnumerable<ISearchableItemInfo> GetPage(int page, int pageSize)
     {
         var actualPageSize = pageSize - GetOverwritesOnPage(pageSize);
@@ -41,7 +41,7 @@ public class SearchButtonOverwrite<TCrate> : ISearchResults<ISearchableItemInfo>
             }
         }
     }
-    
+
     public int GetPageCount(int pageSize)
     {
         var actualPageSize = pageSize - GetOverwritesOnPage(pageSize);

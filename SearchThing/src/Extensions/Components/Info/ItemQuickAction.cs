@@ -9,22 +9,22 @@ namespace SearchThing.Extensions.Components.Info;
 public class ItemQuickAction
 {
     private SpawnablePanelExtension _parent;
-    
+
     // References to original state
     private readonly Sprite _originalFavoriteSprite = null!;
     private readonly Color _originalFavoriteColor = Color.white;
-    
+
     // Renderers
     private readonly Image _fadedButtonImage = null!;
     private readonly Image _favoriteButtonImage = null!;
-    
+
     // Data
     private IQuickActionItemInfo? _quickActionInfo;
 
     public ItemQuickAction(SpawnablePanelExtension extension)
     {
         _parent = extension;
-        
+
         var favoriteButton = extension.PanelView.transform.Find("group_selectedInfo/button_Favorite");
         if (favoriteButton == null)
         {
@@ -44,12 +44,12 @@ public class ItemQuickAction
         _originalFavoriteSprite = _favoriteButtonImage.sprite;
         _originalFavoriteColor = _favoriteButtonImage.color;
     }
-    
+
     public (Sprite? sprite, Color? color) GetFavoriteSprite(IRequiredItemInfo selectedItem)
     {
         if (_quickActionInfo == null)
             return (null, null);
-            
+
         return (_quickActionInfo.GetActionIcon(_parent, selectedItem), _quickActionInfo.GetActionHighlight(_parent, selectedItem));
     }
 
@@ -60,7 +60,7 @@ public class ItemQuickAction
             Reset();
             return;
         }
-        
+
         var favoriteSprite = GetFavoriteSprite(selectedItem);
         var overrideSprite = favoriteSprite.sprite;
         var isVisible = overrideSprite != null;
@@ -78,7 +78,7 @@ public class ItemQuickAction
         if (isHighlightOn)
             _favoriteButtonImage.color = highlightColor!.Value;
     }
-    
+
     public void SetQuickActionInfo(IQuickActionItemInfo? info)
     {
         _quickActionInfo = info;
@@ -90,7 +90,7 @@ public class ItemQuickAction
         _favoriteButtonImage.sprite = _originalFavoriteSprite;
         _favoriteButtonImage.color = _originalFavoriteColor;
     }
-    
+
     public void CallQuickAction(IRequiredItemInfo itemInfo)
     {
         _quickActionInfo?.PerformQuickAction(_parent, itemInfo);

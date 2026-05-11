@@ -10,7 +10,7 @@ public class SortButton
     private GameObject _sortButtonObject = null!;
 
     private ISearchPanel? _panel;
-    
+
     public SortButton(SpawnablePanelExtension extension)
     {
         var panelView = extension.PanelView;
@@ -30,7 +30,7 @@ public class SortButton
             _sortButtonText.gameObject.SetActive(false);
             return;
         }
-        
+
         // Update sort button
         if (_panel.SupportedOrders.Length > 1)
         {
@@ -48,7 +48,7 @@ public class SortButton
             _sortButtonText.gameObject.SetActive(false);
         }
     }
-    
+
     public void SetPanel(ISearchPanel? panel)
     {
         _panel = panel;

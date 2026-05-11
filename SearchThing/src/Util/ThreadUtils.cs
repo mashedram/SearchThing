@@ -1,5 +1,4 @@
 ﻿using MelonLoader;
-using Microsoft.VisualBasic;
 
 namespace SearchThing.Util;
 

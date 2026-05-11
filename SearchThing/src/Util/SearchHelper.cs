@@ -1,7 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
 using Il2CppSLZ.Marrow.Warehouse;
-using SearchThing.Search;
 using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 

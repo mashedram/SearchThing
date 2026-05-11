@@ -21,13 +21,13 @@ public class ItemButton
     // Parent references
     private SpawnablePanelExtension _parentPanel;
     private int _index;
-    
+
     // Value references
     private readonly GameObject _button;
     private readonly TextMeshPro _text;
     private readonly Image _highlight;
     private readonly Image _icon;
-    
+
     // Helper values
     private bool _isSelected = false;
 
@@ -40,7 +40,7 @@ public class ItemButton
     {
         _parentPanel = parentPanel;
         _index = idx;
-        
+
         // Cache default values
         if (_defaultIcon == null) _defaultIcon = button.special.sprite;
         _defaultIconColor ??= button.special.color;
@@ -80,7 +80,7 @@ public class ItemButton
     {
         if (ItemInfo is not ICrateBoundItemInfo crateBoundItemInfo)
             return true;
-        
+
         switch (crateBoundItemInfo.Crate)
         {
             case null:
@@ -92,7 +92,7 @@ public class ItemButton
                 confirmableCrate.OnConfirmed(_parentPanel, _index);
                 break;
         }
-        
+
         return true;
     }
 

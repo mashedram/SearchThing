@@ -1,5 +1,4 @@
-﻿using SearchThing.Search;
-using SearchThing.Search.CrateData;
+﻿using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using UnityEngine;
 
@@ -54,7 +53,7 @@ public static class CrateIconProvider
             _ => CrateIcon
         };
     }
-    
+
     public static Sprite GetDefaultIcon()
     {
         return CrateIcon;

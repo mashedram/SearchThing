@@ -3,7 +3,7 @@
 namespace SearchThing.Search.Data;
 
 public interface IRequiredItemInfo
-{ 
+{
     /// <summary>
     /// Runtime identifier. Used to quickly determine if two items are the same. Not stable across restarts.
     /// </summary>

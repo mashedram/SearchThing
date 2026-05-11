@@ -2,11 +2,13 @@
 using LabFusion.Utilities;
 using SearchThing;
 using MelonLoader;
+using MelonLoader.Utils;
 using SearchThing.Fusion;
 using SearchThing.Patches;
 using SearchThing.Patches.Compatibility;
 using SearchThing.Presets;
 using SearchThing.Search;
+using SearchThing.Search.Database;
 using SearchThing.Search.Search;
 using UnityEngine;
 
@@ -23,6 +25,7 @@ public class Mod : MelonMod
     {
         IsFusionLoaded = FindMelon("LabFusion", "Lakatrazz") != null;
 
+        CrateDatabaseManager.Initialize(UserData.DatabasePath);
         Hooking.OnWarehouseReady += OnWarehouseReady;
     }
 
@@ -49,6 +52,8 @@ public class Mod : MelonMod
 
     public override void OnDeinitializeMelon()
     {
+        PresetManager.SavePresets();
         SearchManager.ShutdownSearchThread();
+        CrateDatabaseManager.Dispose();
     }
 }

@@ -19,6 +19,9 @@ public class ItemButtonView
     
     // Data
     private ISearchPanel? _panel;
+    
+    // The panel and item that the selection is on
+    private ISearchPanel? _selectedPanel;
     private ItemButton? _selectedItemButton;
     
     public IRequiredItemInfo? SelectedItem => _selectedItemButton?.ItemInfo;
@@ -67,6 +70,7 @@ public class ItemButtonView
         if (!item.OnSelected())
             return;
 
+        _selectedPanel = _panel;
         _selectedItemButton = item;
     }
 
@@ -84,13 +88,15 @@ public class ItemButtonView
         var entries = _panel
             .GetPage(_panel.Page);
 
+        var isPanelSelected = _panel.Id == _selectedPanel?.Id;
         for (var i = 0; i < _itemButtons.Count; i++)
         {
             var button = _itemButtons[i];
             if (i < entries.Count)
             {
                 var entry = entries[i];
-                button.SetCrate(entry, button.Id == _selectedItemButton?.Id);
+                var isSelected = isPanelSelected && entry.Id == _selectedItemButton?.Id;
+                button.SetCrate(entry, isSelected);
             }
             else
             {
@@ -104,6 +110,8 @@ public class ItemButtonView
 
         _itemPageNextButton.SetActive(_panel.Page < _panel.PageCount - 1);
         _itemPagePreviousButton.SetActive(_panel.Page > 0);
+        
+        _sortButton.Render();
     }
     
     public void Reset()
@@ -112,22 +120,5 @@ public class ItemButtonView
         {
             button.Reset();
         }
-    }
-    
-    public void SetPage(int page)
-    {
-        if (_panel == null)
-            return;
-        if (page < 0 || page >= _panel.PageCount)
-            return;
-
-        _panel.Page = page;
-    }
-    
-    public void OffsetPage(int offset)
-    {
-        if (_panel == null)
-            return;
-        SetPage(_panel.Page + offset);
     }
 }

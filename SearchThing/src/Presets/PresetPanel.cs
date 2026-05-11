@@ -1,6 +1,7 @@
 ﻿using SearchThing.Extensions;
 using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
+using SearchThing.Presets.Gui;
 using SearchThing.Search.Containers;
 using SearchThing.Search.Data;
 using SearchThing.Search.Search;
@@ -26,12 +27,11 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
 
         if (PresetManager.IsAssignmentMode)
         {
-            var selectedItem = extension.GetSelectedSpawnable();
+            var selectedItem = extension.GetSelectedItemInfo();
             if (selectedItem is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
                 return true;
 
-            if (!preset.AssignedCrates.Add(searchableItemInfo))
-                preset.AssignedCrates.Remove(searchableItemInfo);
+            preset.ToggleCrate(searchableItemInfo);
             
             PresetManager.ToggleAssigmentMode(extension);
             return false;
@@ -39,11 +39,11 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
         
 
         _preset = preset;
+        Query = string.Empty;
         MakeDirty();
         extension.RequestRefresh();
         
-        // We can't actually select a preset, so return false to prevent the panel from closing.
-        return false;
+        return true;
     }
 
     public override bool OnPanelSelected(SpawnablePanelExtension extension)
@@ -57,18 +57,26 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
     {
         if (_preset == null)
             return;
-        if (itemInfo is not ISearchableItemInfo searchableItemInfo)
+
+        if (itemInfo is ICrateBoundItemInfo { Crate: Preset preset }) {
+            _preset = null;
+            PresetManager.RemovePreset(preset);
+            MakeDirty();
+            extension.InfoBox.SetContent(null);
+            extension.RequestRefresh();
+            return;
+        }
+        
+        if (itemInfo is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
             return;
         
-        _preset.AssignedCrates.Remove(searchableItemInfo);
+        _preset.ToggleCrate(searchableItemInfo);
+        extension.InfoBox.SetContent(null);
+        MakeDirty();
     }
 
     public override ItemRender GetRenderDataForCrate(ISearchableItemInfo crate)
     {
-        // TODO : Allow editing the preset name
-        if (_preset == null)
-            return new ItemRender(crate);
-        
         return new ItemRenderWithAction(crate, ItemQuickAction)
         {
             GetActionIconFunc = (_, _) => PresetRemoveIcon,
@@ -78,24 +86,45 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
 
     public override ISearchResults<ISearchableItemInfo> Parse(ISearchResults<ISearchableItemInfo> results)
     {
-        if (_preset != null || Query == string.Empty)
+        if (_preset != null)
+        {
+            if (_preset.AssignedCrates.Count == 0)
+                return new SearchButtonList(new SearchLabel("Here be dragons!"));
+            
             return results;
+        }
 
-        // Add an add button to the end of the preset list
-        return new SearchButtonOverwrite<ISearchableItemInfo>(results, (0, new ActionButton($"Add: {Query}",AddPreset)));
+        // Add an add button to the end of the preset list if we are typing a new preset name
+        if (!string.IsNullOrWhiteSpace(Query))
+            return new SearchButtonOverwrite<ISearchableItemInfo>(results, (0, new ActionButton($"Add: \"{Query}\"", AddPreset)));
+        
+        if (PresetManager.PresetCount == 0)
+            return new SearchButtonList(new SearchLabel("Type to create a preset"));
+            
+        return results;
     }
     
-    private void AddPreset()
+    private void AddPreset(SpawnablePanelExtension extension, int idx)
     {
-        PresetManager.AddPreset(new Preset(Query));
+        var preset = new Preset(Query);
+        PresetManager.AddPreset(preset);
         Query = string.Empty;
+        
+        var itemInfo = extension.GetSelectedItemInfo();
+        if (itemInfo is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
+            return;
+        
+        preset.ToggleCrate(searchableItemInfo);
+        MakeDirty();
+        
+        PresetManager.ToggleAssigmentMode(extension);
     }
 
     protected override void Search(string query, ISearchOrder order, Action<ISearchResults<ISearchableItemInfo>> callback)
     {
         if (_preset == null)
         {
-            SearchManager.SearchAsync(query, PresetManager.PresetList.ToSearchable(), c => true, order, callback);
+            SearchManager.SearchAsync(query, PresetManager.PresetList.ToSearchable(), c => !c.Redacted, order, callback);
             return;
         }
         

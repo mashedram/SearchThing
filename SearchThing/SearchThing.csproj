@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <Configurations>Debug;Release;Release - Unlocked</Configurations>
         <Platforms>AnyCPU</Platforms>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
@@ -394,6 +395,10 @@
 
     <ItemGroup>
         <Folder Include="staging\Mods\"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="dependencies\LiteDB\LiteDB.csproj" />
     </ItemGroup>
 
 </Project>

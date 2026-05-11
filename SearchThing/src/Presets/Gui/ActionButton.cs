@@ -1,13 +1,15 @@
 ﻿using SearchThing.Extensions;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Interaction;
+using SearchThing.Search.Search;
 
-namespace SearchThing.Presets;
+namespace SearchThing.Presets.Gui;
 
 public class ActionButton : ISearchableItemInfo, ISelectableCrate
 {
-    private readonly Action _onSelected;
+    public delegate void OnSelectHandler(SpawnablePanelExtension extension, int idx);
+    
+    private readonly OnSelectHandler _onSelected;
     
     public Guid Id { get; } = Guid.NewGuid();
     public string Name { get; }
@@ -16,11 +18,11 @@ public class ActionButton : ISearchableItemInfo, ISelectableCrate
     
     public bool OnSelected(SpawnablePanelExtension extension, int idx)
     {
-        _onSelected.Invoke();
+        _onSelected.Invoke(extension, idx);
         return false; // Buttons shouldn't take focus
     }
 
-    public ActionButton(string query, Action onSelected)
+    public ActionButton(string query, OnSelectHandler onSelected)
     {
         Name = query;
         _onSelected = onSelected;

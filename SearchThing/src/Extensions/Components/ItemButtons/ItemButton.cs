@@ -63,11 +63,13 @@ public class ItemButton
         _text.text = itemInfo.Name;
         if (itemInfo is ICrateIconProvider iconProvider)
         {
+            _icon.enabled = true;
             _icon.sprite = iconProvider.Icon;
             _icon.color = Color.white;
         }
         else
         {
+            _icon.enabled = false;
             _icon.sprite = _defaultIcon;
             _icon.color = _defaultIconColor!.Value;
         }

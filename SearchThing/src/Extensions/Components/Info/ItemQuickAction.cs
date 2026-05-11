@@ -53,9 +53,9 @@ public class ItemQuickAction
         return (_quickActionInfo.GetActionIcon(_parent, selectedItem), _quickActionInfo.GetActionHighlight(_parent, selectedItem));
     }
 
-    public void Render(IRequiredItemInfo selectedItem)
+    public void Render(IRequiredItemInfo? selectedItem)
     {
-        if (_quickActionInfo == null)
+        if (_quickActionInfo == null || selectedItem == null)
         {
             Reset();
             return;

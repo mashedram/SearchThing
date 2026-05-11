@@ -1,7 +1,7 @@
 ﻿using SearchThing.Search.Data;
 using SearchThing.Search.Search;
 
-namespace SearchThing.Presets;
+namespace SearchThing.Presets.Gui;
 
 public class SearchButtonOverwrite<TCrate> : ISearchResults<ISearchableItemInfo> where TCrate : class, ISearchableItemInfo
 {

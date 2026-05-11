@@ -20,9 +20,14 @@ public static class MarrowCrateManager
                 .Select(crate => new MarrowCrate(crate))
         );
     }
+    
+    public static MarrowCrate? GetCrate(string id)
+    {
+        return SearchableCrateCrates.GetCrateByBarcode(id);
+    }
 
     public static MarrowCrate? GetCrate(Barcode barcode)
     {
-        return SearchableCrateCrates.GetCrateByBarcode(barcode._id);
+        return GetCrate(barcode._id);
     }
 }

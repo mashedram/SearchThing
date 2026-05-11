@@ -145,6 +145,9 @@ public class PanelButtonView
     {
         if (index < 0)
             return;
+        
+        // Clamp the index to the page count
+        index = Math.Clamp(index, 0, _provider.PageCount - 1);
         var page = _provider.GetPage(index);
         if (page == null)
             return;

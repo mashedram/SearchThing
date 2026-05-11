@@ -1,4 +1,4 @@
-﻿namespace SearchThing.Search.CrateData;
+﻿namespace SearchThing.Search.Search;
 
 public interface IFuzzySearchable
 {

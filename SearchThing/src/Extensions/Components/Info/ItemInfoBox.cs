@@ -1,10 +1,7 @@
-﻿using Il2CppSLZ.UI;
-using Il2CppTMPro;
-using SearchThing.Extensions.Components.Info;
-using SearchThing.Search.CrateData;
+﻿using Il2CppTMPro;
 using SearchThing.Search.Data;
 
-namespace SearchThing.Extensions.Components;
+namespace SearchThing.Extensions.Components.Info;
 
 public class ItemInfoBox
 {
@@ -16,9 +13,8 @@ public class ItemInfoBox
     private readonly TextMeshPro _pallet;
     private readonly TextMeshPro _tags;
     
-    private ItemQuickAction _quickAction;
+    private readonly ItemQuickAction _quickAction;
     
-    private string? _titleOverwrite;
     private IRequiredItemInfo? _currentData;
     
     public ItemInfoBox(SpawnablePanelExtension extension)
@@ -52,6 +48,8 @@ public class ItemInfoBox
     
     public void Render()
     {
+        _quickAction.Render(_currentData);
+        
         if (_currentData == null)
         {
             Clear();
@@ -59,7 +57,7 @@ public class ItemInfoBox
         }
         
         // Ensure that overwrites always render in case the value is being edited
-        _title.text = _titleOverwrite ?? _currentData.Name;
+        _title.text = _currentData.Name;
         
         if (_currentData is ICreatorItemInfo sourceData)
         {
@@ -82,13 +80,6 @@ public class ItemInfoBox
             _description.text = "No description.";
             _tags.text = "Tags: None";
         }
-        
-        _quickAction.Render(_currentData);
-    }
-    
-    public void OverwriteTitle(string? title)
-    {
-        _titleOverwrite = title;
     }
     
     public void SetContent(IRequiredItemInfo? data)

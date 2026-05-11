@@ -13,6 +13,7 @@ using SearchThing.Extensions.Components.ItemButtons;
 using SearchThing.Patches;
 using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
+using SearchThing.Search.Database;
 using SearchThing.Search.Interaction;
 using SearchThing.Search.Search;
 using SearchThing.Util;
@@ -23,6 +24,8 @@ namespace SearchThing.Search.Marrow;
 public class MarrowCrate : 
     ISearchableItemInfo,
     ICrateTypeItemInfo,
+    IDescriptiveItemInfo,
+    ICreatorItemInfo,
     ISelectableCrate,
     IConfirmableCrate,
     ICrateIconProvider,
@@ -34,7 +37,7 @@ public class MarrowCrate :
     private readonly SearchTag _author;
     private readonly SearchTag[] _tags;
 
-    public Guid Id { get; } = Guid.NewGuid();
+    public Guid Id { get; }
     public string Name => _name.Original;
     public string PalletName => _palletName.Original;
     public string Author => _author.Original;
@@ -55,7 +58,10 @@ public class MarrowCrate :
     {
         if (spawnableCrate == null)
             throw new ArgumentNullException(nameof(spawnableCrate));
+
+        var knownCrate = CrateDatabaseManager.GetOrCreateKnownCrate(spawnableCrate);
         
+        Id = knownCrate.Id;
         _name = new SearchTag(spawnableCrate.name);
         Description = spawnableCrate._description;
         _palletName = new SearchTag(spawnableCrate._pallet.name);

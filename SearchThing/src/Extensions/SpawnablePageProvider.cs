@@ -18,7 +18,12 @@ public class SpawnablePageProvider
             new LevelTagSearchPanel(),
             new PresetPanel()
         ),
-        new FusionPage()
+        new FusionPage(),
+#if UNLOCKED
+        new BasicSearchPage(
+            new RedactedSearchPanel()
+        )
+#endif
     };
     
     public ISearchPage[] GetVisiblePages()

@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Il2CppSLZ.Bonelab;
+using SearchThing.Presets;
 
 namespace SearchThing.Patches;
 
@@ -23,5 +24,15 @@ public static class PopupMenuViewPatches
     {
         // Prevent the spawn menu from being removed
         return false;
+    }
+    
+    [HarmonyPatch(nameof(PopUpMenuView.Deactivate))]
+    [HarmonyPostfix]
+    public static void Deactivate_Postfix(PopUpMenuView __instance)
+    {
+        if (__instance == null)
+            return;
+
+        PresetManager.SavePresets();
     }
 }

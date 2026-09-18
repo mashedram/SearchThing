@@ -1,23 +1,10 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-using MelonLoader;
-using SearchThing.Extensions;
-using SearchThing.Extensions.Components;
-using SearchThing.Extensions.Components.Info;
-using SearchThing.Extensions.Panel;
-using SearchThing.Extensions.Panel.Abstract;
-using SearchThing.Extensions.Panel.Data;
-using SearchThing.Extensions.Sort;
+﻿using MelonLoader;
 using SearchThing.Presets.Data;
-using SearchThing.Search;
-using SearchThing.Search.Containers;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Database;
 using SearchThing.Search.Marrow;
 using SearchThing.Search.Search;
-using SearchThing.Search.Sorting;
 using SearchThing.Util;
-using UnityEngine;
 using Random = System.Random;
 
 namespace SearchThing.Presets;
@@ -38,12 +25,17 @@ internal class SpawnableCrateComparer : IEqualityComparer<IRequiredItemInfo>
     }
 }
 
-public class Preset : ISearchableItemInfo
+public class Preset : ISearchableItemInfo, IDescriptiveItemInfo
 {
     private readonly SearchTag _nameTag;
 
     public Guid Id { get; } = Guid.NewGuid();
     public string Name => _nameTag.Original;
+
+    public string Description =>
+        IsPreview
+            ? "Select again to open the preset.\nUse the minus button to delete the preset."
+            : "Select an item to spawn it.\nUse the minus on an item to remove it from the preset.";
 
     // Used for deletion marking
     private bool _isRedacted;
@@ -67,6 +59,7 @@ public class Preset : ISearchableItemInfo
 
     public HashSet<ISearchableItemInfo> AssignedCrates { get; } = new(new SpawnableCrateComparer());
     public bool IsDirty { get; private set; } = true;
+    public bool IsPreview { get; set; }
 
     public void ToggleCrate(ISearchableItemInfo crate)
     {

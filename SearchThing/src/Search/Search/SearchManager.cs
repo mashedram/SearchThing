@@ -3,7 +3,6 @@ using System.Diagnostics;
 using Il2CppSLZ.Marrow.Warehouse;
 using MelonLoader;
 using SearchThing.Search.Containers;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Sorting;
 using SearchThing.Util;
 

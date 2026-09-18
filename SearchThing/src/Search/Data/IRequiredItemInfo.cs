@@ -1,6 +1,4 @@
-﻿using SearchThing.Search.Search;
-
-namespace SearchThing.Search.Data;
+﻿namespace SearchThing.Search.Data;
 
 public interface IRequiredItemInfo
 {

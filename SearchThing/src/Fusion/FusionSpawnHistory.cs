@@ -1,10 +1,6 @@
-﻿using HarmonyLib;
-using Il2CppSLZ.Marrow.Warehouse;
-using LabFusion.Data;
+﻿using Il2CppSLZ.Marrow.Warehouse;
 using LabFusion.Player;
-using MelonLoader;
 using SearchThing.History;
-using SearchThing.Search;
 using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Marrow;
@@ -14,7 +10,7 @@ using SearchThing.Search.Sorting;
 namespace SearchThing.Fusion;
 
 public record FusionSpawnHistoryEntry(Barcode Barcode, PlayerID? SpawnerId)
-    : ITrackedDateItemInfo, IDescriptiveItemInfo, ICreatorItemInfo, ICrateTypeItemInfo, ICrateBoundItemInfo, ISearchEntry
+    : ITrackedDateItemInfo, IDescriptiveItemInfo, ITaggedItemInfo, ICreatorItemInfo, ICrateTypeItemInfo, ICrateBoundItemInfo, ISearchEntry
 {
     public MarrowCrate? MarrowCrate { get; } = MarrowCrateManager.GetCrate(Barcode);
 

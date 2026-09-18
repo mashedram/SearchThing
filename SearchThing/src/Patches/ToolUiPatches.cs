@@ -1,7 +1,6 @@
 ﻿using HarmonyLib;
 using Il2CppSLZ.Bonelab;
 using Il2CppSLZ.UI;
-using SearchThing.Presets;
 using UnityEngine;
 
 namespace SearchThing.Patches;
@@ -195,19 +194,20 @@ public static class ToolUiPatches
         return false;
     }
 
-    [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
-    [HarmonyPrefix]
-    public static void ToggleFavorite_Prefix(SpawnablesPanelView __instance, int idx)
-    {
-        if (__instance == null)
-            return;
-
-        if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
-            return;
-
-        if (!extension.IsSearchActive())
-            return;
-
-        extension.RenderAll();
-    }
+    // Not needed anymore
+    // [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
+    // [HarmonyPrefix]
+    // public static void ToggleFavorite_Prefix(SpawnablesPanelView __instance, int idx)
+    // {
+    //     if (__instance == null)
+    //         return;
+    //
+    //     if (!SpawnablesPanelManager.TryGet(__instance, out var extension))
+    //         return;
+    //
+    //     if (!extension.IsSearchActive())
+    //         return;
+    //
+    //     // extension.RenderAll();
+    // }
 }

@@ -1,5 +1,4 @@
-﻿using Il2CppSLZ.UI;
-using Il2CppTMPro;
+﻿using Il2CppTMPro;
 using SearchThing.Extensions.Panel;
 using SearchThing.Search.Data;
 using UnityEngine;

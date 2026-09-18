@@ -1,6 +1,4 @@
-﻿using SearchThing.Search.CrateData;
-
-namespace SearchThing.Search.Search;
+﻿namespace SearchThing.Search.Search;
 
 public interface ISearchEntry
 {

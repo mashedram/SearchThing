@@ -1,9 +1,5 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-using Il2CppSLZ.UI;
+﻿using Il2CppSLZ.UI;
 using Il2CppTMPro;
-using SearchThing.Extensions.Components.Info;
-using SearchThing.Extensions.Panel.Data;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Interaction;
 using UnityEngine;

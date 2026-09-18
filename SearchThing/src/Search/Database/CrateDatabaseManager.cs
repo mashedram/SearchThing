@@ -53,6 +53,7 @@ public static class CrateDatabaseManager
     {
         var barcode = crate._barcode._id;
         var knownCrate = _knownCrates.FindOne(kc => kc.Barcode == barcode);
+        
         if (knownCrate != null)
             return knownCrate;
 

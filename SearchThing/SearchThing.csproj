@@ -394,6 +394,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Folder Include="src\Migrations\" />
         <Folder Include="staging\Mods\"/>
     </ItemGroup>
 

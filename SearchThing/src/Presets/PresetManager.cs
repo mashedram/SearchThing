@@ -1,15 +1,16 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using MelonLoader;
-using MelonLoader.Utils;
 using SearchThing.Extensions;
-using SearchThing.Extensions.Pages;
 using SearchThing.Extensions.Panel.Filter;
 using SearchThing.Presets.Data;
+using SearchThing.Search.Data;
 
 namespace SearchThing.Presets;
 
 public static class PresetManager
 {
+    private static ISearchableItemInfo? _assigningCrate;
     private static Type? _returnPanel;
 
     public static bool IsAssignmentMode { get; private set; }
@@ -23,20 +24,26 @@ public static class PresetManager
 
     }
 
-    public static void ToggleAssigmentMode(SpawnablePanelExtension extension)
+    public static void StartAssignmentMode(SpawnablePanelExtension extension, ISearchableItemInfo crate)
     {
-        if (IsAssignmentMode)
-        {
-            extension.OpenPanel(_returnPanel ?? typeof(PropTagSearchPanel));
-            _returnPanel = null;
-            IsAssignmentMode = false;
-
-            return;
-        }
-
+        _assigningCrate = crate;
         _returnPanel = extension.GetSelectedPanel().GetType();
         IsAssignmentMode = true;
         extension.OpenPanel(typeof(PresetPanel));
+    }
+
+    public static void StopAssignmentMode(SpawnablePanelExtension extension)
+    {
+        extension.OpenPanel(_returnPanel ?? typeof(PropTagSearchPanel));
+        _assigningCrate = null;
+        _returnPanel = null;
+        IsAssignmentMode = false;
+    }
+
+    public static bool TryGetAssigningCrate([MaybeNullWhen(false)] out ISearchableItemInfo crate)
+    {
+        crate = _assigningCrate;
+        return crate != null;
     }
 
     public static void AddPreset(Preset preset)
@@ -57,7 +64,6 @@ public static class PresetManager
         try
         {
             var files = Directory.GetFiles(UserData.PresetsPath, "*.json");
-            ;
             foreach (var file in files)
             {
                 try

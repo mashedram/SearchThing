@@ -1,16 +1,8 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-using LabFusion.Data;
-using LabFusion.Network;
-using LabFusion.Safety;
+﻿using LabFusion.Network;
 using SearchThing.Extensions;
-using SearchThing.Extensions.Components;
-using SearchThing.Extensions.Components.Info;
-using SearchThing.Extensions.Pages;
-using SearchThing.Extensions.Panel;
 using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
-using SearchThing.Search;
 using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Search;
@@ -25,6 +17,7 @@ public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
     private static readonly Sprite BlockIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.BlockIcon.png");
 
     public override string Name => "Fusion Spawn History";
+    public override string Description => "A list of spawned items and who spawned them. Select items to blacklist them.";
     public override bool Redacted => !NetworkInfo.HasServer;
     public override bool CanSelect => false;
 

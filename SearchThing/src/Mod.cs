@@ -2,15 +2,12 @@
 using LabFusion.Utilities;
 using SearchThing;
 using MelonLoader;
-using MelonLoader.Utils;
-using SearchThing.Fusion;
 using SearchThing.Patches;
 using SearchThing.Patches.Compatibility;
 using SearchThing.Presets;
-using SearchThing.Search;
+using SearchThing.Presets.Data;
 using SearchThing.Search.Database;
 using SearchThing.Search.Search;
-using UnityEngine;
 
 [assembly: MelonInfo(typeof(Mod), "SearchThing", "0.5.0", "Mash")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
@@ -42,6 +39,9 @@ public class Mod : MelonMod
     {
         SearchManager.InitializeSearchThread();
         PresetManager.LoadPresets();
+        
+        // Migrate old presets to the new folder
+        OldPresetDataLoader.Migrate();
 
         if (IsFusionLoaded)
         {

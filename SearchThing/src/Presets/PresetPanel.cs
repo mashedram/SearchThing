@@ -17,31 +17,56 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
     private static readonly Sprite EditIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.EditIcon.png");
 
     public override string Name => "Presets";
+    public override string Description => GetDescription();
+    // True when the preset is first clicked, and thus selected but not open
     private Preset? _preset;
+
+    private string GetDescription()
+    {
+        if (PresetManager.IsAssignmentMode)
+            return "Click a preset to assign the item you selected to that preset.\n Start typing if you want to make a new preset.";
+
+        if (_preset == null)
+        {
+            if (PresetManager.PresetCount <= 0)
+                return "No presets have been made yet.\nStart typing to make your first preset.";
+
+            return "Select a preset to edit or spawn its contents.";
+        }
+
+        return _preset.Description;
+    }
 
     public override bool OnItemSelected(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
         // We selected an item, yay
-        if (itemInfo is not ICrateBoundItemInfo { Crate: Preset preset })
+        if (itemInfo is not ICrateBoundItemInfo { Crate: Preset /*Check if it's a preset, and if not, don't do anything*/ preset })
             return true;
 
         if (PresetManager.IsAssignmentMode)
         {
-            var selectedItem = extension.GetSelectedItemInfo();
-            if (selectedItem is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
+            if (!PresetManager.TryGetAssigningCrate(out var searchableItemInfo))
                 return true;
 
             preset.ToggleCrate(searchableItemInfo);
 
-            PresetManager.ToggleAssigmentMode(extension);
+            PresetManager.StopAssignmentMode(extension);
             return false;
         }
 
 
-        _preset = preset;
-        Query = string.Empty;
+        if (_preset != preset)
+        {
+            _preset = preset;
+            _preset.IsPreview = true;
+        }
+        else
+        {
+            Query = string.Empty;
+            _preset.IsPreview = false;
+        }
         MakeDirty();
-        extension.RequestRefresh();
+        // Might need a refresh here
 
         return true;
     }
@@ -60,10 +85,14 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
 
         if (itemInfo is ICrateBoundItemInfo { Crate: Preset preset })
         {
+            // Presets can only be deleted while they are being previewed
+            if (preset.IsPreview)
+                return;
+            
             _preset = null;
             PresetManager.RemovePreset(preset);
             MakeDirty();
-            extension.InfoBox.SetContent(null);
+            extension.InfoBox.SetContent(this);
             extension.RequestRefresh();
             return;
         }
@@ -99,9 +128,6 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
         if (!string.IsNullOrWhiteSpace(Query))
             return new SearchButtonOverwrite<ISearchableItemInfo>(results, (0, new ActionButton($"Add: \"{Query}\"", AddPreset)));
 
-        if (PresetManager.PresetCount == 0)
-            return new SearchButtonList(new SearchLabel("Type to create a preset"));
-
         return results;
     }
 
@@ -111,24 +137,23 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
         PresetManager.AddPreset(preset);
         Query = string.Empty;
 
-        var itemInfo = extension.GetSelectedItemInfo();
-        if (itemInfo is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
+        if (!PresetManager.TryGetAssigningCrate(out var searchableItemInfo))
             return;
 
         preset.ToggleCrate(searchableItemInfo);
         MakeDirty();
 
-        PresetManager.ToggleAssigmentMode(extension);
+        PresetManager.StopAssignmentMode(extension);
     }
 
     protected override void Search(string query, ISearchOrder order, Action<ISearchResults<ISearchableItemInfo>> callback)
     {
-        if (_preset == null)
+        if (_preset == null || _preset.IsPreview)
         {
             SearchManager.SearchAsync(query, PresetManager.PresetList.ToSearchable(), c => !c.Redacted, order, callback);
             return;
         }
 
-        SearchManager.SearchAsync(query, _preset.AssignedCrates.ToSearchable(), c => true, order, callback);
+        SearchManager.SearchAsync(query, _preset.AssignedCrates.ToSearchable(), _ => true, order, callback);
     }
 }

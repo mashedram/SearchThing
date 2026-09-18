@@ -1,7 +1,4 @@
-﻿using LabFusion.Data;
-using SearchThing.Extensions.Sort;
-using SearchThing.Search;
-using SearchThing.Search.CrateData;
+﻿using SearchThing.Extensions.Sort;
 using SearchThing.Search.Data;
 using SearchThing.Search.Sorting;
 

@@ -2,7 +2,6 @@
 using Il2CppSLZ.Bonelab;
 using Il2CppSLZ.Marrow;
 using Il2CppSLZ.Marrow.Warehouse;
-using LabFusion.Network;
 using LabFusion.Scene;
 using LabFusion.Utilities;
 using SearchThing.History;

@@ -1,5 +1,4 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
-using SearchThing.Search.CrateData;
 
 namespace SearchThing.Search.Data;
 

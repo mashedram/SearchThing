@@ -1,28 +1,16 @@
-﻿using Il2CppCysharp.Threading.Tasks;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using Il2CppSLZ.Bonelab;
-using Il2CppSLZ.Marrow.SceneStreaming;
-using Il2CppSLZ.Marrow.Warehouse;
+﻿using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppSLZ.UI;
 using Il2CppTMPro;
 using MelonLoader;
-using SearchThing.Extensions.Components;
 using SearchThing.Extensions.Components.Info;
 using SearchThing.Extensions.Components.ItemButtons;
 using SearchThing.Extensions.Components.PanelButtons;
-using SearchThing.Extensions.Pages;
 using SearchThing.Extensions.Panel;
-using SearchThing.Patches;
-using SearchThing.Presets;
-using SearchThing.Search;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
-using SearchThing.Search.Interaction;
 using SearchThing.Util;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using PresetManager = SearchThing.Presets.PresetManager;
 
 namespace SearchThing.Extensions;
 
@@ -140,6 +128,11 @@ public class SpawnablePanelExtension
         return GetSelectedPanel().Id == panel.Id;
     }
 
+    /// <summary>
+    /// Returns the currently selected item
+    /// </summary>
+    /// <returns>The currently selected item</returns>
+    /// <remarks>Remember, selecting panels is also selecting an item. Thus, this method might return weird values between panels.</remarks>
     public IRequiredItemInfo? GetSelectedItemInfo()
     {
         return InfoBox.SelectedItem;
@@ -200,6 +193,8 @@ public class SpawnablePanelExtension
     {
         // Update the item buttons to the new panel
         ItemButtonView.SetPanel(PanelButtonView.SelectedPanel);
+        // Update the item 
+        InfoBox.SetContent(PanelButtonView.SelectedPanel);
 
         // Clear the query so the user doesn't get an empty screen
         _searchQuery = "";

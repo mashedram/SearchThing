@@ -1,7 +1,5 @@
 ﻿using System.Reflection;
 using HarmonyLib;
-using Il2CppSLZ.Marrow.Warehouse;
-using LabFusion.Marrow;
 using LabFusion.Marrow.Serialization;
 using LabFusion.Network;
 using SearchThing.Fusion;

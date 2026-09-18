@@ -1,4 +1,5 @@
 ﻿using Il2CppTMPro;
+using SearchThing.Extensions.Panel.Data;
 using SearchThing.Search.Data;
 
 namespace SearchThing.Extensions.Components.Info;
@@ -15,7 +16,7 @@ public class ItemInfoBox
 
     private readonly ItemQuickAction _quickAction;
 
-    public IRequiredItemInfo? SelectedItem { get; private set; }
+    public ItemRender? SelectedItem { get; private set; }
 
     public ItemInfoBox(SpawnablePanelExtension extension)
     {
@@ -23,7 +24,7 @@ public class ItemInfoBox
         var panelView = extension.PanelView;
 
         _quickAction = new ItemQuickAction(extension);
-
+        
         _title = panelView.selectedTitle;
         _description = panelView.selectedDescription;
         _author = panelView.selectedAuthor;
@@ -70,19 +71,12 @@ public class ItemInfoBox
             _pallet.text = "Pallet: Unknown";
         }
 
-        if (SelectedItem is IDescriptiveItemInfo descriptiveData)
-        {
-            _description.text = descriptiveData.Description;
-            _tags.text = $"Tags: {string.Join(", ", descriptiveData.Tags)}";
-        }
-        else
-        {
-            _description.text = "No description.";
-            _tags.text = "Tags: None";
-        }
+        
+        _description.text = SelectedItem.Description;
+        _tags.text = SelectedItem.Tags.DefaultIfEmpty("Tags: None").Aggregate("Tags: ", (s, s1) => $"{s} s{1},");;
     }
 
-    public void SetContent(IRequiredItemInfo? data)
+    public void SetContent(ItemRender data)
     {
         SelectedItem = data;
 
@@ -94,6 +88,19 @@ public class ItemInfoBox
         {
             _quickAction.SetQuickActionInfo(null);
         }
+    }
+
+    public void SetContent(IRequiredItemInfo? requiredItemInfo)
+    {
+        if (requiredItemInfo == null)
+        {
+            SelectedItem = null;
+            _quickAction.SetQuickActionInfo(null);
+            
+            return;
+        }
+
+        SetContent(new ItemRender(requiredItemInfo));
     }
 
     public void OnQuickAction()

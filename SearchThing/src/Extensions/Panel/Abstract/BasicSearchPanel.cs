@@ -1,9 +1,5 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-using SearchThing.Extensions.Components;
-using SearchThing.Extensions.Panel.Data;
+﻿using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
-using SearchThing.Search;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Search;
 using SearchThing.Search.Sorting;
@@ -11,13 +7,14 @@ using UnityEngine;
 
 namespace SearchThing.Extensions.Panel.Abstract;
 
-public abstract class BasicSearchPanel<TCrate> : ISearchPanel
+public abstract class BasicSearchPanel<TCrate> : ISearchPanel, IDescriptiveItemInfo
     where TCrate : class, IRequiredItemInfo, ISearchEntry
 {
     private ISearchResults<TCrate>? _results;
 
     public virtual bool ResearchOnPageChange => false;
     public abstract string Name { get; }
+    public abstract string Description { get; }
     public virtual bool Redacted => false;
     public DateTime DateAdded => DateTime.MinValue;
     public virtual bool CanSelect => true;
@@ -85,7 +82,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
         {
             _results = Parse(results);
             Page = 0;
-            PageCount = results.GetPageCount(ISearchPanel.PanelSize);
+            PageCount = results.GetPageCount(ISearchPanel.PANEL_SIZE);
             extension.RenderAll();
         });
     }
@@ -142,7 +139,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel
             return Array.Empty<ItemRender>();
 
         return _results
-            .GetPage(page, ISearchPanel.PanelSize)
+            .GetPage(page, ISearchPanel.PANEL_SIZE)
             .Select(GetRenderDataForCrate)
             .ToList();
     }

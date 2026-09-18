@@ -13,6 +13,7 @@ public class ActionButton : ISearchableItemInfo, ISelectableCrate
 
     public Guid Id { get; } = Guid.NewGuid();
     public string Name { get; }
+    public string Description { get; }
     public bool Redacted => false;
     public DateTime DateAdded { get; } = DateTime.Now;
 

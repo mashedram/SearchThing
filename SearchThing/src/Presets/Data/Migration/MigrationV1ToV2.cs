@@ -2,7 +2,6 @@
 
 public class MigrationV1ToV2 : IMigration
 {
-
     public int FromVersion => 1;
     public int ToVersion => 2;
 

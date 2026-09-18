@@ -1,11 +1,7 @@
-﻿using LabFusion.Network;
-using SearchThing.Extensions;
-using SearchThing.Extensions.Components;
-using SearchThing.Extensions.Components.Info;
+﻿using SearchThing.Extensions;
 using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
-using SearchThing.Search;
 using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Marrow;
@@ -21,6 +17,7 @@ public class FusionBlocklistPage : BasicSearchPanel<MarrowCrate>
     private static readonly Sprite BlockIcon = ImageHelper.LoadEmbeddedSprite("SearchThing.resources.BlockIcon.png");
 
     public override string Name => "Fusion Blocklist";
+    public override string Description => "Select items to mark them as unspawnable in your fusion lobbies";
     public override bool CanSelect => false;
 
     public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)

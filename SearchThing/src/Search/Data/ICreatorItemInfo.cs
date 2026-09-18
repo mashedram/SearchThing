@@ -1,6 +1,4 @@
-﻿using SearchThing.Extensions.Components.Info;
-
-namespace SearchThing.Search.Data;
+﻿namespace SearchThing.Search.Data;
 
 public interface ICreatorItemInfo : IRequiredItemInfo
 {

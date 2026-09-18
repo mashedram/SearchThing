@@ -1,7 +1,4 @@
-﻿using SearchThing.Extensions.Components;
-using SearchThing.Extensions.Components.Info;
-using SearchThing.Search.CrateData;
-using SearchThing.Search.Data;
+﻿using SearchThing.Search.Data;
 using SearchThing.Search.Search;
 
 namespace SearchThing.Search.Containers;

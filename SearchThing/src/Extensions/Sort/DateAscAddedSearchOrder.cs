@@ -1,5 +1,3 @@
-using SearchThing.Search;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Sorting;
 

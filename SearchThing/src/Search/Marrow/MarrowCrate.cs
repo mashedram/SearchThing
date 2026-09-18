@@ -8,6 +8,7 @@ using LabFusion.Network;
 using LabFusion.Player;
 using LabFusion.Representation;
 using LabFusion.RPC;
+using LabFusion.Senders;
 using SearchThing.Extensions;
 using SearchThing.Extensions.Components.ItemButtons;
 using SearchThing.Patches;
@@ -25,6 +26,7 @@ public class MarrowCrate :
     ISearchableItemInfo,
     ICrateTypeItemInfo,
     IDescriptiveItemInfo,
+    ITaggedItemInfo,
     ICreatorItemInfo,
     ISelectableCrate,
     IConfirmableCrate,
@@ -193,10 +195,27 @@ public class MarrowCrate :
         }
     }
 
-    private void LoadLevelCrate(Scannable levelCrate)
+    private bool LoadNetworkLevel(LevelCrate levelCrate)
     {
-        var reference = new LevelCrateReference(levelCrate._barcode);
-        SceneStreamer.LoadAsync(reference).Forget();
+        if (!NetworkInfo.HasServer)
+            return false; // Not in a multiplayer session
+
+        if (!NetworkInfo.IsHost)
+        {
+            LoadSender.SendLevelRequest(levelCrate);
+            return true;
+        }
+
+        SceneStreamer.Load(levelCrate._barcode);
+        return true;
+    }
+
+    private void LoadLevelCrate(LevelCrate levelCrate)
+    {
+        if (Mod.IsFusionLoaded && LoadNetworkLevel(levelCrate))
+            return;
+        
+        SceneStreamer.Load(levelCrate._barcode);
     }
 
     public bool OnSelected(SpawnablePanelExtension extension, int idx)

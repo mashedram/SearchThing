@@ -1,19 +1,14 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-using SearchThing.Extensions.Components;
-using SearchThing.Extensions.Components.Info;
-using SearchThing.Extensions.Panel.Data;
+﻿using SearchThing.Extensions.Panel.Data;
 using SearchThing.Extensions.Sort;
-using SearchThing.Search;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using UnityEngine;
 
 namespace SearchThing.Extensions.Panel;
 
-public interface ISearchPanel : IRequiredItemInfo
+public interface ISearchPanel : IDescriptiveItemInfo
 {
-    public const int PanelSize = 12;
-
+    public const int PANEL_SIZE = 12;
+    
     bool TagEditable { get; }
     string Query { get; set; }
     int SelectedOrderIndex { get; set; }
@@ -23,7 +18,7 @@ public interface ISearchPanel : IRequiredItemInfo
     bool IsDirty { get; }
 
     /// <summary>
-    /// Get's called for every crate that is rendered, return true to force the crate to be highlighted in the menu
+    /// Gets called for every crate that is rendered, return true to force the crate to be highlighted in the menu
     /// </summary>
     /// <returns></returns>
     Color? IsForceHighlighted(SpawnablePanelExtension extension);

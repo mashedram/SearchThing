@@ -1,7 +1,6 @@
 ﻿using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Sort;
 using SearchThing.History;
-using SearchThing.Search;
 using SearchThing.Search.Search;
 using SearchThing.Search.Sorting;
 

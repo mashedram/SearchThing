@@ -1,7 +1,5 @@
 ﻿using HarmonyLib;
 using Il2CppSLZ.Marrow.Warehouse;
-using MelonLoader;
-using SearchThing.Search;
 using SearchThing.Search.Marrow;
 
 namespace SearchThing.Patches;

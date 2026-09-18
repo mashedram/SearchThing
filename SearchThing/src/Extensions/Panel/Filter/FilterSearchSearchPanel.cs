@@ -1,10 +1,6 @@
-﻿using SearchThing.Extensions.Components;
-using SearchThing.Extensions.Components.Info;
-using SearchThing.Extensions.Panel.Abstract;
+﻿using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
 using SearchThing.Presets;
-using SearchThing.Search;
-using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
 using SearchThing.Search.Marrow;
 using SearchThing.Search.Search;
@@ -28,7 +24,10 @@ public abstract class FilterSearchSearchPanel : BasicSearchPanel<MarrowCrate>
 
     public void OnItemFunction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
     {
-        PresetManager.ToggleAssigmentMode(extension);
+        if (itemInfo is not ICrateBoundItemInfo { Crate: ISearchableItemInfo crate })
+            return;
+        
+        PresetManager.StartAssignmentMode(extension, crate);
 
         extension.RenderAll();
     }

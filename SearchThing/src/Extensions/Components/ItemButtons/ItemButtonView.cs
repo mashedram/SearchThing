@@ -1,5 +1,6 @@
 ﻿using Il2CppTMPro;
 using SearchThing.Extensions.Panel;
+using SearchThing.Extensions.Panel.Data;
 using SearchThing.Search.Data;
 using UnityEngine;
 
@@ -21,9 +22,7 @@ public class ItemButtonView
 
     // The panel and item that the selection is on
     private ISearchPanel? _selectedPanel;
-    private ItemButton? _selectedItemButton;
-
-    public IRequiredItemInfo? SelectedItem => _selectedItemButton?.ItemInfo;
+    public IItemRenderInfo? SelectedItem { get; private set; }
 
     public ItemButtonView(SpawnablePanelExtension panelExtension)
     {
@@ -45,7 +44,7 @@ public class ItemButtonView
         _sortButton = new SortButton(panelExtension);
     }
 
-    public IRequiredItemInfo? GetItemInfo(int index)
+    public IItemRenderInfo? GetItemInfo(int index)
     {
         if (index < 0 || index >= _itemButtons.Count)
             return null;
@@ -53,7 +52,7 @@ public class ItemButtonView
         if (!itemButton.IsVisible)
             return null;
 
-        return itemButton.ItemInfo;
+        return itemButton.RenderInfo;
     }
 
     public void SelectItem(int index)
@@ -70,11 +69,14 @@ public class ItemButtonView
             return;
 
         _selectedPanel = _panel;
-        _selectedItemButton = item;
+        SelectedItem = item.RenderInfo;
     }
 
     public void SetPanel(ISearchPanel panel)
     {
+        // Reset the selected item beforehand
+        SelectedItem = null;
+        
         _panel = panel;
         _sortButton.SetPanel(panel);
     }
@@ -94,8 +96,7 @@ public class ItemButtonView
             if (i < entries.Count)
             {
                 var entry = entries[i];
-                var isSelected = isPanelSelected && entry.Id == _selectedItemButton?.Id;
-                button.SetCrate(entry, isSelected);
+                button.SetCrate(entry, this);
             }
             else
             {

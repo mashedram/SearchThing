@@ -1,6 +1,7 @@
 ﻿using SearchThing.Extensions;
 using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
+using SearchThing.Extensions.Panel.Data.Extensions;
 using SearchThing.Presets.Gui;
 using SearchThing.Search.Containers;
 using SearchThing.Search.Data;
@@ -37,10 +38,10 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
         return _preset.Description;
     }
 
-    public override bool OnItemSelected(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    public override bool OnItemSelected(SpawnablePanelExtension extension, IItemRenderInfo itemInfo)
     {
         // We selected an item, yay
-        if (itemInfo is not ICrateBoundItemInfo { Crate: Preset /*Check if it's a preset, and if not, don't do anything*/ preset })
+        if (itemInfo.GetSource() is not Preset preset)
             return true;
 
         if (PresetManager.IsAssignmentMode)
@@ -78,12 +79,13 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
         return true;
     }
 
-    private void ItemQuickAction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    private void ItemQuickAction(SpawnablePanelExtension extension, IItemRenderInfo itemInfo)
     {
         if (_preset == null)
             return;
 
-        if (itemInfo is ICrateBoundItemInfo { Crate: Preset preset })
+        var source = itemInfo.GetSource();
+        if (source is ICrateBoundItemInfo { Crate: Preset preset })
         {
             // Presets can only be deleted while they are being previewed
             if (preset.IsPreview)
@@ -92,12 +94,11 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
             _preset = null;
             PresetManager.RemovePreset(preset);
             MakeDirty();
-            extension.InfoBox.SetContent(this);
-            extension.RequestRefresh();
+            extension.OpenPanel(typeof(PresetPanel));
             return;
         }
 
-        if (itemInfo is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
+        if (source is not ICrateBoundItemInfo { Crate: ISearchableItemInfo searchableItemInfo })
             return;
 
         _preset.ToggleCrate(searchableItemInfo);
@@ -105,13 +106,13 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
         MakeDirty();
     }
 
-    public override ItemRender GetRenderDataForCrate(ISearchableItemInfo crate)
+    public override ItemRenderInfo GetRenderDataForCrate(ISearchableItemInfo crate)
     {
-        return new ItemRenderWithAction(crate, ItemQuickAction)
+        return new ItemRenderInfo(crate, new ActionExtension(ItemQuickAction)
         {
             GetActionIconFunc = (_, _) => PresetRemoveIcon,
             GetActionHighlightFunc = (_, _) => Color.red
-        };
+        }, new IconExtension(crate));
     }
 
     public override ISearchResults<ISearchableItemInfo> Parse(ISearchResults<ISearchableItemInfo> results)

@@ -37,11 +37,11 @@ public interface ISearchPanel : IDescriptiveItemInfo
     /// <summary>
     /// Called when an item is selected, return false to prevent the item from being selected
     /// </summary>
-    bool OnItemSelected(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo);
+    bool OnItemSelected(SpawnablePanelExtension extension, IItemRenderInfo itemInfo);
     /// <summary>
     /// Called when the panel is selected, return false to prevent the panel from being selected
     /// </summary>
     /// <returns>Return false to prevent the panel from being selected</returns>
     bool OnPanelSelected(SpawnablePanelExtension extension);
-    IReadOnlyList<ItemRender> GetPage(int page);
+    IReadOnlyList<ItemRenderInfo> GetPage(int page);
 }

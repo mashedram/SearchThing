@@ -111,7 +111,7 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel, IDescriptiveItemI
         return null;
     }
 
-    public virtual bool OnItemSelected(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    public virtual bool OnItemSelected(SpawnablePanelExtension extension, IItemRenderInfo itemInfo)
     {
         // No special logic needed
         return true;
@@ -123,9 +123,9 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel, IDescriptiveItemI
         return true;
     }
 
-    public virtual ItemRender GetRenderDataForCrate(TCrate crate)
+    public virtual ItemRenderInfo GetRenderDataForCrate(TCrate crate)
     {
-        return new ItemRender(crate);
+        return new ItemRenderInfo(crate);
     }
 
     public virtual ISearchResults<TCrate> Parse(ISearchResults<TCrate> results)
@@ -133,10 +133,10 @@ public abstract class BasicSearchPanel<TCrate> : ISearchPanel, IDescriptiveItemI
         return results;
     }
 
-    public IReadOnlyList<ItemRender> GetPage(int page)
+    public IReadOnlyList<ItemRenderInfo> GetPage(int page)
     {
         if (_results == null)
-            return Array.Empty<ItemRender>();
+            return Array.Empty<ItemRenderInfo>();
 
         return _results
             .GetPage(page, ISearchPanel.PANEL_SIZE)

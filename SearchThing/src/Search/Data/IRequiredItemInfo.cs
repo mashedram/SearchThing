@@ -18,4 +18,9 @@ public interface IRequiredItemInfo
     /// When the item was added to the database. Used for sorting by date added.
     /// </summary>
     DateTime DateAdded { get; }
+
+    public IRequiredItemInfo GetSource()
+    {
+        return this;
+    }
 }

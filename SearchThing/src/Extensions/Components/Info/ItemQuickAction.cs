@@ -1,5 +1,7 @@
 ﻿using Il2CppSLZ.UI;
 using MelonLoader;
+using SearchThing.Extensions.Panel.Data;
+using SearchThing.Extensions.Panel.Data.Extensions;
 using SearchThing.Search.Data;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,11 +17,12 @@ public class ItemQuickAction
     private readonly Color _originalFavoriteColor = Color.white;
 
     // Renderers
+    private readonly GameObject _buttonObject = null!;
     private readonly Image _fadedButtonImage = null!;
     private readonly Image _favoriteButtonImage = null!;
 
     // Data
-    private IQuickActionItemInfo? _quickActionInfo;
+    private ActionExtension? _actionExtension;
 
     public ItemQuickAction(SpawnablePanelExtension extension)
     {
@@ -33,6 +36,7 @@ public class ItemQuickAction
         }
 
         var references = favoriteButton.GetComponent<ButtonReferenceHolder>();
+        _buttonObject = references.gameObject;
         _fadedButtonImage = references.highlight;
         _favoriteButtonImage = references.special;
         if (_favoriteButtonImage == null || _fadedButtonImage == null)
@@ -45,21 +49,23 @@ public class ItemQuickAction
         _originalFavoriteColor = _favoriteButtonImage.color;
     }
 
-    public (Sprite? sprite, Color? color) GetFavoriteSprite(IRequiredItemInfo selectedItem)
+    public (Sprite? sprite, Color? color) GetFavoriteSprite(IItemRenderInfo selectedItem)
     {
-        if (_quickActionInfo == null)
+        if (_actionExtension == null)
             return (null, null);
 
-        return (_quickActionInfo.GetActionIcon(_parent, selectedItem), _quickActionInfo.GetActionHighlight(_parent, selectedItem));
+        return (_actionExtension.GetActionIcon(_parent, selectedItem), _actionExtension.GetActionHighlight(_parent, selectedItem));
     }
 
-    public void Render(IRequiredItemInfo? selectedItem)
+    public void Render(IItemRenderInfo? selectedItem)
     {
-        if (_quickActionInfo == null || selectedItem == null)
+        if (_actionExtension == null || selectedItem == null)
         {
-            Reset();
+            _buttonObject.SetActive(false);
             return;
         }
+        
+        _buttonObject.SetActive(true);
 
         var favoriteSprite = GetFavoriteSprite(selectedItem);
         var overrideSprite = favoriteSprite.sprite;
@@ -79,20 +85,22 @@ public class ItemQuickAction
             _favoriteButtonImage.color = highlightColor!.Value;
     }
 
-    public void SetQuickActionInfo(IQuickActionItemInfo? info)
+    public void SetQuickActionInfo(ActionExtension? info)
     {
-        _quickActionInfo = info;
+        _actionExtension = info;
     }
 
     public void Reset()
     {
+        _buttonObject.SetActive(true);
+        
         _fadedButtonImage.sprite = _originalFavoriteSprite;
         _favoriteButtonImage.sprite = _originalFavoriteSprite;
         _favoriteButtonImage.color = _originalFavoriteColor;
     }
 
-    public void CallQuickAction(IRequiredItemInfo itemInfo)
+    public void CallQuickAction(IItemRenderInfo itemInfo)
     {
-        _quickActionInfo?.PerformQuickAction(_parent, itemInfo);
+        _actionExtension?.PerformQuickAction(_parent, itemInfo);
     }
 }

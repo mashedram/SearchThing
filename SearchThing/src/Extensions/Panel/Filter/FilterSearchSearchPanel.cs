@@ -1,5 +1,6 @@
 ﻿using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
+using SearchThing.Extensions.Panel.Data.Extensions;
 using SearchThing.Presets;
 using SearchThing.Search.Data;
 using SearchThing.Search.Marrow;
@@ -17,14 +18,14 @@ public abstract class FilterSearchSearchPanel : BasicSearchPanel<MarrowCrate>
     public override abstract string Name { get; }
     protected abstract bool Filter(MarrowCrate searchableCrate);
 
-    public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IItemRenderInfo itemInfo)
     {
         return PresetManager.IsAssignmentMode ? Color.green : null;
     }
 
-    public void OnItemFunction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    public void OnItemFunction(SpawnablePanelExtension extension, IItemRenderInfo itemInfo)
     {
-        if (itemInfo is not ICrateBoundItemInfo { Crate: ISearchableItemInfo crate })
+        if (itemInfo.GetSource() is not ICrateBoundItemInfo { Crate: ISearchableItemInfo crate })
             return;
         
         PresetManager.StartAssignmentMode(extension, crate);
@@ -32,13 +33,13 @@ public abstract class FilterSearchSearchPanel : BasicSearchPanel<MarrowCrate>
         extension.RenderAll();
     }
 
-    public override ItemRender GetRenderDataForCrate(MarrowCrate crate)
+    public override ItemRenderInfo GetRenderDataForCrate(MarrowCrate crate)
     {
-        return new ItemRenderWithAction(crate, OnItemFunction)
+        return new ItemRenderInfo(crate, new ActionExtension(OnItemFunction)
         {
             GetActionIconFunc = (_, _) => PresetAddIcon,
             GetActionHighlightFunc = GetItemFunctionHighlight
-        };
+        });
     }
 
     protected override void Search(string query, ISearchOrder order, Action<ISearchResults<MarrowCrate>> callback)

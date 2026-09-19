@@ -30,7 +30,6 @@ public class MarrowCrate :
     ICreatorItemInfo,
     ISelectableCrate,
     IConfirmableCrate,
-    ICrateIconProvider,
     ICrateBoundItemInfo,
     IEquatable<MarrowCrate>
 {
@@ -50,7 +49,6 @@ public class MarrowCrate :
     public int Salt { get; } // Used for tie-breaking to ensure consistent ordering
     public CrateType CrateType { get; }
     public CrateSubType CrateSubType { get; }
-    public Sprite Icon => CrateIconProvider.GetIcon(this);
     public DateTime DateAdded { get; }
     public Barcode Barcode { get; }
     // Self reference for crate-bound info

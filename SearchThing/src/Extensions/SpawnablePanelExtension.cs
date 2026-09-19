@@ -6,6 +6,7 @@ using SearchThing.Extensions.Components.Info;
 using SearchThing.Extensions.Components.ItemButtons;
 using SearchThing.Extensions.Components.PanelButtons;
 using SearchThing.Extensions.Panel;
+using SearchThing.Extensions.Panel.Data;
 using SearchThing.Search.Data;
 using SearchThing.Util;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace SearchThing.Extensions;
 
 public class SpawnablePanelExtension
 {
-    public const int SearchTabIndex = 5;
+    public const int SEARCH_TAB_INDEX = 5;
 
     private const string SourceTabButtonPath = "group_tabs/grid_tabs/button_tab_05";
     private const string SearchTabName = "button_tab_search";
@@ -84,7 +85,7 @@ public class SpawnablePanelExtension
     private void OnSearchTabClicked()
     {
         // Tab 5 is the new tab we added
-        PanelView.SelectTab(SearchTabIndex);
+        PanelView.SelectTab(SEARCH_TAB_INDEX);
     }
 
     public SpawnablePanelExtension(SpawnablesPanelView panelView)
@@ -133,7 +134,7 @@ public class SpawnablePanelExtension
     /// </summary>
     /// <returns>The currently selected item</returns>
     /// <remarks>Remember, selecting panels is also selecting an item. Thus, this method might return weird values between panels.</remarks>
-    public IRequiredItemInfo? GetSelectedItemInfo()
+    public IItemRenderInfo? GetSelectedItemInfo()
     {
         return InfoBox.SelectedItem;
     }
@@ -150,6 +151,10 @@ public class SpawnablePanelExtension
         // Skip rendering if we left the search page before render gets called
         if (!IsSearchActive())
             return;
+        
+        // Ensure the infobox has something
+        if (InfoBox.SelectedItem == null)
+            InfoBox.SetContent(new ItemRenderInfo(PanelButtonView.SelectedPanel));
 
         PanelView.labelText.text = _searchQuery;
         PanelButtonView.Render();
@@ -172,9 +177,10 @@ public class SpawnablePanelExtension
 
         if (panel.OnItemSelected(this, targetItem))
             ItemButtonView.SelectItem(idx);
-
+        
         // Update the infobox
-        InfoBox.SetContent(ItemButtonView.SelectedItem);
+        if (ItemButtonView.SelectedItem != null)
+            InfoBox.SetContent(ItemButtonView.SelectedItem);
 
         // If the panel got updated internally, update the search
         if (panel.IsDirty)
@@ -194,7 +200,7 @@ public class SpawnablePanelExtension
         // Update the item buttons to the new panel
         ItemButtonView.SetPanel(PanelButtonView.SelectedPanel);
         // Update the item 
-        InfoBox.SetContent(PanelButtonView.SelectedPanel);
+        InfoBox.SetContent(new ItemRenderInfo(PanelButtonView.SelectedPanel));
 
         // Clear the query so the user doesn't get an empty screen
         _searchQuery = "";
@@ -221,7 +227,7 @@ public class SpawnablePanelExtension
 
         if (!result)
             return;
-
+        
         OnPanelViewChanged();
     }
 
@@ -277,7 +283,7 @@ public class SpawnablePanelExtension
 
     public bool IsSearchActive()
     {
-        return PanelView._selectedTabIndex == SearchTabIndex;
+        return PanelView._selectedTabIndex == SEARCH_TAB_INDEX;
     }
 
     public bool Is(SpawnablesPanelView panelView)

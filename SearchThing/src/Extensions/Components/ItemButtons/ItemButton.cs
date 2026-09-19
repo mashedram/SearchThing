@@ -1,5 +1,7 @@
 ﻿using Il2CppSLZ.UI;
 using Il2CppTMPro;
+using SearchThing.Extensions.Panel.Data;
+using SearchThing.Extensions.Panel.Data.Extensions;
 using SearchThing.Search.Data;
 using SearchThing.Search.Interaction;
 using UnityEngine;
@@ -10,13 +12,14 @@ namespace SearchThing.Extensions.Components.ItemButtons;
 public class ItemButton
 {
     // Default value cache
-    private static Sprite? _defaultIcon = null!;
-    private static Color? _defaultIconColor = null!;
-    private static Color? _defaultHighlightColor = null!;
+    private static Sprite? _defaultIcon;
+    private static Color? _defaultIconColor;
+    private static Color? _defaultHighlightColor;
+    private static Color? _defaultTextColor;
 
     // Parent references
-    private SpawnablePanelExtension _parentPanel;
-    private int _index;
+    private readonly SpawnablePanelExtension _parentPanel;
+    private readonly int _index;
 
     // Value references
     private readonly GameObject _button;
@@ -25,11 +28,11 @@ public class ItemButton
     private readonly Image _icon;
 
     // Helper values
-    private bool _isSelected = false;
+    private bool _isSelected;
 
     // Getters
-    public IRequiredItemInfo? ItemInfo { get; private set; }
-    public Guid Id => ItemInfo?.Id ?? Guid.Empty;
+    public IItemRenderInfo? RenderInfo { get; private set; }
+    public Guid Id => RenderInfo?.GetSource().Id ?? Guid.Empty;
     public bool IsVisible { get; private set; }
 
     public ItemButton(SpawnablePanelExtension parentPanel, ButtonReferenceHolder button, int idx)
@@ -38,10 +41,15 @@ public class ItemButton
         _index = idx;
 
         // Cache default values
-        if (_defaultIcon == null) _defaultIcon = button.special.sprite;
+        
+        // Unity check, ??= can't be used
+        if (_defaultIcon == null) 
+            _defaultIcon = button.special.sprite;
+        
         _defaultIconColor ??= button.special.color;
         _defaultHighlightColor ??= button.highlight.color;
-
+        _defaultTextColor ??= button.tmp.color;
+        
         // Store references
         _button = button.gameObject;
         _text = button.tmp;
@@ -49,18 +57,19 @@ public class ItemButton
         _icon = button.special;
     }
 
-    public void SetCrate(IRequiredItemInfo itemInfo, bool isSelected = false)
+    public void SetCrate(IItemRenderInfo itemInfo, ItemButtonView view)
     {
-        _isSelected = isSelected;
-        ItemInfo = itemInfo;
+        RenderInfo = itemInfo;
         IsVisible = true;
         _button.SetActive(true);
 
-        _text.text = itemInfo.Name;
-        if (itemInfo is ICrateIconProvider iconProvider)
+        var source = itemInfo.GetSource();
+        
+        _text.text = source.Name;
+        if (itemInfo.TryGetExtension<IconExtension>(out var iconExtension))
         {
             _icon.enabled = true;
-            _icon.sprite = iconProvider.Icon;
+            _icon.sprite = iconExtension.Icon;
             _icon.color = Color.white;
         }
         else
@@ -69,12 +78,18 @@ public class ItemButton
             _icon.sprite = _defaultIcon;
             _icon.color = _defaultIconColor!.Value;
         }
-        _highlight.enabled = isSelected;
+
+        _text.color = itemInfo.TryGetExtension<LabelColorExtension>(out var colorProvider)
+            ? colorProvider.Color 
+            : _defaultTextColor!.Value;
+
+        _isSelected = view.SelectedItem != null && view.SelectedItem.Id == Id;
+        _highlight.enabled = _isSelected;
     }
 
     public bool OnSelected()
     {
-        if (ItemInfo is not ICrateBoundItemInfo crateBoundItemInfo)
+        if (RenderInfo?.GetSource() is not ICrateBoundItemInfo crateBoundItemInfo)
             return true;
 
         switch (crateBoundItemInfo.Crate)
@@ -103,5 +118,6 @@ public class ItemButton
         _highlight.color = _defaultHighlightColor!.Value;
         _icon.color = _defaultIconColor!.Value;
         _icon.sprite = _defaultIcon!;
+        _text.color = _defaultTextColor!.Value;
     }
 }

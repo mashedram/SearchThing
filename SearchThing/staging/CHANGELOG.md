@@ -1,3 +1,14 @@
+> > **Version 0.6.1**
+>1. Fixed the fusion blocklist button
+>2. Made double-tap spawning more consistent
+
+> > **Version 0.6.0**
+>1. Rework the preset system
+>2. Fixed a bug related to fusion level loading
+>3. Laid the groundwork for managing and searching mods that are not currently downloaded 
+>4. You can now double-click items to spawn them without a spawn gun. This respect spawngun permissions in fusion.
+>5. Added descriptions to all the pages of the search panel, to explain their functions.
+ 
 > > **Version 0.5.0**
 >1. Added a spawn log when in a Fusion server.
 >2. Added a menu where you can edit your Fusion Block list from an in game panel.
@@ -17,15 +28,12 @@
 
 > > **Version 0.4.0**
 >1. Added custom presets.
-    >
-
-1. Hover over an item you want and press the plus button in the top right to go into assignment mode
-
-> 2. Scroll through your presets and press on the ones you wish to assign the item to
->   3. Exit edit mode
->   4. You can rename your presets by click on the preset and then the edit mode in the top right
->   5. Type in the name of your preset, then click anywhere else
->   6. Click an item in the preset and press the minus to remove it from the preset
+ > >1. Hover over an item you want and press the plus button in the top right to go into assignment mode
+ > >2. Scroll through your presets and press on the ones you wish to assign the item to
+>>3. Exit edit mode
+>>4. You can rename your presets by click on the preset and then the edit mode in the top right
+>>5. Type in the name of your preset, then click anywhere else
+>>6. Click an item in the preset and press the minus to remove it from the preset
 
 > > **Version 0.3.0**
 >1. Made some more tweaks to the searching algorithm

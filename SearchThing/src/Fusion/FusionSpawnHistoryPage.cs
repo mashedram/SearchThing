@@ -2,6 +2,7 @@
 using SearchThing.Extensions;
 using SearchThing.Extensions.Panel.Abstract;
 using SearchThing.Extensions.Panel.Data;
+using SearchThing.Extensions.Panel.Data.Extensions;
 using SearchThing.Extensions.Sort;
 using SearchThing.Search.CrateData;
 using SearchThing.Search.Data;
@@ -23,17 +24,17 @@ public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
 
     public override bool ResearchOnPageChange => true;
 
-    public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    public Color? GetItemFunctionHighlight(SpawnablePanelExtension extension, IItemRenderInfo itemInfo)
     {
-        if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })
+        if (itemInfo.GetSource() is not ICrateBoundItemInfo { Barcode: var barcode })
             return null;
 
         return FusionBlacklistHelper.IsBlacklisted(barcode._id) ? Color.red : Color.green;
     }
 
-    public void OnItemFunction(SpawnablePanelExtension extension, IRequiredItemInfo itemInfo)
+    public void OnItemFunction(SpawnablePanelExtension extension, IItemRenderInfo itemInfo)
     {
-        if (itemInfo is not ICrateBoundItemInfo { Barcode: var barcode })
+        if (itemInfo.GetSource() is not ICrateBoundItemInfo { Barcode: var barcode })
             return;
 
         FusionBlacklistHelper.ToggleBlacklist(barcode._id);
@@ -51,18 +52,17 @@ public class FusionSpawnHistoryPage : BasicSearchPanel<FusionSpawnHistoryEntry>
         new RandomSearchOrder()
     };
 
-    public override ItemRender GetRenderDataForCrate(FusionSpawnHistoryEntry crate)
+    public override ItemRenderInfo GetRenderDataForCrate(FusionSpawnHistoryEntry crate)
     {
         var ownerName = crate.SpawnerId?.IsValid == true && crate.SpawnerId.TryGetDisplayName(out var name)
             ? StringHelper.RemoveUnityRichText(name)
             : "Unknown";
 
-        return new ItemRenderWithAction(crate, OnItemFunction)
+        return new ItemRenderInfo(crate, new IconExtension(crate), new NameOverwriteExtension($"{crate.Name} ({ownerName})"), new ActionExtension(OnItemFunction)
         {
-            Name = $"{crate.Name} ({ownerName})",
             GetActionIconFunc = (_, _) => BlockIcon,
             GetActionHighlightFunc = GetItemFunctionHighlight
-        };
+        });
     }
 
     protected override void Search(string query, ISearchOrder order, Action<ISearchResults<FusionSpawnHistoryEntry>> callback)

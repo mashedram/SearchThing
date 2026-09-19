@@ -1,5 +1,6 @@
 ﻿using Il2CppTMPro;
 using SearchThing.Extensions.Panel.Data;
+using SearchThing.Extensions.Panel.Data.Extensions;
 using SearchThing.Search.Data;
 
 namespace SearchThing.Extensions.Components.Info;
@@ -16,7 +17,7 @@ public class ItemInfoBox
 
     private readonly ItemQuickAction _quickAction;
 
-    public ItemRender? SelectedItem { get; private set; }
+    public IItemRenderInfo? SelectedItem { get; private set; }
 
     public ItemInfoBox(SpawnablePanelExtension extension)
     {
@@ -57,10 +58,12 @@ public class ItemInfoBox
             return;
         }
 
+        var source = SelectedItem.GetSource();
+
         // Ensure that overwrites always render in case the value is being edited
         _title.text = SelectedItem.Name;
 
-        if (SelectedItem is ICreatorItemInfo sourceData)
+        if (source is ICreatorItemInfo sourceData)
         {
             _author.text = $"Author: {sourceData.Author}";
             _pallet.text = $"Pallet: {sourceData.PalletName}";
@@ -70,39 +73,17 @@ public class ItemInfoBox
             _author.text = "Author: Unknown";
             _pallet.text = "Pallet: Unknown";
         }
-
-        
-        _description.text = SelectedItem.Description;
-        _tags.text = SelectedItem.Tags.DefaultIfEmpty("Tags: None").Aggregate("Tags: ", (s, s1) => $"{s} s{1},");;
+        _description.text = source is IDescriptiveItemInfo descriptiveItemInfo ? descriptiveItemInfo.Description : "No Description.";
+        _tags.text = source is ITaggedItemInfo taggedItemInfo ? taggedItemInfo.TagString : "Tags: None";
     }
 
-    public void SetContent(ItemRender data)
+    public void SetContent(IItemRenderInfo? data)
     {
         SelectedItem = data;
 
-        if (data is IQuickActionItemInfo quickActionInfo)
-        {
-            _quickAction.SetQuickActionInfo(quickActionInfo);
-        }
-        else
-        {
-            _quickAction.SetQuickActionInfo(null);
-        }
+        _quickAction.SetQuickActionInfo(data?.GetExtension<ActionExtension>());
     }
-
-    public void SetContent(IRequiredItemInfo? requiredItemInfo)
-    {
-        if (requiredItemInfo == null)
-        {
-            SelectedItem = null;
-            _quickAction.SetQuickActionInfo(null);
-            
-            return;
-        }
-
-        SetContent(new ItemRender(requiredItemInfo));
-    }
-
+    
     public void OnQuickAction()
     {
         if (SelectedItem == null)

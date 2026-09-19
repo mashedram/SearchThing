@@ -27,7 +27,7 @@ public static class SpawnablesPanelManager
         if (_extension == null || !_extension.Is(panelView))
             return;
 
-        if (index == SpawnablePanelExtension.SearchTabIndex)
+        if (index == SpawnablePanelExtension.SEARCH_TAB_INDEX)
             _extension.Show();
         else
             _extension.Hide();

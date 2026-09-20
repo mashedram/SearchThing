@@ -131,10 +131,12 @@ public class MarrowCrate :
         if (!NetworkInfo.HasServer)
             return false; // Not in a multiplayer session
 
+#if !UNLOCKED
         FusionPermissions.FetchPermissionLevel(PlayerIDManager.LocalPlatformID, out var level, out _);
-        
+
         if (!FusionPermissions.HasSufficientPermissions(level, LobbyInfoManager.LobbyInfo.DevTools))
             return true; // Don't attempt to spawn locally if we don't have permissions
+#endif
 
         var spawnable = LocalAssetSpawner.CreateSpawnable(spawnableCrate.Barcode._id);
         NetworkAssetSpawner.Spawn(new NetworkAssetSpawner.SpawnRequestInfo

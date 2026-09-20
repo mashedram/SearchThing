@@ -89,10 +89,12 @@ public class ItemButton
 
     public bool OnSelected()
     {
-        if (RenderInfo?.GetSource() is not ICrateBoundItemInfo crateBoundItemInfo)
-            return true;
+        var source = RenderInfo?.GetSource();
 
-        switch (crateBoundItemInfo.Crate)
+        if (source == null)
+            return true;
+        
+        switch (source)
         {
             case null:
                 break;

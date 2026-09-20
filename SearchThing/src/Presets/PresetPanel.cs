@@ -21,6 +21,9 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
     public override string Description => GetDescription();
     // True when the preset is first clicked, and thus selected but not open
     private Preset? _preset;
+    private Preset? OpenPreset => _preset is { IsPreview: false }
+        ? _preset
+        : null;
 
     private string GetDescription()
     {
@@ -117,9 +120,9 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
 
     public override ISearchResults<ISearchableItemInfo> Parse(ISearchResults<ISearchableItemInfo> results)
     {
-        if (_preset != null)
+        if (OpenPreset != null)
         {
-            if (_preset.AssignedCrates.Count == 0)
+            if (OpenPreset.AssignedCrates.Count == 0)
                 return new SearchButtonList(new SearchLabel("Here be dragons!"));
 
             return results;
@@ -149,12 +152,12 @@ public class PresetPanel : BasicSearchPanel<ISearchableItemInfo>
 
     protected override void Search(string query, ISearchOrder order, Action<ISearchResults<ISearchableItemInfo>> callback)
     {
-        if (_preset == null || _preset.IsPreview)
+        if (OpenPreset == null)
         {
-            SearchManager.SearchAsync(query, PresetManager.PresetList.ToSearchable(), c => !c.Redacted, order, callback);
+            SearchManager.SearchAsync(query, PresetManager.PresetList.ToSearchable(), _ => true, order, callback);
             return;
         }
 
-        SearchManager.SearchAsync(query, _preset.AssignedCrates.ToSearchable(), _ => true, order, callback);
+        SearchManager.SearchAsync(query, OpenPreset.AssignedCrates.ToSearchable(), c => !c.Redacted, order, callback);
     }
 }

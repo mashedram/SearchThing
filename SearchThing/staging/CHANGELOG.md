@@ -1,3 +1,10 @@
+> > **Version 0.7.0**
+>1. The tap to spawn system now also works on tabs other than the search tab
+>2. Search field content now persist between pages
+ 
+> > **Version 0.6.2**
+>1. Fixed preset creation being broken
+ 
 > > **Version 0.6.1**
 >1. Fixed the fusion blocklist button
 >2. Made double-tap spawning more consistent

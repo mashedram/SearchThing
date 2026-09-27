@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using Il2CppSLZ.Bonelab;
 using Il2CppSLZ.UI;
+using SearchThing.Util;
 using UnityEngine;
 
 namespace SearchThing.Patches;
@@ -92,6 +93,29 @@ public static class ToolUiPatches
         return false;
     }
 
+    private static void DoSpawnBehaviour(SpawnablesPanelView __instance, int idx)
+    {   
+        if (!__instance.SpawnablesQuickMap.TryGetValue(__instance._selectedTag, out var spawnables))
+            return;
+        
+        if (idx < 0 || idx >= spawnables.Count)
+            return;
+        
+        const int pageSize = 12;
+        // Figure out the spawnable that was selected based on the current page and the index of the button clicked
+        var targetItemIdx = __instance._currentPage * pageSize + idx;
+        var spawnable = spawnables[targetItemIdx];
+        
+        // Figure out the button world position
+        var buttonPosition = __instance.itemButtons[idx]?.transform.position;
+        
+        // Spawn the item
+        if (__instance._selectedItemIndex == targetItemIdx && buttonPosition.HasValue)
+            SpawnUtils.Spawn(spawnable, buttonPosition.Value);
+        else
+            SpawnGunPatches.SelectCrate(spawnable);
+    }
+
     [HarmonyPatch(nameof(SpawnablesPanelView.SelectItem))]
     [HarmonyPrefix]
     public static bool SelectItem_Prefix(SpawnablesPanelView __instance, int idx)
@@ -103,7 +127,10 @@ public static class ToolUiPatches
             return true;
 
         if (!extension.IsSearchActive())
+        {
+            DoSpawnBehaviour(__instance, idx);
             return true;
+        }
 
         extension.OnSelectItem(idx);
         return false;

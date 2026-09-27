@@ -203,7 +203,7 @@ public class SpawnablePanelExtension
         InfoBox.SetContent(new ItemRenderInfo(PanelButtonView.SelectedPanel));
 
         // Clear the query so the user doesn't get an empty screen
-        _searchQuery = "";
+        _searchQuery = PanelButtonView.SelectedPanel.Query;
         _keyboard.SetText(_searchQuery, false);
 
         // Update everything to reflect the new selected panel

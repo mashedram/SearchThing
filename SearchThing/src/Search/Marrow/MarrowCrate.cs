@@ -126,98 +126,6 @@ public class MarrowCrate :
 
     // Menu interaction
 
-    private bool SpawnNetworkedCrate(SpawnableCrate spawnableCrate, Vector3 position)
-    {
-        if (!NetworkInfo.HasServer)
-            return false; // Not in a multiplayer session
-
-#if !UNLOCKED
-        FusionPermissions.FetchPermissionLevel(PlayerIDManager.LocalPlatformID, out var level, out _);
-
-        if (!FusionPermissions.HasSufficientPermissions(level, LobbyInfoManager.LobbyInfo.DevTools))
-            return true; // Don't attempt to spawn locally if we don't have permissions
-#endif
-
-        var spawnable = LocalAssetSpawner.CreateSpawnable(spawnableCrate.Barcode._id);
-        NetworkAssetSpawner.Spawn(new NetworkAssetSpawner.SpawnRequestInfo
-        {
-            Spawnable = spawnable,
-            Position = position,
-            Rotation = Quaternion.identity
-        });
-
-        return true;
-    }
-
-    private void AssignSpawnableCrate(SpawnableCrate spawnableCrate, SpawnablePanelExtension extension, int idx)
-    {
-        if (SpawnGunPatches.SelectCrate(spawnableCrate))
-            return;
-
-        // Figure out the pressed buttons world position
-        var buttons = extension.PanelView.itemButtons;
-        if (buttons == null || idx < 0 || idx >= buttons.Length)
-            return;
-        var position = buttons[idx]!.transform.position;
-
-        if (Mod.IsFusionLoaded && SpawnNetworkedCrate(spawnableCrate, position))
-            return;
-
-        var spawnable = new Spawnable
-        {
-            crateRef = new SpawnableCrateReference(spawnableCrate.Barcode._id),
-            policyData = null
-        };
-        AssetSpawner.Register(spawnable);
-
-        var scale = new Il2CppSystem.Nullable<Vector3>(Vector3.zero)
-        {
-            hasValue = false
-        };
-
-        var groupId = new Il2CppSystem.Nullable<int>(0)
-        {
-            hasValue = false
-        };
-
-        AssetSpawner
-            .SpawnAsync(spawnable, position, Quaternion.identity, scale, null, false, groupId, null, null)
-            .Forget();
-    }
-
-    private void AssignAvatarCrate(Scannable avatarCrate)
-    {
-        var reference = new AvatarCrateReference(avatarCrate._barcode);
-        var cordDevice = BodylogAccessor.GetCordDevice();
-        if (cordDevice != null)
-        {
-            cordDevice.SwapAvatar(reference).Forget();
-        }
-    }
-
-    private bool LoadNetworkLevel(LevelCrate levelCrate)
-    {
-        if (!NetworkInfo.HasServer)
-            return false; // Not in a multiplayer session
-
-        if (!NetworkInfo.IsHost)
-        {
-            LoadSender.SendLevelRequest(levelCrate);
-            return true;
-        }
-
-        SceneStreamer.Load(levelCrate._barcode);
-        return true;
-    }
-
-    private void LoadLevelCrate(LevelCrate levelCrate)
-    {
-        if (Mod.IsFusionLoaded && LoadNetworkLevel(levelCrate))
-            return;
-        
-        SceneStreamer.Load(levelCrate._barcode);
-    }
-
     public bool OnSelected(SpawnablePanelExtension extension, int idx)
     {
         if (!this.TryGetCrate(out var crate))
@@ -238,23 +146,12 @@ public class MarrowCrate :
         if (!this.TryGetCrate(out var crate))
             return;
 
-        var selectedAvatarCrate = crate.TryCast<AvatarCrate>();
-        if (selectedAvatarCrate != null)
-        {
-            AssignAvatarCrate(selectedAvatarCrate);
+        // Figure out the pressed buttons world position
+        var buttons = extension.PanelView.itemButtons;
+        if (buttons == null || idx < 0 || idx >= buttons.Length)
             return;
-        }
-
-        var spawnableCrate = crate.TryCast<SpawnableCrate>();
-        if (spawnableCrate != null)
-        {
-            AssignSpawnableCrate(spawnableCrate, extension, idx);
-        }
-
-        var levelCrate = crate.TryCast<LevelCrate>();
-        if (levelCrate != null)
-        {
-            LoadLevelCrate(levelCrate);
-        }
+        var position = buttons[idx]!.transform.position;
+        
+        SpawnUtils.Spawn(crate, position);
     }
 }
